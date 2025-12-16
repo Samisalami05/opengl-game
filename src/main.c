@@ -57,7 +57,7 @@ int main(void) {
 
 		mat4 view;
 		mat4_identity(&view);
-		mat4_rotate(&view, (const vec3){1, 2, 1});
+		//mat4_rotate(&view, (const vec3){1, 2, 1});
 		//camera_get_view(main_camera, view);
 
 		mat4 projection;
