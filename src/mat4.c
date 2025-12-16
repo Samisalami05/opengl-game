@@ -4,7 +4,7 @@
 #include <math.h>
 
 static int index_to_1d(int x, int y) {
-	return y * 4 + x;
+	return x * 4 + y; // instead if y * 4 + x because opengl is column-major
 }
 
 void mat4_identity(mat4* m) {
@@ -15,7 +15,24 @@ void mat4_identity(mat4* m) {
 	}
 }
 
-void mat4_mul(mat4* m1, const mat4 m2);
+void mat4_mul(mat4* m1, const mat4 m2) {
+	mat4 result;
+	mat4_identity(&result);
+
+	for (int y = 0; y < 4; y++) {
+		for (int x = 0; x < 4; x++) {			
+			float v = 0;
+			for (int i = 0; i < 4; i++) {
+				int a_index = index_to_1d(i, y);
+				int b_index = index_to_1d(x, i);				
+				v += m1->data[a_index] * m2.data[b_index];
+			}
+			result.data[index_to_1d(x, y)] = v;
+		}
+	}
+
+	*m1 = result;
+}
 
 void mat4_mul_vec3(const mat4 m, vec3* v) {
 	v->x = m.data[0] * v->x + m.data[3];
@@ -69,6 +86,23 @@ void mat4_rotate(mat4* m, const vec3 v) {
 	mat4_mul(m, rx);
 	mat4_mul(m, ry);
 	mat4_mul(m, rz);
+}
+
+void mat4_projection(mat4* m, float fov, float width, float height, float near_clip, float far_clip) {
+	float aspect = width / height;
+	float wow = tanf(fov * 0.5f * (M_PI / 180.0f));
+	float t = wow * near_clip;
+	float b = -t;
+	float r = t * aspect;
+	float l = -r;
+
+	m->data[0]  = 2 * near_clip / (r - l);
+    m->data[5]  = 2 * near_clip / (t - b);
+    m->data[8]  = (r + l) / (r - l);
+    m->data[9]  = (t + b) / (t - b);
+    m->data[10] = -(far_clip + near_clip) / (far_clip - near_clip);
+    m->data[14] = -2 * far_clip * near_clip / (far_clip - near_clip);
+    m->data[11] = -1;
 }
 
 void mat4_print(mat4 m) {

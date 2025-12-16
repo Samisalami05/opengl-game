@@ -47,6 +47,8 @@ int main(void) {
 	shader_use(shader);
 	mesh_use(mesh);
 
+	float i = 0;
+
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT);
@@ -57,17 +59,20 @@ int main(void) {
 
 		mat4 view;
 		mat4_identity(&view);
-		//mat4_rotate(&view, (const vec3){1, 2, 1});
+		mat4_rotate(&view, (const vec3){0, i, 0});
+		mat4_translate(&view, (const vec3){0, 0, -2});
 		//camera_get_view(main_camera, view);
 
 		mat4 projection;
 		mat4_identity(&projection);
+		mat4_projection(&projection, 60, 800, 800, 0.1, 200);
 		//camera_get_projection(main_camera, projection);
 
 		shader_set_mat4(shader, "model", model);
 		shader_set_mat4(shader, "view", view);
 		shader_set_mat4(shader, "projection", projection);
 
+		i += 0.0001;
 
 		glDrawElements(GL_TRIANGLES, mesh->index_count, GL_UNSIGNED_INT, 0);
 
