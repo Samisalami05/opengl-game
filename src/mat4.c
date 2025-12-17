@@ -35,10 +35,26 @@ void mat4_mul(mat4* m1, const mat4 m2) {
 }
 
 void mat4_mul_vec3(const mat4 m, vec3* v) {
-	v->x = m.data[0] * v->x + m.data[3];
-	v->y = m.data[4] * v->y + m.data[7];
-	v->z = m.data[8] * v->z + m.data[11];
+    float x = v->x;
+    float y = v->y;
+    float z = v->z;
+
+    v->x = m.data[index_to_1d(0,0)] * x +
+           m.data[index_to_1d(1,0)] * y +
+           m.data[index_to_1d(2,0)] * z +
+           m.data[index_to_1d(3,0)];
+
+    v->y = m.data[index_to_1d(0,1)] * x +
+           m.data[index_to_1d(1,1)] * y +
+           m.data[index_to_1d(2,1)] * z +
+           m.data[index_to_1d(3,1)];
+
+    v->z = m.data[index_to_1d(0,2)] * x +
+           m.data[index_to_1d(1,2)] * y +
+           m.data[index_to_1d(2,2)] * z +
+           m.data[index_to_1d(3,2)];
 }
+
 
 void mat4_scale(mat4* m, const float s) {
 	for (int i = 0; i < 4; i++) {
@@ -48,33 +64,44 @@ void mat4_scale(mat4* m, const float s) {
 }
 
 void mat4_translate(mat4* m, const vec3 v) {
-	m->data[12] = v.x;
-	m->data[13] = v.y;
-	m->data[14] = v.z;
+    m->data[index_to_1d(3,0)] +=
+        m->data[index_to_1d(0,0)] * v.x +
+        m->data[index_to_1d(1,0)] * v.y +
+        m->data[index_to_1d(2,0)] * v.z;
+
+    m->data[index_to_1d(3,1)] +=
+        m->data[index_to_1d(0,1)] * v.x +
+        m->data[index_to_1d(1,1)] * v.y +
+        m->data[index_to_1d(2,1)] * v.z;
+
+    m->data[index_to_1d(3,2)] +=
+        m->data[index_to_1d(0,2)] * v.x +
+        m->data[index_to_1d(1,2)] * v.y +
+        m->data[index_to_1d(2,2)] * v.z;
 }
 
 void mat4_rotate_x(mat4* m, const float a) {
 	mat4_identity(m);
-	m->data[5] = cos(a);
-	m->data[6] = -sin(a);
-	m->data[9] = sin(a);
-	m->data[10] = cos(a);
+	m->data[index_to_1d(1,1)] =  cos(a);
+	m->data[index_to_1d(2,1)] = -sin(a);
+	m->data[index_to_1d(1,2)] =  sin(a);
+	m->data[index_to_1d(2,2)] =  cos(a);
 }
 
 void mat4_rotate_y(mat4* m, const float a) {
 	mat4_identity(m);
-	m->data[0] = cos(a);
-	m->data[2] = sin(a);
-	m->data[8] = -sin(a);
-	m->data[10] = cos(a);
+	m->data[index_to_1d(0, 0)] = cos(a);
+	m->data[index_to_1d(2, 0)] = -sin(a);
+	m->data[index_to_1d(0, 2)] = sin(a);
+	m->data[index_to_1d(2, 2)] = cos(a);
 }
 
 void mat4_rotate_z(mat4* m, const float a) {
 	mat4_identity(m);
-	m->data[0] = cos(a);
-	m->data[1] = -sin(a);
-	m->data[4] = sin(a);
-	m->data[5] = cos(a);
+	m->data[index_to_1d(0, 0)] = cos(a);
+	m->data[index_to_1d(1, 0)] = -sin(a);
+	m->data[index_to_1d(0, 1)] = sin(a);
+	m->data[index_to_1d(1, 1)] = cos(a);
 }
 
 void mat4_rotate(mat4* m, const vec3 v) {
@@ -83,10 +110,9 @@ void mat4_rotate(mat4* m, const vec3 v) {
 	mat4_rotate_y(&ry, v.y);
 	mat4_rotate_z(&rz, v.z);
 
-	mat4_mul(m, rx);
-	mat4_mul(m, ry);
 	mat4_mul(m, rz);
-}
+	mat4_mul(m, ry);
+	mat4_mul(m, rx);}
 
 void mat4_projection(mat4* m, float fov, float width, float height, float near_clip, float far_clip) {
 	float aspect = width / height;

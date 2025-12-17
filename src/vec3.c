@@ -26,3 +26,7 @@ vec3 vec3_normilized(const vec3 v) {
 float vec3_dot(const vec3 v1, const vec3 v2) {
 	return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
 }
+
+vec3 vec3_inverse(const vec3 v) {
+	return (vec3){-v.x, -v.y, -v.z};
+}

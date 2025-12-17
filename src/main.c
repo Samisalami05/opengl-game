@@ -5,6 +5,7 @@
 #include "mesh.h"
 #include "shader.h"
 #include "vec3.h"
+#include "camera.h"
 
 static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
@@ -47,38 +48,38 @@ int main(void) {
 	shader_use(shader);
 	mesh_use(mesh);
 
+	camera cam;
+	camera_init(&cam, 800, 800);
+	cam.pos.z = 2;
+
 	float i = 0;
 
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT);
 
+		i += 0.01;
+
 		mat4 model;
 		mat4_identity(&model);
 		mat4_translate(&model, (const vec3){0, 0, 0});
+		mat4_rotate(&model, (const vec3){0, 0, 0});
 
-		mat4 view;
-		mat4_identity(&view);
-		mat4_rotate(&view, (const vec3){0, i, 0});
-		mat4_translate(&view, (const vec3){0, 0, -2});
-		//camera_get_view(main_camera, view);
-
-		mat4 projection;
-		mat4_identity(&projection);
-		mat4_projection(&projection, 60, 800, 800, 0.1, 200);
-		//camera_get_projection(main_camera, projection);
+		cam.rot.y = i / 2;
+		mat4 view = camera_view(&cam);
+		mat4 projection = camera_proj(&cam);
 
 		shader_set_mat4(shader, "model", model);
 		shader_set_mat4(shader, "view", view);
 		shader_set_mat4(shader, "projection", projection);
 
-		i += 0.0001;
 
 		glDrawElements(GL_TRIANGLES, mesh->index_count, GL_UNSIGNED_INT, 0);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
 	mesh_delete(mesh);
 	shader_deinit(shader);
 
