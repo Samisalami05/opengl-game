@@ -8,6 +8,7 @@ typedef struct mat4 {
 } mat4;
 
 void mat4_identity(mat4* m);
+mat4 mat4_lookat(vec3 eye, vec3 target);
 
 void mat4_mul_vec3(const mat4 m, vec3* v);
 

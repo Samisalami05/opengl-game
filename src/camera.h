@@ -22,4 +22,8 @@ mat4 camera_view(camera* cam);
 
 mat4 camera_proj(camera* cam);
 
+vec3 camera_forward(const camera cam);
+vec3 camera_right(const camera cam);
+vec3 camera_up(const camera cam);
+
 #endif

@@ -1,4 +1,5 @@
 #include "mat4.h"
+#include "vec3.h"
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -13,6 +14,42 @@ void mat4_identity(mat4* m) {
 		int index = index_to_1d(i, i);
 		m->data[index] = 1;
 	}
+}
+
+mat4 mat4_lookat(vec3 eye, vec3 target) {
+	mat4 m;
+	mat4_identity(&m);
+
+	vec3_sub_v3(&eye, target);
+	vec3 forward = vec3_normilized(eye);
+	vec3 right = vec3_cross(forward, (vec3){0.0f, 1.0f, 0.0f});
+	vec3 up = vec3_cross(right, forward);
+	
+	// Column 0
+    m.data[index_to_1d(0,0)] = right.x;
+    m.data[index_to_1d(0,1)] = right.y;
+    m.data[index_to_1d(0,2)] = right.z;
+    m.data[index_to_1d(0,3)] = 0.0f;
+
+    // Column 1
+    m.data[index_to_1d(1,0)] = up.x;
+    m.data[index_to_1d(1,1)] = up.y;
+    m.data[index_to_1d(1,2)] = up.z;
+    m.data[index_to_1d(1,3)] = 0.0f;
+
+    // Column 2
+    m.data[index_to_1d(2,0)] = -forward.x;
+    m.data[index_to_1d(2,1)] = -forward.y;
+    m.data[index_to_1d(2,2)] = -forward.z;
+    m.data[index_to_1d(2,3)] = 0.0f;
+
+    // Column 3 (translation)
+    m.data[index_to_1d(3,0)] = -vec3_dot(right, eye);
+    m.data[index_to_1d(3,1)] = -vec3_dot(up, eye);
+    m.data[index_to_1d(3,2)] = vec3_dot(forward, eye);
+    m.data[index_to_1d(3,3)] = 1.0f;
+
+	return m;
 }
 
 void mat4_mul(mat4* m1, const mat4 m2) {
@@ -106,9 +143,9 @@ void mat4_rotate_z(mat4* m, const float a) {
 
 void mat4_rotate(mat4* m, const vec3 v) {
 	mat4 rx, ry, rz;
-	mat4_rotate_x(&rx, v.x);
+	mat4_rotate_z(&rz, v.z); // Maybe like this
 	mat4_rotate_y(&ry, v.y);
-	mat4_rotate_z(&rz, v.z);
+	mat4_rotate_x(&rx, v.x);
 
 	mat4_mul(m, rz);
 	mat4_mul(m, ry);
