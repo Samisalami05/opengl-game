@@ -50,6 +50,73 @@ mesh* mesh_create(vertex* vertices, int vertex_count, unsigned int* indices, int
 	return m;
 }
 
+mesh* mesh_load_obj(char* filepath) {
+	FILE* f = fopen(filepath, "rb");
+	if (f == NULL) {
+		perror("Could not open obj file");
+		return NULL;
+	}
+	
+	vec3* positions = NULL, *normals = NULL;
+	vec2* texcoords = NULL;
+
+	int p_count = 0, n_count = 0, t_count = 0;
+	
+	char c;
+	while ((c = fgetc(f)) != EOF) {
+		if (c == 'v') { // Is vertex type
+			char c2 = fgetc(f);
+
+			if (c2 == ' ') { // Is vertex pos
+				positions = realloc(positions, sizeof(vec3) * (p_count + 1));
+				vec3* vpos = &positions[p_count];
+				p_count++;
+				if (fscanf(f, "%f %f %f", &vpos->x, &vpos->y, &vpos->z) != 3) {
+					fprintf(stderr, "Invalid vertex position format in %s\n", filepath);
+					return NULL;
+				}
+			}
+			else if (c2 == 'n') { // Is vertex normal
+				normals = realloc(normals, sizeof(vec3) * (n_count + 1));
+				vec3* vnorm = &normals[n_count];
+				n_count++;
+				if (fscanf(f, " %f %f %f", &vnorm->x, &vnorm->y, &vnorm->z) != 3) {
+					fprintf(stderr, "Invalid vertex normal format in %s\n", filepath);
+					return NULL;
+				}
+			}
+			else if (c2 == 't') { // Is texture coordinate
+				texcoords = realloc(texcoords, sizeof(vec2) * (t_count + 1));
+				vec2* tc = &texcoords[t_count];
+				t_count++;
+				if (fscanf(f, " %f %f", &tc->x, &tc->y) != 2) {
+					fprintf(stderr, "Invalid vertex normal format in %s\n", filepath);
+					return NULL;
+				}
+
+			}
+		}
+		else if (c == 'f') { // Is face
+			for (int i = 0; i < 3; i++) {
+				int p_id, t_id, n_id;
+				if (fscanf(f, "%d/%d/%d", &p_id, &t_id, &n_id) != 3) break;
+				if (p_id > p_count || n_id > n_count || t_id > t_count) {
+					fprintf(stderr, "Not a valid face format in %s\n", filepath);
+					return NULL;
+				}
+				vertex v = {
+					.pos = positions[p_id - 1],
+					.normal = normals[n_id - 1],
+					.uv = texcoords[t_id - 1],
+				};
+				vertex_print(v);
+			}
+		}
+	}
+
+	return NULL;
+}
+
 void mesh_delete(mesh *m) {
 	free(m);
 }
@@ -75,4 +142,14 @@ void vertex_set_normal(vertex* v, float x, float y, float z) {
 	v->normal.x = x;
 	v->normal.y = y;
 	v->normal.z = z;
+}
+
+void vertex_print(const vertex v) {
+	printf("VERTEX\n");
+	printf("pos:    ");
+	vec3_print(v.pos);
+	printf("norm:   ");
+	vec3_print(v.normal);
+	printf("uv:     ");
+	vec2_print(v.uv);
 }

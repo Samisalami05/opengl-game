@@ -18,6 +18,9 @@ typedef struct gameinfo {
 } gameinfo;
 
 int main(void) {
+	mesh_load_obj("assets/cube.obj");
+	return 0;
+
     if (!glfwInit()) {
 		fprintf(stderr, "Failed to initialize glfw\n");
         return 1;

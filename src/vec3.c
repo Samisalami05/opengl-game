@@ -89,5 +89,5 @@ void vec3_div_f(vec3* v1, const float v2) {
 }
 
 void vec3_print(const vec3 v) {
-	printf("v: %f, %f, %f\n", v.x, v.y, v.z);
+	printf("%f, %f, %f\n", v.x, v.y, v.z);
 }

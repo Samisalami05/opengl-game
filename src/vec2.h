@@ -6,4 +6,6 @@ typedef struct vec2 {
 	float y;
 } vec2;
 
+void vec2_print(const vec2 v);
+
 #endif
