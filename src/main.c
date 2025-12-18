@@ -7,6 +7,8 @@
 #include "vec3.h"
 #include "camera.h"
 
+#ifndef TESTING	
+
 void error_callback(int error, const char* description);
 static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 static void process_input(GLFWwindow* window, float deltatime);
@@ -188,3 +190,5 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 	cam->rot.y += xoffset;
 	cam->rot.x += yoffset;
 }
+
+#endif
