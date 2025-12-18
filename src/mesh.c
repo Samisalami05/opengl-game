@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <glad/glad.h>
+#include "arraylist.h"
 
 /* ------------------ Internal Declarations ------------------- */
 
@@ -56,12 +57,12 @@ mesh* mesh_load_obj(char* filepath) {
 		perror("Could not open obj file");
 		return NULL;
 	}
+
+	arraylist positions, normals, texcoords;
+	arraylist_init(&positions, sizeof(vec3));
+	arraylist_init(&normals, sizeof(vec3));
+	arraylist_init(&texcoords, sizeof(vec2));
 	
-	vec3* positions = NULL, *normals = NULL;
-	vec2* texcoords = NULL;
-
-	int p_count = 0, n_count = 0, t_count = 0;
-
 	unsigned int* indices = NULL;
 	int index_count = 0;
 	
@@ -71,46 +72,42 @@ mesh* mesh_load_obj(char* filepath) {
 			char c2 = fgetc(f);
 
 			if (c2 == ' ') { // Is vertex pos
-				positions = realloc(positions, sizeof(vec3) * (p_count + 1));
-				vec3* vpos = &positions[p_count];
-				p_count++;
-				if (fscanf(f, "%f %f %f", &vpos->x, &vpos->y, &vpos->z) != 3) {
+				vec3 vpos;
+				if (fscanf(f, "%f %f %f", &vpos.x, &vpos.y, &vpos.z) != 3) {
 					fprintf(stderr, "Invalid vertex position format in %s\n", filepath);
 					return NULL;
 				}
+				arraylist_append(&positions, &vpos);
 			}
 			else if (c2 == 'n') { // Is vertex normal
-				normals = realloc(normals, sizeof(vec3) * (n_count + 1));
-				vec3* vnorm = &normals[n_count];
-				n_count++;
-				if (fscanf(f, " %f %f %f", &vnorm->x, &vnorm->y, &vnorm->z) != 3) {
+				vec3 vnorm;
+				if (fscanf(f, " %f %f %f", &vnorm.x, &vnorm.y, &vnorm.z) != 3) {
 					fprintf(stderr, "Invalid vertex normal format in %s\n", filepath);
 					return NULL;
 				}
+				arraylist_append(&normals, &vnorm);
 			}
 			else if (c2 == 't') { // Is texture coordinate
-				texcoords = realloc(texcoords, sizeof(vec2) * (t_count + 1));
-				vec2* tc = &texcoords[t_count];
-				t_count++;
-				if (fscanf(f, " %f %f", &tc->x, &tc->y) != 2) {
+				vec2 tc;
+				if (fscanf(f, " %f %f", &tc.x, &tc.y) != 2) {
 					fprintf(stderr, "Invalid vertex normal format in %s\n", filepath);
 					return NULL;
 				}
-
+				arraylist_append(&texcoords, &tc);
 			}
 		}
 		else if (c == 'f') { // Is face
 			for (int i = 0; i < 3; i++) {
 				int p_id, t_id, n_id;
 				if (fscanf(f, "%d/%d/%d", &p_id, &t_id, &n_id) != 3) break;
-				if (p_id > p_count || n_id > n_count || t_id > t_count) {
+				if (p_id > positions.count || n_id > normals.count || t_id > texcoords.count) {
 					fprintf(stderr, "Not a valid face format in %s\n", filepath);
 					return NULL;
 				}
 				vertex v = {
-					.pos = positions[p_id - 1],
-					.normal = normals[n_id - 1],
-					.uv = texcoords[t_id - 1],
+					.pos = ((vec3*)positions.data)[p_id - 1],
+					.normal = ((vec3*)normals.data)[n_id - 1],
+					.uv = ((vec2*)texcoords.data)[t_id - 1],
 				};
 				//vertex_print(v);
 
@@ -121,19 +118,19 @@ mesh* mesh_load_obj(char* filepath) {
 		}
 	}
 
-	vertex* vertices = malloc(sizeof(vertex) * p_count);
-	for (int i = 0; i < p_count; i++) {
+	vertex* vertices = malloc(sizeof(vertex) * positions.count);
+	for (int i = 0; i < positions.count; i++) {
 		vertices[i] = (vertex){
-			.pos = positions[i],
+			.pos = ((vec3*)positions.data)[i],
 			.normal = (vec3){0, 0, 0},
 			.uv = (vec2){0, 0},
 		};
 		vertex_print(vertices[i]);
 	}
 	
-	printf("Index count: %d\nVertex count: %d\n", index_count, p_count);
+	printf("Index count: %d\nVertex count: %d\n", index_count, positions.count);
 
-	return mesh_create(vertices, p_count, indices, index_count);
+	return mesh_create(vertices, positions.count, indices, index_count);
 }
 
 void mesh_delete(mesh *m) {
