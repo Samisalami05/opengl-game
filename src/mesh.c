@@ -16,7 +16,7 @@ static void mesh_init(mesh* m) {
 
 	glGenBuffers(1, &m->vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * m->vertex_count, m->vertices, GL_STATIC_DRAW); // Todo: Option to change draw mode
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * m->vertex_count, m->vertices, GL_STATIC_DRAW); // TODO: Option to change draw mode
 	
 	glGenBuffers(1, &m->ebo);
 
@@ -61,6 +61,9 @@ mesh* mesh_load_obj(char* filepath) {
 	vec2* texcoords = NULL;
 
 	int p_count = 0, n_count = 0, t_count = 0;
+
+	unsigned int* indices = NULL;
+	int index_count = 0;
 	
 	char c;
 	while ((c = fgetc(f)) != EOF) {
@@ -109,12 +112,28 @@ mesh* mesh_load_obj(char* filepath) {
 					.normal = normals[n_id - 1],
 					.uv = texcoords[t_id - 1],
 				};
-				vertex_print(v);
+				//vertex_print(v);
+
+				indices = realloc(indices, sizeof(unsigned int) * (index_count + 1));
+				indices[index_count] = p_id - 1;
+				index_count++;
 			}
 		}
 	}
 
-	return NULL;
+	vertex* vertices = malloc(sizeof(vertex) * p_count);
+	for (int i = 0; i < p_count; i++) {
+		vertices[i] = (vertex){
+			.pos = positions[i],
+			.normal = (vec3){0, 0, 0},
+			.uv = (vec2){0, 0},
+		};
+		vertex_print(vertices[i]);
+	}
+	
+	printf("Index count: %d\nVertex count: %d\n", index_count, p_count);
+
+	return mesh_create(vertices, p_count, indices, index_count);
 }
 
 void mesh_delete(mesh *m) {

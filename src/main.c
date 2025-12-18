@@ -18,9 +18,6 @@ typedef struct gameinfo {
 } gameinfo;
 
 int main(void) {
-	mesh_load_obj("assets/cube.obj");
-	return 0;
-
     if (!glfwInit()) {
 		fprintf(stderr, "Failed to initialize glfw\n");
         return 1;
@@ -52,13 +49,15 @@ int main(void) {
 		0, 1, 2
 	};
 
-	mesh* mesh = mesh_create(vertices, 3, indices, 3);
+	mesh* triangle = mesh_create(vertices, 3, indices, 3);
+	mesh* cube = mesh_load_obj("assets/cube.obj");
 
 	shader shader; 
 	shader_init(&shader, "shaders/basic.vert", "shaders/basic.frag");
 
 	shader_use(shader);
-	mesh_use(mesh);
+	mesh_use(triangle);
+	mesh_use(cube);
 
 	gameinfo info;
 	camera_init(&info.cam, 800, 800);
@@ -91,13 +90,18 @@ int main(void) {
 		shader_set_mat4(shader, "view", view);
 		shader_set_mat4(shader, "projection", projection);
 
-		glDrawElements(GL_TRIANGLES, mesh->index_count, GL_UNSIGNED_INT, 0);
+
+		glDrawElements(GL_TRIANGLES, triangle->index_count, GL_UNSIGNED_INT, 0);
+
+		glDrawElements(GL_TRIANGLES, cube->index_count, GL_UNSIGNED_INT, 0);
+
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-	mesh_delete(mesh);
+	mesh_delete(triangle);
+	mesh_delete(cube);
 	shader_deinit(shader);
 
     glfwTerminate();
@@ -110,7 +114,10 @@ void error_callback(int error, const char* description) {
 
 static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
+	gameinfo* info = (gameinfo*)glfwGetWindowUserPointer(window);
     glViewport(0, 0, width, height);
+	info->cam.width = width;
+	info->cam.height = height;
 }
 
 static void process_input(GLFWwindow* window, float deltatime) {
@@ -131,7 +138,6 @@ static void process_input(GLFWwindow* window, float deltatime) {
 	}
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
 		vec3 move = camera_forward(*cam);
-		vec3_print(move);
 		vec3_mul_f(&move, deltatime * camera_speed);
 		vec3_add_v3(&cam->pos, move);
 		//vec3_sub_v3(&cam->pos, move);
