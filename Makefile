@@ -34,11 +34,11 @@ $(BUILDDIR)/$(TESTDIR)/%.o: $(TESTDIR)/%.c
 run: $(NAME)
 	./$(NAME)
 
-comptests: $(TEST_OBJS) $(TEST_APP_OBJS)
-	$(CC) $^ -o test $(LDLIBS)
+runtests: $(TEST_OBJS) $(TEST_APP_OBJS)
+	$(CC) $^ -o runtests $(LDLIBS)
 
-test: comptests
-	./test
+test: runtests
+	./runtests
 	
 
 .PHONY: clean

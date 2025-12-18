@@ -1,13 +1,14 @@
-#include "test_arraylist.h"
+#include "arraylist/test_arraylist.h"
 #include <stdio.h>
 #include "testing.h"
 
 int main(void) {
-	uint8_t passed = 1;
-	printf("--- STARTED TESTING ---\n");
+	printf("\n===== STARTED TESTING =====\n");
+	test_init(&g_test_env);
 	EXECUTE_TEST(test_arraylist);
-	if (passed) 
-		printf("--- TESTS PASSED ---\n");
+	if (g_test_env.failed == 0) 
+		printf("\n%s===== TESTS PASSED =====%s\n", COL_GREEN, COL_ENDC);
 	else 
-		printf("--- TESTS FAILED ---\n");
+		printf("\n%s===== TESTS FAILED =====%s\n", COL_FAIL, COL_ENDC);
+	printf("time: %ld ms , passed %d/%d\n\n", test_time(g_test_env), g_test_env.total - g_test_env.failed, g_test_env.total);
 }
