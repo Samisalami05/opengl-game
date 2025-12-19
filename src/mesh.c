@@ -1,9 +1,12 @@
 #include "mesh.h"
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <glad/glad.h>
 #include "arraylist.h"
+#include "hashmap.h"
+#include "ivec3.h"
 
 /* ------------------ Internal Declarations ------------------- */
 
@@ -51,6 +54,13 @@ mesh* mesh_create(vertex* vertices, int vertex_count, unsigned int* indices, int
 	return m;
 }
 
+uint64_t vertex_hash(void* v) {
+	vertex* vertex = v;
+	return (*(uint64_t*)&vertex->pos << 42) | 
+		(*(uint64_t*)&vertex->uv << 21) |
+		*(uint64_t*)&vertex->normal;
+}
+
 mesh* mesh_load_obj(char* filepath) {
 	FILE* f = fopen(filepath, "rb");
 	if (f == NULL) {
@@ -58,14 +68,18 @@ mesh* mesh_load_obj(char* filepath) {
 		return NULL;
 	}
 
+	hashmap vertex_map;
+	hashmap_init(&vertex_map, sizeof(unsigned int), vertex_hash);
+
 	arraylist positions, normals, texcoords;
 	arraylist_init(&positions, sizeof(vec3));
 	arraylist_init(&normals, sizeof(vec3));
 	arraylist_init(&texcoords, sizeof(vec2));
 	
-	unsigned int* indices = NULL;
-	int index_count = 0;
-	
+	arraylist indices, vertices;
+	arraylist_init(&indices, sizeof(unsigned int));
+	arraylist_init(&indices, sizeof(vertex));
+
 	char c;
 	while ((c = fgetc(f)) != EOF) {
 		if (c == 'v') { // Is vertex type
@@ -98,39 +112,33 @@ mesh* mesh_load_obj(char* filepath) {
 		}
 		else if (c == 'f') { // Is face
 			for (int i = 0; i < 3; i++) {
-				int p_id, t_id, n_id;
-				if (fscanf(f, "%d/%d/%d", &p_id, &t_id, &n_id) != 3) break;
-				if (p_id > positions.count || n_id > normals.count || t_id > texcoords.count) {
+				ivec3 f_id;
+				if (fscanf(f, "%d/%d/%d", &f_id.x, &f_id.y, &f_id.z) != 3) break;
+				if (f_id.x > positions.count || f_id.z > normals.count || f_id.y > texcoords.count) {
 					fprintf(stderr, "Not a valid face format in %s\n", filepath);
 					return NULL;
 				}
-				vertex v = {
-					.pos = ((vec3*)positions.data)[p_id - 1],
-					.normal = ((vec3*)normals.data)[n_id - 1],
-					.uv = ((vec2*)texcoords.data)[t_id - 1],
-				};
-				//vertex_print(v);
 
-				indices = realloc(indices, sizeof(unsigned int) * (index_count + 1));
-				indices[index_count] = p_id - 1;
-				index_count++;
+				if (hashmap_get(&vertex_map, &f_id) == NULL) {
+					vertex v = {
+						.pos = ((vec3*)positions.data)[f_id.x - 1],
+						.normal = ((vec3*)normals.data)[f_id.z - 1],
+						.uv = ((vec2*)texcoords.data)[f_id.y - 1],
+					};
+
+					unsigned int index = vertices.count;
+					arraylist_append(&vertices, &v);
+					hashmap_put(&vertex_map, &index);
+				}
+
+				arraylist_append(&indices, hashmap_get(&vertex_map, &f_id));
 			}
 		}
 	}
-
-	vertex* vertices = malloc(sizeof(vertex) * positions.count);
-	for (int i = 0; i < positions.count; i++) {
-		vertices[i] = (vertex){
-			.pos = ((vec3*)positions.data)[i],
-			.normal = (vec3){0, 0, 0},
-			.uv = (vec2){0, 0},
-		};
-		vertex_print(vertices[i]);
-	}
 	
-	printf("Index count: %d\nVertex count: %d\n", index_count, positions.count);
+	printf("Index count: %d\nVertex count: %d\n", indices.count, positions.count);
 
-	return mesh_create(vertices, positions.count, indices, index_count);
+	return mesh_create((vertex*)vertices.data, positions.count, (unsigned int*)indices.data, indices.count);
 }
 
 void mesh_delete(mesh *m) {

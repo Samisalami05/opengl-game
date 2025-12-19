@@ -94,7 +94,6 @@ int main(void) {
 
 
 		glDrawElements(GL_TRIANGLES, triangle->index_count, GL_UNSIGNED_INT, 0);
-
 		glDrawElements(GL_TRIANGLES, cube->index_count, GL_UNSIGNED_INT, 0);
 
 
