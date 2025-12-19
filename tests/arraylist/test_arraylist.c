@@ -6,7 +6,9 @@
 #define INIT_ARRAYLIST(stride) arraylist a; arraylist_init(&a, stride);
 
 uint8_t test_arraylist_init();
+uint8_t test_arraylist_deinit();
 uint8_t test_arraylist_append();
+uint8_t test_arraylist_append_ext();
 
 uint8_t test_arraylist_init() {
 	INIT_ARRAYLIST(sizeof(int));
@@ -15,6 +17,16 @@ uint8_t test_arraylist_init() {
 	ASSERT(a.count == 0);
 	ASSERT(a.data == NULL);
 	ASSERT(a.stride == sizeof(int));
+
+	arraylist_deinit(&a);
+	return 1;
+}
+
+uint8_t test_arraylist_deinit() {
+	INIT_ARRAYLIST(sizeof(int));
+	arraylist_deinit(&a);
+
+	ASSERT(a.data == NULL);
 
 	return 1;
 }
@@ -27,6 +39,8 @@ uint8_t test_arraylist_append() {
 
 	int j = a.data[0];
 	ASSERT(i == j);
+
+	arraylist_deinit(&a);
 	return 1;
 }
 
@@ -44,6 +58,8 @@ uint8_t test_arraylist_append_ext() {
 	for (int i = 0; i < count; i++) {
 		ASSERT(*(long*)a.data + i == i);
 	}
+
+	arraylist_deinit(&a);
 	return 1;
 }
 
@@ -51,6 +67,7 @@ uint8_t test_arraylist() {
 	INIT_TEST();
 
 	EXECUTE_SUBTEST(test_arraylist_init);
+	EXECUTE_SUBTEST(test_arraylist_deinit);
 	EXECUTE_SUBTEST(test_arraylist_append);
 	EXECUTE_SUBTEST(test_arraylist_append_ext);
 

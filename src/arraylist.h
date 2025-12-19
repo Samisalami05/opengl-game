@@ -12,7 +12,7 @@ typedef struct arraylist {
 } arraylist;
 
 void arraylist_init(arraylist* a, size_t stride);
-
 void arraylist_append(arraylist* a, void* data);
+void arraylist_deinit(arraylist* a);
 
 #endif

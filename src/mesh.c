@@ -54,11 +54,11 @@ mesh* mesh_create(vertex* vertices, int vertex_count, unsigned int* indices, int
 	return m;
 }
 
-uint64_t vertex_hash(void* v) {
-	vertex* vertex = v;
-	return (*(uint64_t*)&vertex->pos << 42) | 
-		(*(uint64_t*)&vertex->uv << 21) |
-		*(uint64_t*)&vertex->normal;
+uint64_t face_hash(void* v) {
+	ivec3* face = v;
+	return ((uint64_t)face->x << 42) | 
+		((uint64_t)face->y << 21) |
+		(uint64_t)face->z;
 }
 
 mesh* mesh_load_obj(char* filepath) {
@@ -69,7 +69,7 @@ mesh* mesh_load_obj(char* filepath) {
 	}
 
 	hashmap vertex_map;
-	hashmap_init(&vertex_map, sizeof(unsigned int), vertex_hash);
+	hashmap_init(&vertex_map, sizeof(unsigned int), sizeof(ivec3), face_hash);
 
 	arraylist positions, normals, texcoords;
 	arraylist_init(&positions, sizeof(vec3));
@@ -128,7 +128,7 @@ mesh* mesh_load_obj(char* filepath) {
 
 					unsigned int index = vertices.count;
 					arraylist_append(&vertices, &v);
-					hashmap_put(&vertex_map, &index);
+					hashmap_put(&vertex_map, &f_id, &index);
 				}
 
 				arraylist_append(&indices, hashmap_get(&vertex_map, &f_id));

@@ -29,4 +29,8 @@ void arraylist_append(arraylist* a, void* data) {
 	a->count++;
 }
 
-
+void arraylist_deinit(arraylist* a) {
+	if (a->data != NULL)
+		free(a->data);
+	a->data = NULL;
+}
