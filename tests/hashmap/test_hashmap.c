@@ -7,6 +7,10 @@
 
 #define INIT_HASHMAP(v_size, k_size, hash) hashmap m; hashmap_init(&m, v_size, k_size, hash);
 
+static void print_func(void* v) {
+	printf("%-3d ", *(int*)v);
+}
+
 uint64_t test_hash(void* v) {
 	if (v == NULL) return 0;
 	int* i = (int*)v;
@@ -110,6 +114,8 @@ uint8_t test_hashmap_put_resize() {
 	int* values = hashmap_values(&m);
 	int* keys = hashmap_keys(&m);
 
+	printf("SIZE: %ld\n", m.count);
+
 	for (int i = 0; i < m.count; i++) {
 		int v = values[i];
 		int k = keys[i];
@@ -120,6 +126,8 @@ uint8_t test_hashmap_put_resize() {
 
 	free(values);
 	free(keys);
+
+	hashmap_print(&m, print_func, print_func);
 
 	hashmap_deinit(&m);
 	return 1;
@@ -132,7 +140,7 @@ uint8_t test_hashmap() {
 	EXECUTE_SUBTEST(test_hashmap_deinit);
 	EXECUTE_SUBTEST(test_hashmap_put);
 	EXECUTE_SUBTEST(test_hashmap_put_ext);
-	//EXECUTE_SUBTEST(test_hashmap_put_probe);
+	EXECUTE_SUBTEST(test_hashmap_put_probe);
 	EXECUTE_SUBTEST(test_hashmap_put_resize)
 
 	EXIT_TEST();

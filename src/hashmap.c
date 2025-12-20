@@ -30,6 +30,13 @@ static uint8_t expand(hashmap* m) {
 	size_t prev_count = m->b_count;
 	m->b_count = m->b_count <= 0 ? 4 : m->b_count * 2;
 	m->buckets = calloc(m->b_count, sizeof(bucket));
+	if (m->buckets == NULL) {
+		perror("hashmap: calloc");
+		m->b_count /= 2;
+		return 1;
+	}
+
+	m->count = 0; // Reset count
 
 	for (int i = 0; i < prev_count; i++) {
 		void* v = old[i].value;
@@ -42,7 +49,7 @@ static uint8_t expand(hashmap* m) {
 	free(old);
 
 	printf("resizeing from %ld to %ld\n", prev_count, m->b_count);
-	printf("resize complete\n");
+	//printf("resize complete\n");
 	
 	return 0;
 }
@@ -73,38 +80,37 @@ void hashmap_deinit(hashmap* m) {
 }
 
 void hashmap_put(hashmap* m, void* k, void* v) {
+	printf("inserting %d\n", *(int*)v);
 	void* value = calloc(1, m->v_size);
 	memcpy(value, v, m->v_size);
 	void* key = calloc(1, m->k_size);
 	memcpy(key, k, m->k_size);
 
 	uint64_t p =  m->hash(key) % m->b_count;
-	printf("p: %ld\n", p);
 	int vpsl = 0;  // probe sequence length
 	while (m->buckets[p].key != NULL && m->buckets[p].value != NULL) {
-		bucket* bucket = &m->buckets[p];
-
+		printf("vpsl: %d, p: %ld\n", vpsl, p);
 		if (vpsl >= m->b_count) {
-			printf("Need to resize\n");
-			//p = m->b_count;
 			if (expand(m)) {
 				free(value);
 				free(key);
 				return;
 			}
 			p = m->hash(key) % m->b_count;
+			printf("new p: %ld\n", p);
 			vpsl = 0;
 			continue;
 		}
 
+		bucket* bucket = &m->buckets[p];
+
 		// Collision
 		if (memcmp(bucket->key, key, m->k_size) == 0) {
-			//printf("Found bucket with the same key: bk = %d, k = %d\n", *(int*)bucket->key, *(int*)key);
 			break;
 		}
 
 		if (vpsl > bucket->probe) {
-			//printf("swapping\n");
+			printf("swapping %d %d\n", *(int*)bucket->value, *(int*)value);
 			swap(bucket->value, value, m->v_size);
 			swap(bucket->key, key, m->k_size);
 			int tmp_probe = bucket->probe;
@@ -116,7 +122,8 @@ void hashmap_put(hashmap* m, void* k, void* v) {
 		vpsl++;
 	}
 
-	printf("Found unoccupied bucket at %ld\n", p);
+	printf("Found unoccupied slot %ld\n", p);
+
 	bucket_set_v(&m->buckets[p], m->v_size, value);
 	bucket_set_k(&m->buckets[p], m->k_size, key);
 	m->buckets[p].probe = vpsl;
@@ -127,7 +134,6 @@ void hashmap_put(hashmap* m, void* k, void* v) {
 }
 
 void* hashmap_get(hashmap* m, void* k) {
-	printf("getting\n");
 	int p = m->hash(k);
 	return m->buckets[p].value;
 }
@@ -158,4 +164,30 @@ void* hashmap_keys(hashmap* m) {
 			break;
 	}
 	return keys;
+}
+
+void hashmap_print(hashmap* m, void(*v_print)(void*), void(*k_print)(void*)) {
+	printf("values: ");
+	for (int i = 0; i < m->b_count; i++) {
+		if (m->buckets[i].key != NULL && m->buckets[i].value != NULL) {
+			v_print(m->buckets[i].value);
+		}
+	}
+	printf("\n");
+
+	printf("keys:   ");
+	for (int i = 0; i < m->b_count; i++) {
+		if (m->buckets[i].key != NULL) {
+			k_print(m->buckets[i].key);
+		}
+	}
+	printf("\n");
+
+	printf("probes: ");
+	for (int i = 0; i < m->b_count; i++) {
+		if (m->buckets[i].key != NULL && m->buckets[i].value != NULL) {
+			printf("%-3d ", m->buckets[i].probe);
+		}
+	}
+	printf("\n");
 }
