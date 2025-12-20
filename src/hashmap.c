@@ -73,14 +73,15 @@ void hashmap_deinit(hashmap* m) {
 }
 
 void hashmap_put(hashmap* m, void* k, void* v) {
-	void* value = malloc(m->v_size);
+	void* value = calloc(1, m->v_size);
 	memcpy(value, v, m->v_size);
-	void* key = malloc(m->k_size);
+	void* key = calloc(1, m->k_size);
 	memcpy(key, k, m->k_size);
 
-	uint64_t p = m->hash(key) % m->b_count;
+	uint64_t p =  m->hash(key) % m->b_count;
+	printf("p: %ld\n", p);
 	int vpsl = 0;  // probe sequence length
-	while (m->buckets[p].key != NULL) {
+	while (m->buckets[p].key != NULL && m->buckets[p].value != NULL) {
 		bucket* bucket = &m->buckets[p];
 
 		if (vpsl >= m->b_count) {
@@ -99,10 +100,10 @@ void hashmap_put(hashmap* m, void* k, void* v) {
 		// Collision
 		if (memcmp(bucket->key, key, m->k_size) == 0) {
 			//printf("Found bucket with the same key: bk = %d, k = %d\n", *(int*)bucket->key, *(int*)key);
-			break;	
+			break;
 		}
 
-		if (vpsl > bucket->probe && 0) {
+		if (vpsl > bucket->probe) {
 			//printf("swapping\n");
 			swap(bucket->value, value, m->v_size);
 			swap(bucket->key, key, m->k_size);
@@ -115,11 +116,10 @@ void hashmap_put(hashmap* m, void* k, void* v) {
 		vpsl++;
 	}
 
-	//printf("Found unoccupied bucket at %ld\n", p);
+	printf("Found unoccupied bucket at %ld\n", p);
 	bucket_set_v(&m->buckets[p], m->v_size, value);
 	bucket_set_k(&m->buckets[p], m->k_size, key);
 	m->buckets[p].probe = vpsl;
-	m->buckets[p].occupied = 1;
 	m->count++;
 
 	free(value);
@@ -127,6 +127,7 @@ void hashmap_put(hashmap* m, void* k, void* v) {
 }
 
 void* hashmap_get(hashmap* m, void* k) {
+	printf("getting\n");
 	int p = m->hash(k);
 	return m->buckets[p].value;
 }
@@ -135,7 +136,7 @@ void* hashmap_values(hashmap* m) {
 	void* values = malloc(m->count * m->v_size);
 	int index = 0;
 	for (int i = 0; i < m->b_count; i++) {
-		if (m->buckets[i].occupied) {
+		if (m->buckets[i].key != NULL && m->buckets[i].value != NULL) {
 			memcpy(values + (index * m->v_size), m->buckets[i].value, m->v_size);
 			index++;
 		}
@@ -149,7 +150,7 @@ void* hashmap_keys(hashmap* m) {
 	void* keys = malloc(m->count * m->k_size);
 	int index = 0;
 	for (int i = 0; i < m->b_count; i++) {
-		if (m->buckets[i].occupied) {
+		if (m->buckets[i].key != NULL && m->buckets[i].value != NULL) {
 			memcpy(keys + (index * m->k_size), m->buckets[i].key, m->k_size);
 			index++;
 		}

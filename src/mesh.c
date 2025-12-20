@@ -80,8 +80,11 @@ mesh* mesh_load_obj(char* filepath) {
 	arraylist_init(&indices, sizeof(unsigned int));
 	arraylist_init(&indices, sizeof(vertex));
 
+	printf("Initiated\n");
+
 	char c;
 	while ((c = fgetc(f)) != EOF) {
+		printf("iterating %c\n", c);
 		if (c == 'v') { // Is vertex type
 			char c2 = fgetc(f);
 

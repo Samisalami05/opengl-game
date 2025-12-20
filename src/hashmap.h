@@ -9,8 +9,7 @@ typedef uint64_t (*hashfunc)(void*);
 typedef struct bucket {
 	void* value;
 	void* key;
-	uint32_t probe : 31; // probe sequence length
-	uint32_t occupied : 1;
+	uint32_t probe; // probe sequence length
 } bucket;
 
 typedef struct hashmap {

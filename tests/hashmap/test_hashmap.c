@@ -8,7 +8,8 @@
 #define INIT_HASHMAP(v_size, k_size, hash) hashmap m; hashmap_init(&m, v_size, k_size, hash);
 
 uint64_t test_hash(void* v) {
-	uint64_t* i = (uint64_t*)v;
+	if (v == NULL) return 0;
+	int* i = (int*)v;
 	return *i;
 }
 
@@ -74,8 +75,9 @@ uint8_t test_hashmap_put_probe() {
 	INIT_HASHMAP(sizeof(int), sizeof(int), probe_hash);
 
 	for (int i = 0; i < 31; i++) {
+		int v = i;
 		printf(" - INSERTING %d -\n", i);
-		hashmap_put(&m, &i, &i);
+		hashmap_put(&m, &v, &v);
 	}
 
 	int* values = hashmap_values(&m);
@@ -95,11 +97,14 @@ uint8_t test_hashmap_put_probe() {
 }
 
 uint8_t test_hashmap_put_resize() {
-	INIT_HASHMAP(sizeof(int), sizeof(int), test_hash);
+	hashmap m;
+	hashmap_init(&m, sizeof(int), sizeof(int), test_hash);
 
 	for (int i = 0; i < 17; i++) {
+		int v = i;
+		int k = i;
 		printf(" - INSERTING %d -\n", i);
-		hashmap_put(&m, &i, &i);
+		hashmap_put(&m, &v, &k);
 	}
 
 	int* values = hashmap_values(&m);
