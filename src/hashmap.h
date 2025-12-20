@@ -8,9 +8,9 @@ typedef uint64_t (*hashfunc)(void*);
 
 typedef struct bucket {
 	void* value;
+	void* key;
 	uint32_t probe : 31; // probe sequence length
 	uint32_t occupied : 1;
-	void* key;
 } bucket;
 
 typedef struct hashmap {
@@ -29,5 +29,6 @@ void hashmap_deinit(hashmap* m);
 void hashmap_put(hashmap* m, void* k, void* v);
 void* hashmap_get(hashmap* m, void* k);
 void* hashmap_values(hashmap* m);
+void* hashmap_keys(hashmap* m);
 
 #endif

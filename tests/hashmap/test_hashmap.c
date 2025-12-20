@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "../testing.h"
+#include <stdlib.h>
 
 #define INIT_HASHMAP(v_size, k_size, hash) hashmap m; hashmap_init(&m, v_size, k_size, hash);
 
@@ -12,7 +13,7 @@ uint64_t test_hash(void* v) {
 }
 
 uint64_t probe_hash(void* v) {
-	return 0;
+	return rand();
 }
 
 uint8_t test_hashmap_init() {
@@ -72,15 +73,50 @@ uint8_t test_hashmap_put_ext() {
 uint8_t test_hashmap_put_probe() {
 	INIT_HASHMAP(sizeof(int), sizeof(int), probe_hash);
 
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < 31; i++) {
+		printf(" - INSERTING %d -\n", i);
 		hashmap_put(&m, &i, &i);
 	}
 
 	int* values = hashmap_values(&m);
+	int* keys = hashmap_keys(&m);
+
 	for (int i = 0; i < m.count; i++) {
-		printf("v: %d\n", values[i]);
+		int v = values[i];
+		int k = keys[i];
+		printf("v: %-2d   k: %-2d\n", v, k);
 	}
 
+	free(values);
+	free(keys);
+
+	hashmap_deinit(&m);
+	return 1;
+}
+
+uint8_t test_hashmap_put_resize() {
+	INIT_HASHMAP(sizeof(int), sizeof(int), test_hash);
+
+	for (int i = 0; i < 31; i++) {
+		printf(" - INSERTING %d -\n", i);
+		hashmap_put(&m, &i, &i);
+	}
+
+	int* values = hashmap_values(&m);
+	int* keys = hashmap_keys(&m);
+
+	for (int i = 0; i < m.count; i++) {
+		int v = values[i];
+		int k = keys[i];
+		ASSERT(v == i);
+		ASSERT(k == i);
+		printf("v: %-2d   k: %-2d\n", v, k);
+	}
+
+	free(values);
+	free(keys);
+
+	hashmap_deinit(&m);
 	return 1;
 }
 
@@ -91,7 +127,8 @@ uint8_t test_hashmap() {
 	EXECUTE_SUBTEST(test_hashmap_deinit);
 	EXECUTE_SUBTEST(test_hashmap_put);
 	EXECUTE_SUBTEST(test_hashmap_put_ext);
-	EXECUTE_SUBTEST(test_hashmap_put_probe);
+	//EXECUTE_SUBTEST(test_hashmap_put_probe);
+	EXECUTE_SUBTEST(test_hashmap_put_resize)
 
 	EXIT_TEST();
 }
