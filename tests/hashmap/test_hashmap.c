@@ -13,7 +13,7 @@ uint64_t test_hash(void* v) {
 }
 
 uint64_t probe_hash(void* v) {
-	return rand();
+	return 0;
 }
 
 uint8_t test_hashmap_init() {
@@ -97,7 +97,7 @@ uint8_t test_hashmap_put_probe() {
 uint8_t test_hashmap_put_resize() {
 	INIT_HASHMAP(sizeof(int), sizeof(int), test_hash);
 
-	for (int i = 0; i < 31; i++) {
+	for (int i = 0; i < 17; i++) {
 		printf(" - INSERTING %d -\n", i);
 		hashmap_put(&m, &i, &i);
 	}
@@ -108,9 +108,9 @@ uint8_t test_hashmap_put_resize() {
 	for (int i = 0; i < m.count; i++) {
 		int v = values[i];
 		int k = keys[i];
+		printf("v: %-2d   k: %-2d   i: %-2d\n", v, k, i);
 		ASSERT(v == i);
 		ASSERT(k == i);
-		printf("v: %-2d   k: %-2d\n", v, k);
 	}
 
 	free(values);

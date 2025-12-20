@@ -5,7 +5,7 @@
 
 static uint8_t expand_if_necessary(arraylist* a) {
 	if (a->allocated <= a->count) {
-		a->allocated = a->allocated <= 0 ? 4 : a->allocated * a->allocated;
+		a->allocated = a->allocated <= 0 ? 4 : a->allocated * 2;
 		void* tmp = realloc(a->data, a->stride * a->allocated);
 		if (tmp == NULL) {
 			perror("arraylist: realloc");

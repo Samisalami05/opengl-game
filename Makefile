@@ -16,7 +16,7 @@ TEST_SRCS := $(shell find $(TESTDIR) -name '*.c')
 TEST_OBJS := $(patsubst %.c,$(BUILDDIR)/%.o,$(TEST_SRCS)) 
 TEST_APP_OBJS := $(filter-out $(MAIN_OBJ),$(OBJS))
 
-CFLAGS := -Wall
+CFLAGS := -Wall -ggdb
 INCLUDES := -Isrc -Ilibs/glfw-3.4/include -Ilibs/glad/include
 LDLIBS := -lm -lglfw -ldl -lGL
 
