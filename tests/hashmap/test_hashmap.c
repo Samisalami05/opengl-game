@@ -133,6 +133,29 @@ uint8_t test_hashmap_put_resize() {
 	return 1;
 }
 
+uint8_t test_hashmap_get() {
+	INIT_HASHMAP(sizeof(int), sizeof(int), test_hash);
+
+	int count = 30;
+	int keys[count];
+	int values[count];
+	for (int i = 0; i < count; i++) {
+		keys[i] = rand();
+		values[i] = rand();
+		hashmap_put(&m, &keys[i], &values[i]);
+	}
+
+	for (int i = 0; i < count; i++) {
+		int* v = hashmap_get(&m, &keys[i]);
+		ASSERT(*v == values[i]);
+	}
+
+	hashmap_print(&m, print_func, print_func);
+
+	hashmap_deinit(&m);
+	return 1;
+}
+
 uint8_t test_hashmap() {
 	INIT_TEST();
 
@@ -141,7 +164,8 @@ uint8_t test_hashmap() {
 	EXECUTE_SUBTEST(test_hashmap_put);
 	EXECUTE_SUBTEST(test_hashmap_put_ext);
 	EXECUTE_SUBTEST(test_hashmap_put_probe);
-	EXECUTE_SUBTEST(test_hashmap_put_resize)
+	EXECUTE_SUBTEST(test_hashmap_put_resize);
+	EXECUTE_SUBTEST(test_hashmap_get);
 
 	EXIT_TEST();
 }

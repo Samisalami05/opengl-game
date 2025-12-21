@@ -16,6 +16,10 @@ static void bucket_set_k(bucket* b, size_t k_size, void* k) {
 	memcpy(b->key, k, k_size);
 }
 
+static uint8_t bucket_occupied(bucket* b) {
+	return b->value != NULL && b->key != NULL;
+}
+
 static void swap(void* a, void* b, size_t size) {
 	void* tmp = malloc(size);
 	memcpy(tmp, a, size);
@@ -79,12 +83,24 @@ void hashmap_deinit(hashmap* m) {
 	m->buckets = NULL;
 }
 
+void printf_func(void* v) {
+	printf("%-3d", *(int*)v);
+}
+
 void hashmap_put(hashmap* m, void* k, void* v) {
 	printf("inserting %d\n", *(int*)v);
 	void* value = calloc(1, m->v_size);
 	memcpy(value, v, m->v_size);
 	void* key = calloc(1, m->k_size);
 	memcpy(key, k, m->k_size);
+
+	if (m->count == m->b_count) {
+		if (expand(m)) {
+			free(value);
+			free(key);
+			return;
+		}
+	}
 
 	uint64_t p =  m->hash(key) % m->b_count;
 	int vpsl = 0;  // probe sequence length
@@ -134,7 +150,23 @@ void hashmap_put(hashmap* m, void* k, void* v) {
 }
 
 void* hashmap_get(hashmap* m, void* k) {
-	int p = m->hash(k);
+	printf("getting\n");
+	uint64_t steps = 0;
+	uint64_t p = m->hash(k) % m->b_count;
+	while (1) {
+		bucket* bucket = &m->buckets[p];
+
+		if (steps >= m->b_count) {
+			return NULL;
+		}
+
+		if (memcmp(bucket->key, k, m->k_size) == 0) {
+			break;
+		}
+
+		p = (p + 1) % m->b_count;
+		steps++;
+	}
 	return m->buckets[p].value;
 }
 

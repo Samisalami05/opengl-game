@@ -134,7 +134,8 @@ mesh* mesh_load_obj(char* filepath) {
 					hashmap_put(&vertex_map, &f_id, &index);
 				}
 
-				arraylist_append(&indices, hashmap_get(&vertex_map, &f_id));
+				unsigned int* ind = hashmap_get(&vertex_map, &f_id);
+				arraylist_append(&indices, ind);
 			}
 		}
 	}
