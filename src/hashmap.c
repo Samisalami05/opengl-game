@@ -1,4 +1,5 @@
 #include "hashmap.h"
+#include "ivec3.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -52,7 +53,7 @@ static uint8_t expand(hashmap* m) {
 
 	free(old);
 
-	printf("resizeing from %ld to %ld\n", prev_count, m->b_count);
+	//printf("resizeing from %ld to %ld\n", prev_count, m->b_count);
 	//printf("resize complete\n");
 	
 	return 0;
@@ -88,7 +89,7 @@ void printf_func(void* v) {
 }
 
 void hashmap_put(hashmap* m, void* k, void* v) {
-	printf("inserting %d\n", *(int*)v);
+	//printf("inserting %d\n", *(int*)v);
 	void* value = calloc(1, m->v_size);
 	memcpy(value, v, m->v_size);
 	void* key = calloc(1, m->k_size);
@@ -105,7 +106,7 @@ void hashmap_put(hashmap* m, void* k, void* v) {
 	uint64_t p =  m->hash(key) % m->b_count;
 	int vpsl = 0;  // probe sequence length
 	while (m->buckets[p].key != NULL && m->buckets[p].value != NULL) {
-		printf("vpsl: %d, p: %ld\n", vpsl, p);
+		//printf("vpsl: %d, p: %ld\n", vpsl, p);
 		if (vpsl >= m->b_count) {
 			if (expand(m)) {
 				free(value);
@@ -113,7 +114,7 @@ void hashmap_put(hashmap* m, void* k, void* v) {
 				return;
 			}
 			p = m->hash(key) % m->b_count;
-			printf("new p: %ld\n", p);
+			//printf("new p: %ld\n", p);
 			vpsl = 0;
 			continue;
 		}
@@ -126,7 +127,7 @@ void hashmap_put(hashmap* m, void* k, void* v) {
 		}
 
 		if (vpsl > bucket->probe) {
-			printf("swapping %d %d\n", *(int*)bucket->value, *(int*)value);
+			//printf("swapping %d %d\n", *(int*)bucket->value, *(int*)value);
 			swap(bucket->value, value, m->v_size);
 			swap(bucket->key, key, m->k_size);
 			int tmp_probe = bucket->probe;
@@ -138,7 +139,7 @@ void hashmap_put(hashmap* m, void* k, void* v) {
 		vpsl++;
 	}
 
-	printf("Found unoccupied slot %ld\n", p);
+	//printf("Found unoccupied slot %ld\n", p);
 
 	bucket_set_v(&m->buckets[p], m->v_size, value);
 	bucket_set_k(&m->buckets[p], m->k_size, key);
@@ -150,7 +151,6 @@ void hashmap_put(hashmap* m, void* k, void* v) {
 }
 
 void* hashmap_get(hashmap* m, void* k) {
-	printf("getting\n");
 	uint64_t steps = 0;
 	uint64_t p = m->hash(k) % m->b_count;
 	while (1) {
@@ -160,8 +160,10 @@ void* hashmap_get(hashmap* m, void* k) {
 			return NULL;
 		}
 
-		if (memcmp(bucket->key, k, m->k_size) == 0) {
-			break;
+		if (bucket_occupied(bucket)) {
+			if (memcmp(bucket->key, k, m->k_size) == 0) {
+				break;
+			}
 		}
 
 		p = (p + 1) % m->b_count;

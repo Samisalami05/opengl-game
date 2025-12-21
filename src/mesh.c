@@ -61,6 +61,15 @@ uint64_t face_hash(void* v) {
 		(uint64_t)face->z;
 }
 
+static void index_print(void* v) {
+	printf("%-3d ", *(unsigned int*)v);
+}
+
+static void face_print(void * v) {
+	ivec3* iv = v;
+	printf("(%d, %d, %d) ", iv->x, iv->y, iv->z);
+}
+
 mesh* mesh_load_obj(char* filepath) {
 	FILE* f = fopen(filepath, "rb");
 	if (f == NULL) {
@@ -78,13 +87,10 @@ mesh* mesh_load_obj(char* filepath) {
 	
 	arraylist indices, vertices;
 	arraylist_init(&indices, sizeof(unsigned int));
-	arraylist_init(&indices, sizeof(vertex));
-
-	printf("Initiated\n");
+	arraylist_init(&vertices, sizeof(vertex));
 
 	char c;
 	while ((c = fgetc(f)) != EOF) {
-		printf("iterating %c\n", c);
 		if (c == 'v') { // Is vertex type
 			char c2 = fgetc(f);
 
@@ -130,6 +136,8 @@ mesh* mesh_load_obj(char* filepath) {
 					};
 
 					unsigned int index = vertices.count;
+					//printf("index: %d\n", index);
+					//vertex_print(v);
 					arraylist_append(&vertices, &v);
 					hashmap_put(&vertex_map, &f_id, &index);
 				}
@@ -139,8 +147,25 @@ mesh* mesh_load_obj(char* filepath) {
 			}
 		}
 	}
+
+	hashmap_print(&vertex_map, index_print, face_print);
 	
-	printf("Index count: %d\nVertex count: %d\n", indices.count, positions.count);
+	printf("Index count: %d\nVertex count: %d\n", indices.count, vertices.count);
+
+	arraylist_deinit(&positions);
+	arraylist_deinit(&normals);
+	arraylist_deinit(&texcoords);
+	
+	hashmap_deinit(&vertex_map);
+
+	for (int i = 0; i < vertices.count; i++) {
+		vertex_print(*((vertex*)vertices.data + i));
+	}
+
+	for (int i = 0; i < indices.count; i++) {
+		printf("%d ", *((unsigned int*)indices.data + i));
+	}
+	printf("\n");
 
 	return mesh_create((vertex*)vertices.data, positions.count, (unsigned int*)indices.data, indices.count);
 }
