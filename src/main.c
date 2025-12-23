@@ -25,6 +25,8 @@ int main(void) {
         return 1;
 	}
 
+	glfwWindowHint(GLFW_DEPTH_BITS, 24);
+
     GLFWwindow* window = glfwCreateWindow(640, 480, "game", NULL, NULL);
     if (!window) {
         glfwTerminate();
@@ -41,6 +43,8 @@ int main(void) {
 		return 1;
 	}
 
+	glEnable(GL_DEPTH_TEST);
+
 	vertex vertices[] = {
 		{{-0.5, -0.5, 0}, {0, 0}, {0, 0, 0}},
 		{{0.5, -0.5, 0}, {1, 0}, {0, 0, 0}},
@@ -52,7 +56,7 @@ int main(void) {
 	};
 
 	mesh* triangle = mesh_create(vertices, 3, indices, 3);
-	mesh* cube = mesh_load_obj("assets/cube.obj");
+	mesh* cube = mesh_load_obj_new("assets/cube.obj");
 
 	shader shader; 
 	shader_init(&shader, "shaders/basic.vert", "shaders/basic.frag");
@@ -72,7 +76,7 @@ int main(void) {
 
     while (!glfwWindowShouldClose(window))
     {
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		float current_frame = glfwGetTime();
 		info.deltatime = current_frame - last_frame;

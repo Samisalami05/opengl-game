@@ -54,7 +54,7 @@ mesh* mesh_create(vertex* vertices, int vertex_count, unsigned int* indices, int
 	return m;
 }
 
-uint64_t face_hash(void* v) {
+static uint64_t face_hash(void* v) {
 	ivec3* face = v;
 	return ((uint64_t)face->x << 42) | 
 		((uint64_t)face->y << 21) |
@@ -69,6 +69,30 @@ static void face_print(void * v) {
 	ivec3* iv = v;
 	printf("(%d, %d, %d) ", iv->x, iv->y, iv->z);
 }
+
+static ivec3 read_face(FILE* f) {
+	printf("char: %c\n", fgetc(f)); // skip first whitespace
+	
+	ivec3 out;
+	if (fscanf(f, "%d", &out.x) != 1)
+		fprintf(stderr, "No vertex found in face\n");
+	
+	if (fgetc(f) == '/') {
+		if (fscanf(f, "%d", &out.y) != 1)
+			fprintf(stderr, "No texture coordinate found in face\n");
+	} else 
+		out.y = -1;
+
+	if (fgetc(f) == '/') {
+		if (fscanf(f, "%d", &out.z) != 1)
+			fprintf(stderr, "No normal coordinate found in face\n");
+	} else 
+		out.z = -1;
+	printf("%d %d %d\n", out.x, out.y, out.z);
+
+	return out;
+}
+
 
 mesh* mesh_load_obj(char* filepath) {
 	FILE* f = fopen(filepath, "rb");
@@ -121,18 +145,19 @@ mesh* mesh_load_obj(char* filepath) {
 		}
 		else if (c == 'f') { // Is face
 			for (int i = 0; i < 3; i++) {
-				ivec3 f_id;
-				if (fscanf(f, "%d/%d/%d", &f_id.x, &f_id.y, &f_id.z) != 3) break;
-				if (f_id.x > positions.count || f_id.z > normals.count || f_id.y > texcoords.count) {
-					fprintf(stderr, "Not a valid face format in %s\n", filepath);
+				ivec3 f_id = read_face(f);
+				printf("f_id: %d %d %d\n", f_id.x, f_id.y, f_id.z);
+
+				if (f_id.x > (int)positions.count || f_id.y > (int)texcoords.count || f_id.z > (int)normals.count) {
+					fprintf(stderr, "Not a valid face format in %s\nvertices: %d, normals: %d, uvs: %d\n", filepath, positions.count, normals.count, texcoords.count);
 					return NULL;
 				}
 
 				if (hashmap_get(&vertex_map, &f_id) == NULL) {
 					vertex v = {
-						.pos = ((vec3*)positions.data)[f_id.x - 1],
-						.normal = ((vec3*)normals.data)[f_id.z - 1],
-						.uv = ((vec2*)texcoords.data)[f_id.y - 1],
+						.pos	= f_id.x >= 0 ? ((vec3*)positions.data)[f_id.x - 1] : (vec3){0, 0, 0},
+						.normal = f_id.z >= 0 ? ((vec3*)normals.data)[f_id.z - 1] : (vec3){0, 0, 0},
+						.uv     = f_id.y >= 0 ? ((vec2*)texcoords.data)[f_id.y - 1] : (vec2){0, 0},
 					};
 
 					unsigned int index = vertices.count;
@@ -167,7 +192,7 @@ mesh* mesh_load_obj(char* filepath) {
 	}
 	printf("\n");
 
-	return mesh_create((vertex*)vertices.data, positions.count, (unsigned int*)indices.data, indices.count);
+	return mesh_create((vertex*)vertices.data, vertices.count, (unsigned int*)indices.data, indices.count);
 }
 
 void mesh_delete(mesh *m) {
