@@ -1,8 +1,11 @@
 #include <stdio.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "entity.h"
 #include "mat4.h"
+#include "material.h"
 #include "mesh.h"
+#include "rendering.h"
 #include "shader.h"
 #include "vec3.h"
 #include "camera.h"
@@ -14,10 +17,10 @@ static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 static void process_input(GLFWwindow* window, float deltatime);
 static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 
-typedef struct gameinfo {
+typedef struct gamedata {
 	camera cam;
 	float deltatime;
-} gameinfo;
+} gamedata;
 
 int main(void) {
     if (!glfwInit()) {
@@ -55,21 +58,27 @@ int main(void) {
 		0, 1, 2
 	};
 
-	mesh* triangle = mesh_create(vertices, 3, indices, 3);
-	mesh* cube = mesh_load_obj_new("assets/cube.obj");
+	//mesh* triangle = mesh_create(vertices, 3, indices, 3);
+	mesh* cube = mesh_load_obj_new("assets/character.obj");
 
 	shader shader; 
 	shader_init(&shader, "shaders/basic.vert", "shaders/basic.frag");
 
-	shader_use(shader);
-	mesh_use(triangle);
-	mesh_use(cube);
+	//shader_use(shader);
+	//mesh_use(triangle);
+	//mesh_use(cube);
 
-	gameinfo info;
-	camera_init(&info.cam, 800, 800);
-	info.cam.pos.z = 2;
+	gamedata data;
+	camera_init(&data.cam, 800, 800);
+	data.cam.pos.z = 2;
 
-	glfwSetWindowUserPointer(window, &info);
+	entity e;
+	entity_init(&e, cube);
+
+	material mat;
+	material_init(&mat, MAT_DEFAULT);
+
+	glfwSetWindowUserPointer(window, &data);
 	glfwSetCursorPosCallback(window, mouse_callback);
 
 	float last_frame = 0.0f;
@@ -79,33 +88,20 @@ int main(void) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		float current_frame = glfwGetTime();
-		info.deltatime = current_frame - last_frame;
+		data.deltatime = current_frame - last_frame;
 		last_frame = current_frame;
 
-		process_input(window, info.deltatime);
+		process_input(window, data.deltatime);
 
-		mat4 model;
-		mat4_identity(&model);
-		mat4_translate(&model, (const vec3){0, 0, 0});
-		mat4_rotate(&model, (const vec3){0, 0, 0});
+		e.rotation.y += data.deltatime / 2;
 
-		mat4 view = camera_view(&info.cam);
-		mat4 projection = camera_proj(&info.cam);
-
-		shader_set_mat4(shader, "model", model);
-		shader_set_mat4(shader, "view", view);
-		shader_set_mat4(shader, "projection", projection);
-
-
-		glDrawElements(GL_TRIANGLES, triangle->index_count, GL_UNSIGNED_INT, 0);
-		glDrawElements(GL_TRIANGLES, cube->index_count, GL_UNSIGNED_INT, 0);
-
+		render_entity(&e, &mat, &data.cam);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-	mesh_delete(triangle);
+	//mesh_delete(triangle);
 	mesh_delete(cube);
 	shader_deinit(shader);
 
@@ -119,15 +115,15 @@ void error_callback(int error, const char* description) {
 
 static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-	gameinfo* info = (gameinfo*)glfwGetWindowUserPointer(window);
+	gamedata* data = (gamedata*)glfwGetWindowUserPointer(window);
     glViewport(0, 0, width, height);
-	info->cam.width = width;
-	info->cam.height = height;
+	data->cam.width = width;
+	data->cam.height = height;
 }
 
 static void process_input(GLFWwindow* window, float deltatime) {
-	gameinfo* info = (gameinfo*)glfwGetWindowUserPointer(window);
-	camera* cam = &info->cam;
+	gamedata* data = (gamedata*)glfwGetWindowUserPointer(window);
+	camera* cam = &data->cam;
 
 	float camera_speed = 10.0f;
 
@@ -171,7 +167,7 @@ char first_mouse = 1;
 float last_x = 320;
 float last_y = 240;
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-	gameinfo* info = (gameinfo*)glfwGetWindowUserPointer(window);
+	gamedata* data = (gamedata*)glfwGetWindowUserPointer(window);
 	
 	if (first_mouse) {
 		last_x = xpos;
@@ -185,10 +181,10 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 	last_y = ypos;
 
 	float sensitivity = 0.5f;
-	xoffset *= sensitivity * info->deltatime;
-	yoffset *= sensitivity * info->deltatime;
+	xoffset *= sensitivity * data->deltatime;
+	yoffset *= sensitivity * data->deltatime;
 
-	camera* cam = &info->cam;
+	camera* cam = &data->cam;
 
 	cam->rot.y += xoffset;
 	cam->rot.x += yoffset;

@@ -13,10 +13,10 @@ uint8_t test_arraylist_append_ext();
 uint8_t test_arraylist_init() {
 	INIT_ARRAYLIST(sizeof(int));
 
-	ASSERT(a.allocated == 0);
-	ASSERT(a.count == 0);
-	ASSERT(a.data == NULL);
-	ASSERT(a.stride == sizeof(int));
+	TEST_ASSERT(a.allocated == 0);
+	TEST_ASSERT(a.count == 0);
+	TEST_ASSERT(a.data == NULL);
+	TEST_ASSERT(a.stride == sizeof(int));
 
 	arraylist_deinit(&a);
 	return 1;
@@ -26,7 +26,7 @@ uint8_t test_arraylist_deinit() {
 	INIT_ARRAYLIST(sizeof(int));
 	arraylist_deinit(&a);
 
-	ASSERT(a.data == NULL);
+	TEST_ASSERT(a.data == NULL);
 
 	return 1;
 }
@@ -38,7 +38,7 @@ uint8_t test_arraylist_append() {
 	arraylist_append(&a, &i);
 
 	int j = a.data[0];
-	ASSERT(i == j);
+	TEST_ASSERT(i == j);
 
 	arraylist_deinit(&a);
 	return 1;
@@ -56,7 +56,7 @@ uint8_t test_arraylist_append_ext() {
 	}
 
 	for (int i = 0; i < count; i++) {
-		ASSERT(*(long*)a.data + i == i);
+		TEST_ASSERT(*(long*)a.data + i == i);
 	}
 
 	arraylist_deinit(&a);

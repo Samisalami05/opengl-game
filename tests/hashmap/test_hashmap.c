@@ -7,10 +7,6 @@
 
 #define INIT_HASHMAP(v_size, k_size, hash) hashmap m; hashmap_init(&m, v_size, k_size, hash);
 
-static void print_func(void* v) {
-	printf("%-3d ", *(int*)v);
-}
-
 uint64_t test_hash(void* v) {
 	if (v == NULL) return 0;
 	int* i = (int*)v;
@@ -24,12 +20,12 @@ uint64_t probe_hash(void* v) {
 uint8_t test_hashmap_init() {
 	INIT_HASHMAP(sizeof(int), sizeof(int), test_hash);
 
-	ASSERT(m.buckets != NULL);
-	ASSERT(m.hash != NULL);
-	ASSERT(m.b_count != 0);
-	ASSERT(m.count == 0);
-	ASSERT(m.v_size == sizeof(int));
-	ASSERT(m.k_size == sizeof(int));
+	TEST_ASSERT(m.buckets != NULL);
+	TEST_ASSERT(m.hash != NULL);
+	TEST_ASSERT(m.b_count != 0);
+	TEST_ASSERT(m.count == 0);
+	TEST_ASSERT(m.v_size == sizeof(int));
+	TEST_ASSERT(m.k_size == sizeof(int));
 
 	hashmap_deinit(&m);
 	return 1;
@@ -39,7 +35,7 @@ uint8_t test_hashmap_deinit() {
 	INIT_HASHMAP(sizeof(int), sizeof(int), test_hash);
 
 	hashmap_deinit(&m);
-	ASSERT(m.buckets == NULL);
+	TEST_ASSERT(m.buckets == NULL);
 	return 1;
 }
 
@@ -52,8 +48,8 @@ uint8_t test_hashmap_put() {
 	hashmap_put(&m, &k, &v);
 
 	int* rv = m.buckets[0].value;	
-	ASSERT(rv != NULL);
-	ASSERT(*rv == 5);
+	TEST_ASSERT(rv != NULL);
+	TEST_ASSERT(*rv == 5);
 
 	hashmap_deinit(&m);
 	return 1;
@@ -68,8 +64,8 @@ uint8_t test_hashmap_put_ext() {
 	hashmap_put(&m, &k, &v);
 
 	int* rv = m.buckets[k % m.b_count].value;	
-	ASSERT(rv != NULL);
-	ASSERT(*rv == v);
+	TEST_ASSERT(rv != NULL);
+	TEST_ASSERT(*rv == v);
 
 	hashmap_deinit(&m);
 	return 1;
@@ -80,7 +76,6 @@ uint8_t test_hashmap_put_probe() {
 
 	for (int i = 0; i < 31; i++) {
 		int v = i;
-		printf(" - INSERTING %d -\n", i);
 		hashmap_put(&m, &v, &v);
 	}
 
@@ -90,7 +85,8 @@ uint8_t test_hashmap_put_probe() {
 	for (int i = 0; i < m.count; i++) {
 		int v = values[i];
 		int k = keys[i];
-		printf("v: %-2d   k: %-2d\n", v, k);
+		TEST_ASSERT(v == i);
+		TEST_ASSERT(k == i);
 	}
 
 	free(values);
@@ -107,27 +103,21 @@ uint8_t test_hashmap_put_resize() {
 	for (int i = 0; i < 17; i++) {
 		int v = i;
 		int k = i;
-		printf(" - INSERTING %d -\n", i);
 		hashmap_put(&m, &v, &k);
 	}
 
 	int* values = hashmap_values(&m);
 	int* keys = hashmap_keys(&m);
 
-	printf("SIZE: %ld\n", m.count);
-
 	for (int i = 0; i < m.count; i++) {
 		int v = values[i];
 		int k = keys[i];
-		printf("v: %-2d   k: %-2d   i: %-2d\n", v, k, i);
-		ASSERT(v == i);
-		ASSERT(k == i);
+		TEST_ASSERT(v == i);
+		TEST_ASSERT(k == i);
 	}
 
 	free(values);
 	free(keys);
-
-	hashmap_print(&m, print_func, print_func);
 
 	hashmap_deinit(&m);
 	return 1;
@@ -147,10 +137,8 @@ uint8_t test_hashmap_get() {
 
 	for (int i = 0; i < count; i++) {
 		int* v = hashmap_get(&m, &keys[i]);
-		ASSERT(*v == values[i]);
+		TEST_ASSERT(*v == values[i]);
 	}
-
-	hashmap_print(&m, print_func, print_func);
 
 	hashmap_deinit(&m);
 	return 1;

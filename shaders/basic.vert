@@ -4,6 +4,7 @@ layout (location = 1) in vec2 aUv;
 layout (location = 2) in vec3 aNormal;
 
 out vec3 Pos;
+out vec3 WorldPos;
 out vec2 TexCoord;
 out vec3 Normal;
 
@@ -13,8 +14,14 @@ uniform mat4 projection;
 
 void main()
 {
-    gl_Position = projection * view * model * vec4(aPos, 1.0);
+	vec4 world_pos = model * vec4(aPos, 1.0f);
+
+    gl_Position = projection * view * world_pos;
+	
 	Pos = aPos;
+	WorldPos = world_pos.xyz;
 	TexCoord = aUv;
-	Normal = aNormal;
+	
+	mat3 normalMatrix = transpose(inverse(mat3(model)));
+    Normal = normalize(normalMatrix * aNormal);
 }

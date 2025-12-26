@@ -19,7 +19,7 @@ static void shader_compile(unsigned int shader, char* source) {
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 	if (!success) {
 		glGetShaderInfoLog(shader, 512, NULL, info_log);
-		fprintf(stderr, "ERROR: Shader compilation failed, shader program: %d\n", shader);
+		fprintf(stderr, "ERROR: Shader compilation failed, shader program: %d\n%s", shader, info_log);
 	}
 }
 
