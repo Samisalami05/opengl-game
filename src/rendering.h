@@ -8,7 +8,7 @@
 #include "camera.h"
 
 void render_mesh(mesh* m, material* mat, camera* cam);
-void render_entity(entity* e, material* mat, camera* cam);
+void render_entity(entity* e, camera* cam);
 void render_scene(scene* s);
 
 #endif

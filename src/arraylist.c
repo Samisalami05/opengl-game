@@ -29,6 +29,44 @@ void arraylist_append(arraylist* a, void* data) {
 	a->count++;
 }
 
+void arraylist_set(arraylist* a, void* data, int index) {
+	if (index < 0 || index >= a->count) {
+		fprintf(stderr, "arraylist: Index %d out of bounds in list with count %d\n", index, a->count);
+		return;
+	}
+	memcpy(a->data + index * a->stride, data, a->stride);
+}
+
+void* arraylist_get(arraylist* a, int index) {
+	if (index < 0 || index >= a->count) {
+		fprintf(stderr, "arraylist: Index %d out of bounds in list with count %d\n", index, a->count);
+		return NULL;
+	}
+	return a->data + index * a->stride;
+}
+
+void* arraylist_get_last(arraylist* a) {
+	if (a->count == 0) {
+		fprintf(stderr, "arraylist: Cant get last element from a empty lis\nt");
+		return NULL;
+	}
+	return a->data + (a->count - 1) * a->stride;
+}
+
+void arraylist_remove(arraylist* a, int index) {
+	if (index < a->count - 1)
+		memcpy(a->data + index * a->stride, a->data + (index + 1) * a->stride, (a->count - index - 1) * a->stride);
+
+	a->count--;
+}
+void arraylist_remove_last(arraylist* a) {
+	if (a->count == 0) {
+		fprintf(stderr, "arraylist: Cant remove last element from a empty list\n");
+		return;
+	}
+	a->count--;
+}
+
 void arraylist_deinit(arraylist* a) {
 	if (a->data != NULL)
 		free(a->data);

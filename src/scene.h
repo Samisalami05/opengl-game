@@ -1,11 +1,21 @@
 #ifndef SCENE_H
 #define SCENE_H
 
+#include "arraylist.h"
+#include "entity.h"
+#include "camera.h"
+#include "hashmap.h"
+#include <stddef.h>
+
 typedef struct scene {
 	unsigned int id;
-	// int* free_ent; // says what places are free in entities
-	// entity* entities;
-	// camera cam;
+	char* name;
+	arraylist entities;
+	camera cam;
 } scene;
+
+void scene_add_entity(scene* s, entity* e);
+void scene_remove_entity(scene* s, int index);
+void scene_print(scene* s);
 
 #endif

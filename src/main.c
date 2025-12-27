@@ -6,7 +6,10 @@
 #include "material.h"
 #include "mesh.h"
 #include "rendering.h"
+#include "scene.h"
+#include "scenemanager.h"
 #include "shader.h"
+#include "texture.h"
 #include "vec3.h"
 #include "camera.h"
 
@@ -17,10 +20,7 @@ static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 static void process_input(GLFWwindow* window, float deltatime);
 static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 
-typedef struct gamedata {
-	camera cam;
-	float deltatime;
-} gamedata;
+static float deltatime;
 
 int main(void) {
     if (!glfwInit()) {
@@ -48,37 +48,26 @@ int main(void) {
 
 	glEnable(GL_DEPTH_TEST);
 
-	vertex vertices[] = {
-		{{-0.5, -0.5, 0}, {0, 0}, {0, 0, 0}},
-		{{0.5, -0.5, 0}, {1, 0}, {0, 0, 0}},
-		{{0.0, 0.5, 0}, {0.5, 1}, {0, 0, 0}},
-	};
-
-	unsigned int indices[] = {
-		0, 1, 2
-	};
-
-	//mesh* triangle = mesh_create(vertices, 3, indices, 3);
+	sm_init();
+	
 	mesh* cube = mesh_load_obj_new("assets/character.obj");
+	mesh* plane = mesh_load_obj_new("assets/cube.obj");
 
 	shader shader; 
 	shader_init(&shader, "shaders/basic.vert", "shaders/basic.frag");
 
-	//shader_use(shader);
-	//mesh_use(triangle);
-	//mesh_use(cube);
-
-	gamedata data;
-	camera_init(&data.cam, 800, 800);
-	data.cam.pos.z = 2;
-
-	entity e;
-	entity_init(&e, cube);
-
 	material mat;
 	material_init(&mat, MAT_DEFAULT);
+	
+	entity* e = entity_create(cube, &mat);
+	entity* ground = entity_create(plane, &mat);
 
-	glfwSetWindowUserPointer(window, &data);
+	e->position.y += 10;
+	ground->scale.x = 100;
+	ground->scale.z = 100;
+	
+	texture* t = texture_create("assets/grass.jpg", GL_TEXTURE0, GL_RGB);
+
 	glfwSetCursorPosCallback(window, mouse_callback);
 
 	float last_frame = 0.0f;
@@ -88,14 +77,16 @@ int main(void) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		float current_frame = glfwGetTime();
-		data.deltatime = current_frame - last_frame;
+		deltatime = current_frame - last_frame;
 		last_frame = current_frame;
 
-		process_input(window, data.deltatime);
+		process_input(window, deltatime);
 
-		e.rotation.y += data.deltatime / 2;
+		e->rotation.y += deltatime / 2;
 
-		render_entity(&e, &mat, &data.cam);
+		texture_use(t);
+		
+		render_scene(sm_get_current_scene());
 
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -104,6 +95,7 @@ int main(void) {
 	//mesh_delete(triangle);
 	mesh_delete(cube);
 	shader_deinit(shader);
+	sm_deinit();
 
     glfwTerminate();
     return 0;
@@ -115,15 +107,15 @@ void error_callback(int error, const char* description) {
 
 static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-	gamedata* data = (gamedata*)glfwGetWindowUserPointer(window);
     glViewport(0, 0, width, height);
-	data->cam.width = width;
-	data->cam.height = height;
+	scene* scene = sm_get_current_scene();
+	scene->cam.width = width;
+	scene->cam.height = height;
 }
 
 static void process_input(GLFWwindow* window, float deltatime) {
-	gamedata* data = (gamedata*)glfwGetWindowUserPointer(window);
-	camera* cam = &data->cam;
+	scene* scene = sm_get_current_scene();
+	camera* cam = &scene->cam;
 
 	float camera_speed = 10.0f;
 
@@ -167,7 +159,7 @@ char first_mouse = 1;
 float last_x = 320;
 float last_y = 240;
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-	gamedata* data = (gamedata*)glfwGetWindowUserPointer(window);
+	scene* scene = sm_get_current_scene();
 	
 	if (first_mouse) {
 		last_x = xpos;
@@ -181,10 +173,10 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 	last_y = ypos;
 
 	float sensitivity = 0.5f;
-	xoffset *= sensitivity * data->deltatime;
-	yoffset *= sensitivity * data->deltatime;
+	xoffset *= sensitivity * deltatime;
+	yoffset *= sensitivity * deltatime;
 
-	camera* cam = &data->cam;
+	camera* cam = &scene->cam;
 
 	cam->rot.y += xoffset;
 	cam->rot.x += yoffset;

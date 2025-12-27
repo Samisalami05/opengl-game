@@ -13,6 +13,7 @@ mat4 mat4_lookat(vec3 eye, vec3 target);
 void mat4_mul_vec3(const mat4 m, vec3* v);
 
 void mat4_scale(mat4* m, const float s);
+void mat4_scale_v3(mat4* m, const vec3 v);
 
 void mat4_translate(mat4* m, const vec3 v);
 

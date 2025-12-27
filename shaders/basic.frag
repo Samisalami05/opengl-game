@@ -1,10 +1,21 @@
-#version 330 core
+#version 430 core
 out vec4 FragColor;
 
 in vec3 Pos;
 in vec3 WorldPos;
 in vec2 TexCoord;
 in vec3 Normal;
+
+struct light {
+    vec4 color_intensity; // color     + intensity
+    vec4 position_range;  // position  + range
+    vec4 direction_type;  // direction + type (encoded)
+};
+
+layout(std430, binding = 0) buffer lightbuffer {
+    uint lightCount;
+    light lights[];
+};
 
 struct material {
 	vec3 ambient;
@@ -16,17 +27,18 @@ struct material {
 uniform material mat;
 uniform vec3 view_pos;
 
-//uniform sampler2D tex;
+uniform sampler2D tex;
 
 void main()
 {
-	vec3 light_pos = vec3(0.0f, 5.0f, 2.5f);
+	vec3 light_pos = vec3(0.0f, 50.0f, 20.0f);
 
 	vec3 light_col = vec3(1.0f, 1.0f, 1.0f);
 	vec3 ambient = light_col * mat.ambient;
 
 	vec3 norm = normalize(Normal);
-	vec3 light_dir = normalize(light_pos - WorldPos);
+	//vec3 light_dir = normalize(light_pos - WorldPos);
+	vec3 light_dir = normalize(vec3(0.5f, 0.5f, 0));
 	float diff = max(dot(norm, light_dir), 0.0f);
 	vec3 diffuse = light_col * (diff * mat.diffuse);
 
@@ -35,7 +47,7 @@ void main()
 	float spec = pow(max(dot(view_dir, reflect_dir), 0.0f), mat.shininess);
 	vec3 specular = light_col * (spec * mat.specular);
 
-	vec3 result = ambient + diffuse + specular;
+	vec3 result = (ambient + diffuse + specular) * texture(tex, TexCoord).rgb;
 	FragColor = vec4(result, 1.0);
 
 	//FragColor = vec4(TexCoord.x, TexCoord.y, 0.0f, 1.0f);

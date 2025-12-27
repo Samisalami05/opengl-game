@@ -5,8 +5,8 @@
 void material_init(material* m, material_type type) {
 	m->type = type;
 	
-	m->ambient = (vec3){0.2f, 0.0f, 0.0f};
-	m->diffuse = (vec3){1.0f, 0.5f, 0.31f};
+	m->ambient = (vec3){0.2f, 0.2f, 0.2f};
+	m->diffuse = (vec3){1.0f, 1.0f, 1.0f};
 	m->specular = (vec3){0.5f, 0.5f, 0.5f};
 	m->shininess = 32.0f;
 

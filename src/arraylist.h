@@ -13,6 +13,11 @@ typedef struct arraylist {
 
 void arraylist_init(arraylist* a, size_t stride);
 void arraylist_append(arraylist* a, void* data);
+void arraylist_set(arraylist* a, void* data, int index);
+void* arraylist_get(arraylist* a, int index);
+void* arraylist_get_last(arraylist* a);
+void arraylist_remove(arraylist* a, int index);
+void arraylist_remove_last(arraylist* a);
 void arraylist_deinit(arraylist* a);
 
 #endif

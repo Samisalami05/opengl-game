@@ -100,6 +100,12 @@ void mat4_scale(mat4* m, const float s) {
 	}
 }
 
+void mat4_scale_v3(mat4* m, const vec3 v) {
+	m->data[index_to_1d(0, 0)] *= v.x;
+	m->data[index_to_1d(1, 1)] *= v.y;
+	m->data[index_to_1d(2, 2)] *= v.z;
+}
+
 void mat4_translate(mat4* m, const vec3 v) {
     m->data[index_to_1d(3,0)] +=
         m->data[index_to_1d(0,0)] * v.x +

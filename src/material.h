@@ -2,9 +2,12 @@
 #define MATERIAL_H
 
 #include "shader.h"
+#include "texture.h"
+#include <stdint.h>
 
 typedef enum material_type {
 	MAT_DEFAULT,
+	MAT_TEXTURE,
 	MAT_LIT, // TODO: Implement these
 	MAT_UNLIT,
 } material_type;
