@@ -1,7 +1,10 @@
+#include <math.h>
 #include <stdio.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "arraylist.h"
 #include "entity.h"
+#include "light.h"
 #include "mat4.h"
 #include "material.h"
 #include "mesh.h"
@@ -12,6 +15,7 @@
 #include "texture.h"
 #include "vec3.h"
 #include "camera.h"
+#include "ssbo.h"
 
 #ifndef TESTING	
 
@@ -56,21 +60,37 @@ int main(void) {
 	shader shader; 
 	shader_init(&shader, "shaders/basic.vert", "shaders/basic.frag");
 
-	material mat;
-	material_init(&mat, MAT_DEFAULT);
+	material ground_mat, player_mat;
+	material_init(&ground_mat, MAT_TEXTURE_LIT);
+	material_init(&player_mat, MAT_TEXTURE_LIT);
+	player_mat.shininess = 100.0f;
+	player_mat.color = (vec3){1.0f, 0.0f, 0.0f};
 	
-	entity* e = entity_create(cube, &mat);
-	entity* ground = entity_create(plane, &mat);
+	entity* player = entity_create(cube, &player_mat);
+	entity* ground = entity_create(plane, &ground_mat);
 
-	e->position.y += 10;
+	player->position.y += 10;
 	ground->scale.x = 100;
 	ground->scale.z = 100;
 	
-	texture* t = texture_create("assets/grass.jpg", GL_TEXTURE0, GL_RGB);
+	ground_mat.albedo_tex = texture_create("assets/grass.jpg", GL_RGB);
+	
+	scene* scene = sm_get_current_scene();
+	
+	light pointlight1, pointlight2;
+	light_init_point(&pointlight1, (vec3){2.0f, 8.0f, 1.0f});
+	light_init_point(&pointlight2, (vec3){-2.0f, 13.0f, -2.0f});
+	pointlight1.color = (vec3){1.0f, 1.0f, 0.8f};
+	pointlight2.color = (vec3){1.0f, 1.0f, 0.8f};
+
+	arraylist_append(&scene->lights, &pointlight1);
+	arraylist_append(&scene->lights, &pointlight2);
 
 	glfwSetCursorPosCallback(window, mouse_callback);
 
 	float last_frame = 0.0f;
+	
+	float time = 0;
 
     while (!glfwWindowShouldClose(window))
     {
@@ -82,9 +102,15 @@ int main(void) {
 
 		process_input(window, deltatime);
 
-		e->rotation.y += deltatime / 2;
+		time += deltatime / 2;
 
-		texture_use(t);
+		//e->rotation.y += deltatime / 2;
+
+		//scene* s = sm_get_current_scene();
+		//light* sun = arraylist_get(&s->lights, 0);
+
+		//sun->dir.x = cosf(time);
+		//sun->dir.z = sinf(time);
 		
 		render_scene(sm_get_current_scene());
 

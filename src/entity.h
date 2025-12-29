@@ -16,4 +16,5 @@ typedef struct entity {
 
 void entity_init(entity* e, mesh* m, material* mat);
 entity* entity_create(mesh* m, material* mat);
+
 #endif

@@ -10,9 +10,9 @@ typedef struct texture {
 	int height;
 } texture;
 
-texture* texture_create(char* path, GLenum unit, GLenum input_format);
+texture* texture_create(char* path, GLenum input_format);
 void texture_delete(texture* t);
 void texture_generate_mipmap(texture* t);
-void texture_use(texture* t);
+void texture_use(texture* t, unsigned int unit_index);
 
 #endif

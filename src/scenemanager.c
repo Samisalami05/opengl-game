@@ -3,9 +3,13 @@
 #include "camera.h"
 #include "entity.h"
 #include "hashmap.h"
+#include "light.h"
+#include "material.h"
+#include "mesh.h"
 #include "scene.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 static arraylist sm_scenes;
 static hashmap sm_scene_names;
@@ -46,6 +50,23 @@ scene* sm_create_scene(char* name) {
 	s.name = name;
 	camera_init(&s.cam, 800, 800);
 	arraylist_init(&s.entities, sizeof(entity));
+	arraylist_init(&s.lights, sizeof(light));
+	
+	mesh* cube_mesh = mesh_load_obj_new("assets/cube.obj");
+	material* mat = malloc(sizeof(material));
+	material_init(mat, MAT_COLOR_UNLIT);
+
+	entity_init(&s.light_entity, cube_mesh, mat);
+	s.light_entity.scale = (vec3){0.5f, 0.5, 0.5f};
+
+	// Create default sun
+	light sun = {
+		.type = LIGHT_GLOBAL,
+		.color = {1.0f, 1.0f, 0.8f},
+		.dir = {0.5f, -0.3f, 0.2f},
+		.intensity = 0.2f,
+	};
+	arraylist_append(&s.lights, &sun);
 
 	arraylist_append(&sm_scenes, &s);
 	hashmap_put(&sm_scene_names, name, &s.id);

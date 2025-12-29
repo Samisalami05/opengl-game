@@ -5,11 +5,10 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image/stb_image.h>
 
-texture* texture_create(char* path, GLenum unit, GLenum input_format) {
+texture* texture_create(char* path, GLenum input_format) {
 	texture* t = malloc(sizeof(texture));
 
 	glGenTextures(1, &t->id);
-	glActiveTexture(unit);
 	glBindTexture(GL_TEXTURE_2D, t->id);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
@@ -23,7 +22,7 @@ texture* texture_create(char* path, GLenum unit, GLenum input_format) {
 	unsigned char* data = stbi_load(path, &t->width, &t->height, &nrChannels, 0);
 
 	if (!data) {
-		fprintf(stderr, "Failed to open image\n");
+		fprintf(stderr, "texture: Failed to open image %s\n", path);
 		return NULL;
 	}
 
@@ -44,6 +43,7 @@ void texture_generate_mipmap(texture* t) {
 	glGenerateMipmap(GL_TEXTURE_2D);
 }
 
-void texture_use(texture* t) {
+void texture_use(texture* t, unsigned int unit_index) {
+	glActiveTexture(GL_TEXTURE0 + unit_index);
 	glBindTexture(GL_TEXTURE_2D, t->id);
 }

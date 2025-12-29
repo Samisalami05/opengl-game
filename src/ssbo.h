@@ -10,7 +10,7 @@ typedef struct ssbo {
 	GLenum usage;
 } ssbo;
 
-void ssbo_init(ssbo* ssbo, size_t capacity, GLenum usage, unsigned int binding);
+void ssbo_init(ssbo* ssbo, size_t capacity, GLenum usage);
 void ssbo_deinit(ssbo* ssbo);
 void ssbo_set_data(ssbo* ssbo, size_t offset, size_t size, void* data);
 void ssbo_bind(ssbo* ssbo, unsigned int binding);

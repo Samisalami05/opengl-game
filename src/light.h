@@ -31,4 +31,7 @@ typedef struct light {
 	vec3 position;
 } light;
 
+void light_init_global(light* light, const vec3 dir);
+void light_init_point(light* light, const vec3 position);
+
 #endif

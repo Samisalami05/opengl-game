@@ -1,6 +1,6 @@
 #include "ssbo.h"
 
-void ssbo_init(ssbo* ssbo, size_t capacity, GLenum usage, unsigned int binding) {
+void ssbo_init(ssbo* ssbo, size_t capacity, GLenum usage) {
 	glGenBuffers(1, &ssbo->handle);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo->handle);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, capacity, NULL, usage);

@@ -11,6 +11,8 @@ typedef struct scene {
 	unsigned int id;
 	char* name;
 	arraylist entities;
+	arraylist lights;
+	entity light_entity;
 	camera cam;
 } scene;
 

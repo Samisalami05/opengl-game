@@ -6,20 +6,32 @@
 #include <stdint.h>
 
 typedef enum material_type {
-	MAT_DEFAULT,
-	MAT_TEXTURE,
-	MAT_LIT, // TODO: Implement these
-	MAT_UNLIT,
+	MAT_COLOR_LIT,
+	MAT_COLOR_UNLIT,
+	MAT_TEXTURE_LIT, // TODO: Implement these
+	MAT_TEXTURE_UNLIT,
 } material_type;
 
 typedef struct material {
 	material_type type;
 	shader shader;
 
+	texture* albedo_tex;
+	//texture* normal_tex;
+	//texture* roughness_tex;
+	//texture* metallic_tex;
+	//texture* glossiness_tex;
+	//texture* specular_tex;
+	
+	vec3 color;
+
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
 	float shininess;
+
+	vec3 emission;
+	float emission_str;
 } material;
 
 void material_init(material* m, material_type type);
