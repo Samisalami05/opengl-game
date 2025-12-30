@@ -3,6 +3,7 @@
 
 #include "shader.h"
 #include "texture.h"
+#include "ivec2.h"
 #include <stdint.h>
 
 typedef enum material_type {
@@ -32,9 +33,12 @@ typedef struct material {
 
 	vec3 emission;
 	float emission_str;
+
+	vec2 tiling;
 } material;
 
 void material_init(material* m, material_type type);
 void material_use(material* m);
+void material_deinit(material* m);
 
 #endif

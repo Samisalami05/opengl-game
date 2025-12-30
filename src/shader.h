@@ -2,11 +2,14 @@
 #define SHADER_H
 
 #include <glad/glad.h>
+#include <stddef.h>
 #include "linmath.h"
 
 typedef struct shader {
 	unsigned int id;
 } shader;
+
+char* shader_parse_new(const char* shader_path, size_t* size_out); // For testing
 
 void shader_init(shader* s, const char* vertsh, const char* fragsh);
 void shader_use(shader s);

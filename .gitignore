@@ -4,3 +4,4 @@ compile_commands.json
 main
 runtests
 vgcore*
+/assets/sponza.obj

@@ -63,8 +63,8 @@ scene* sm_create_scene(char* name) {
 	light sun = {
 		.type = LIGHT_GLOBAL,
 		.color = {1.0f, 1.0f, 0.8f},
-		.dir = {0.5f, -0.3f, 0.2f},
-		.intensity = 0.2f,
+		.dir = {0.5f, -0.5f, 0.2f},
+		.intensity = 0.5f,
 	};
 	arraylist_append(&s.lights, &sun);
 

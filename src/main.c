@@ -57,12 +57,10 @@ int main(void) {
 	mesh* cube = mesh_load_obj_new("assets/character.obj");
 	mesh* plane = mesh_load_obj_new("assets/cube.obj");
 
-	shader shader; 
-	shader_init(&shader, "shaders/basic.vert", "shaders/basic.frag");
-
 	material ground_mat, player_mat;
 	material_init(&ground_mat, MAT_TEXTURE_LIT);
-	material_init(&player_mat, MAT_TEXTURE_LIT);
+	material_init(&player_mat, MAT_COLOR_LIT);
+	ground_mat.tiling = (vec2){100.0f, 100.0f};
 	player_mat.shininess = 100.0f;
 	player_mat.color = (vec3){1.0f, 0.0f, 0.0f};
 	
@@ -102,15 +100,14 @@ int main(void) {
 
 		process_input(window, deltatime);
 
-		time += deltatime / 2;
+		time += deltatime / 8;
 
 		//e->rotation.y += deltatime / 2;
 
-		//scene* s = sm_get_current_scene();
-		//light* sun = arraylist_get(&s->lights, 0);
+		light* sun = arraylist_get(&scene->lights, 0);
 
-		//sun->dir.x = cosf(time);
-		//sun->dir.z = sinf(time);
+		sun->dir.x = cosf(time);
+		sun->dir.z = sinf(time);
 		
 		render_scene(sm_get_current_scene());
 
@@ -120,7 +117,6 @@ int main(void) {
 
 	//mesh_delete(triangle);
 	mesh_delete(cube);
-	shader_deinit(shader);
 	sm_deinit();
 
     glfwTerminate();

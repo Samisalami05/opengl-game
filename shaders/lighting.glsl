@@ -1,10 +1,13 @@
-#version 430 core
-out vec4 FragColor;
+#define MAX_LIGHTS 16
 
-in vec3 Pos;
-in vec3 WorldPos;
-in vec2 TexCoord;
-in vec3 Normal;
+struct light {
+	int type;
+	float intensity;
+	float range;
+	vec3 color;
+	vec3 dir;
+	vec3 position;
+};
 
 // TODO: Light buffer
 //struct light {
@@ -18,30 +21,9 @@ in vec3 Normal;
 //    light lights[];
 //};
 
-struct material {
-	vec3 color;
-	vec3 ambient;
-	vec3 diffuse;
-	vec3 specular;
-	float shininess;
-};
-
-struct light {
-	int type;
-	float intensity;
-	float range;
-	vec3 color;
-	vec3 dir;
-	vec3 position;
-};
-
-#define MAX_LIGHTS 16
-
 const uint LIGHT_GLOBAL = 0;
 const uint LIGHT_POINT  = 1;
 
-uniform material mat;
-uniform vec3 view_pos;
 uniform int light_count;
 uniform light lights[MAX_LIGHTS];
 
@@ -90,29 +72,4 @@ vec3 calc_light(light light, material mat, vec3 normal, vec3 view_dir, vec3 frag
 			return calc_point_light(light, mat, normal, view_dir, frag_pos);
 	}
 	return vec3(0.0f);
-}
-
-void main()
-{
-	vec3 normal = normalize(Normal);
-	vec3 view_dir = normalize(view_pos - WorldPos);
-	
-	vec3 result = vec3(0.0f);
-	for (int i = 0; i < light_count; i++) {
-		light light = lights[i];
-		result += calc_light(light, mat, normal, view_dir, WorldPos);
-	}
-
-	FragColor = vec4(result * mat.color, 1.0);
-
-	//FragColor = vec4(TexCoord.x, TexCoord.y, 0.0f, 1.0f);
-	//FragColor = texture(tex, TexCoord);
-	//FragColor = vec4(Pos.x / 32.0f, Pos.y / 32.0f, Pos.z / 32.0f, 1.0f);
-	//FragColor = vec4((Normal.x + 1.0f) / 2.0f, (Normal.y + 1.0f) / 2.0f, (Normal.z + 1.0f) / 2.0f, 1.0f);
-
-	//vec3 light_dir = normalize(vec3(0.8f, -0.6f, 0.2f));
-	//float diffuse = dot(light_dir, Normal);
-
-	//vec4 color = texture(tex, TexCoord);
-	//FragColor = vec4(color.xyz * (max(diffuse, 0.0f) + 0.2f), color.w);
 }

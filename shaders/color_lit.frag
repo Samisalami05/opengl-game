@@ -7,24 +7,11 @@ in vec2 TexCoord;
 in vec3 Normal;
 
 struct material {
-	sampler2D albedo_tex;
-	//texture* normal_tex;
-	//texture* roughness_tex;
-	//texture* metallic_tex;
-	//texture* glossiness_tex;
-	//texture* specular_tex;
-
 	vec3 color;
-
-	vec3 ambient; // TODO: Implement textures for these aswell
+	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
 	float shininess;
-
-	vec3 emission;
-	float emission_str;
-
-	vec2 tiling;
 };
 
 #include "shaders/lighting.glsl"
@@ -43,7 +30,7 @@ void main()
 		result += calc_light(light, mat, normal, view_dir, WorldPos);
 	}
 
-	FragColor = vec4(result * texture(mat.albedo_tex, TexCoord * mat.tiling).rgb * mat.color, 1.0);
+	FragColor = vec4(result * mat.color, 1.0);
 
 	//FragColor = vec4(TexCoord.x, TexCoord.y, 0.0f, 1.0f);
 	//FragColor = texture(tex, TexCoord);

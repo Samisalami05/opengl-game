@@ -6,20 +6,12 @@ in vec3 WorldPos;
 in vec2 TexCoord;
 in vec3 Normal;
 
-// TODO: Light buffer
-//struct light {
-//    vec4 color_intensity; // color     + intensity
-//    vec4 position_range;  // position  + range
-//    vec4 direction_type;  // direction + type (encoded)
-//};
-
-//layout(std430, binding = 0) buffer lightbuffer {
-//    uint lightCount;
-//    light lights[];
-//};
-
 struct material {
+	sampler2D albedo_tex;
+
 	vec3 color;
+
+	vec2 tiling;
 };
 
 uniform material mat;
@@ -27,7 +19,7 @@ uniform vec3 view_pos;
 
 void main()
 {
-	FragColor = vec4(mat.color, 1.0);
+	FragColor = vec4(texture(mat.albedo_tex, TexCoord * mat.tiling).rgb * mat.color, 1.0);
 
 	//FragColor = vec4(TexCoord.x, TexCoord.y, 0.0f, 1.0f);
 	//FragColor = texture(tex, TexCoord);

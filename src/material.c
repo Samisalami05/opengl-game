@@ -15,14 +15,15 @@ void material_init(material* m, material_type type) {
 
 	switch (m->type) {
 		case MAT_COLOR_LIT:
-			shader_init(&m->shader, "shaders/basic.vert", "shaders/basic.frag");
+			shader_init(&m->shader, "shaders/basic.vert", "shaders/color_lit.frag");
 			break;
 		case MAT_COLOR_UNLIT:
-			shader_init(&m->shader, "shaders/basic.vert", "shaders/unlit.frag");
+			shader_init(&m->shader, "shaders/basic.vert", "shaders/color_unlit.frag");
 			break;
 		case MAT_TEXTURE_LIT:
 			shader_init(&m->shader, "shaders/basic.vert", "shaders/texture_lit.frag");
 			m->albedo_tex = texture_create("assets/white.png", GL_RGBA);
+			m->tiling = (vec2){1.0f, 1.0f};
 			break;
 		default:
 			fprintf(stderr, "Material type not implemented\n");
@@ -54,9 +55,15 @@ void material_use(material* m) {
 			bind_material_lighting(m);
 			shader_set_int(m->shader, "mat.albedo_tex", 0);
 			shader_set_vec3(m->shader, "mat.color", m->color);
+			shader_set_vec2(m->shader, "mat.tiling", m->tiling);
 			texture_use(m->albedo_tex, 0);
 			break;
 		default:
 			fprintf(stderr, "Material type not implemented\n");
 	}
+}
+
+void material_deinit(material* m) {
+	shader_deinit(m->shader);
+	texture_delete(m->albedo_tex);
 }
