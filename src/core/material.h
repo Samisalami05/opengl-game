@@ -1,9 +1,9 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
 
-#include "shader.h"
-#include "texture.h"
-#include "ivec2.h"
+#include "core/shader.h"
+#include "core/texture.h"
+#include "math/ivec2.h"
 #include <stdint.h>
 
 typedef enum material_type {

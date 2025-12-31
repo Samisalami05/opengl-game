@@ -3,16 +3,16 @@
 
 #include <glad/glad.h>
 #include <stddef.h>
-#include "vec2.h"
-#include "vec3.h"
-#include "vec4.h"
-#include "mat4.h"
+#include "math/vec2.h"
+#include "math/vec3.h"
+#include "math/vec4.h"
+#include "math/mat4.h"
 
 typedef struct shader {
 	unsigned int id;
 } shader;
 
-char* shader_parse_new(const char* shader_path, size_t* size_out); // For testing
+char* shader_parse(const char* shader_path); // For testing
 
 void shader_init(shader* s, const char* vertsh, const char* fragsh);
 void shader_use(shader* s);

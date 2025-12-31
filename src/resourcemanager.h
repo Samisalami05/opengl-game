@@ -1,8 +1,8 @@
 #ifndef RESOURCE_MANAGER_H
 #define RESOURCE_MANAGER_H
 
-#include "shader.h"
-#include "texture.h"
+#include "core/shader.h"
+#include "core/texture.h"
 
 void resource_manager_init();
 void resource_manager_deinit();

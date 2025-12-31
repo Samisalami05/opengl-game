@@ -2,10 +2,10 @@
 #define RENDERER_H
 
 #include "entity.h"
-#include "mesh.h"
+#include "core/mesh.h"
 #include "scene.h"
-#include "material.h"
-#include "camera.h"
+#include "core/material.h"
+#include "rendering/camera.h"
 
 void render_mesh(mesh* m, material* mat, camera* cam);
 void render_entity(entity* e, camera* cam);

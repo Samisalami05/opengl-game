@@ -15,7 +15,7 @@ static void log_message(char* message, const char* log, int length);
 static void shader_compile_error(const char* path, unsigned int shader, char* source);
 static uint8_t shader_compile(const char* name, unsigned int shader, char* source);
 static char* expand_str(char* str, size_t new_size);
-static char* shader_parse(const char* shader_path);
+static char* shader_parse_include(const char* shader_path, size_t* size_out);
 
 /* -------------------- Internal Functions -------------------- */
 
@@ -150,11 +150,10 @@ static char* expand_str(char* str, size_t new_size) {
 	return str;
 }
 
-char* shader_parse_new(const char* shader_path, size_t* size_out) {
+static char* shader_parse_include(const char* shader_path, size_t* size_out) {
 	FILE* fp = fopen(shader_path, "rb");
 	if (fp == NULL) {
-		fprintf(stderr, "shader parser: Cant open file %s: No such file or directory\n", shader_path);
-		perror("shader parser");
+		fprintf(stderr, "shader: Cant include file %s: No such file or directory\n", shader_path);
 		return NULL;
 	}
 
@@ -169,7 +168,7 @@ char* shader_parse_new(const char* shader_path, size_t* size_out) {
             sscanf(line, "#include \"%255[^\"]\"", include_path);
 
 			size_t inc_size;
-			char* include_content = shader_parse_new(include_path, &inc_size);
+			char* include_content = shader_parse_include(include_path, &inc_size);
 			if (include_content == NULL) {
 				free(content);
 				return NULL;
@@ -194,10 +193,49 @@ char* shader_parse_new(const char* shader_path, size_t* size_out) {
 
 /* ------------------ External Declarations ------------------- */
 
+char* shader_parse(const char* shader_path) {
+	FILE* fp = fopen(shader_path, "rb");
+	if (fp == NULL) {
+		fprintf(stderr, "shader: Cant open file %s: No such file or directory\n", shader_path);
+		return NULL;
+	}
+
+	size_t size = 0;
+	char* content = NULL;
+
+	char line[1024];
+	while (fgets(line, sizeof(line), fp) != NULL) {
+		size_t line_size = strlen(line);
+		if (strncmp(line, "#include ", 9) == 0) {
+			char include_path[256];
+            sscanf(line, "#include \"%255[^\"]\"", include_path);
+
+			size_t inc_size;
+			char* include_content = shader_parse_include(include_path, &inc_size);
+			if (include_content == NULL) {
+				free(content);
+				return NULL;
+			}
+
+			size += inc_size;
+			content = realloc(content, size + 1); // +1 for \0
+			strcat(content, include_content);
+			free(include_content);
+		}
+		else {
+			size += line_size;
+			content = expand_str(content, size + 1); // p1 for \0
+			strcat(content, line);
+		}
+	}
+
+	fclose(fp);
+	return content;
+}
+
 void shader_init(shader* s, const char* vertsh, const char* fragsh) {
-	size_t s1, s2;
-	char* vertex_source = shader_parse_new(vertsh, &s1);
-	char* fragment_source = shader_parse_new(fragsh, &s2);
+	char* vertex_source = shader_parse(vertsh);
+	char* fragment_source = shader_parse(fragsh);
 
 	if (vertex_source == NULL || fragment_source == NULL) return;
 

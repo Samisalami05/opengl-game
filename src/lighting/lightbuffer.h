@@ -1,10 +1,10 @@
 #ifndef LIGHTBUFFER_H
 #define LIGHTBUFFER_H
 
-#include "arraylist.h"
+#include "util/arraylist.h"
 #include "light.h"
-#include "ssbo.h"
-#include "vec4.h"
+#include "core/buffers/ssbo.h"
+#include "math/vec4.h"
 
 typedef struct gpulight {
     vec4 color_intensity; // color     + intensity

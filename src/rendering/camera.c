@@ -1,7 +1,7 @@
 #include "camera.h"
-#include "mat4.h"
+#include "math/mat4.h"
 #include "math.h"
-#include "vec3.h"
+#include "math/vec3.h"
 
 void camera_init(camera* cam, float width, float height) {
 	cam->pos = (vec3){0, 0, 0};

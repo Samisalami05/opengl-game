@@ -1,5 +1,5 @@
 #include "lightbuffer.h"
-#include "ssbo.h"
+#include "core/buffers/ssbo.h"
 
 void lightbuffer_init(lightbuffer* lb) {
 	///ssbo_init(lb->ssbo, sizeof(gpulight) * 100, GL_, unsigned int binding)

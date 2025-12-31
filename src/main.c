@@ -2,23 +2,17 @@
 #include <stdio.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include "arraylist.h"
+#include "util/arraylist.h"
 #include "entity.h"
-#include "light.h"
-#include "mat4.h"
-#include "material.h"
-#include "mesh.h"
-#include "rendering.h"
+#include "lighting/light.h"
+#include "core/material.h"
+#include "core/mesh.h"
+#include "rendering/renderer.h"
 #include "resourcemanager.h"
 #include "scene.h"
 #include "scenemanager.h"
-#include "shader.h"
-#include "texture.h"
-#include "vec3.h"
-#include "camera.h"
-#include "ssbo.h"
-
-#ifndef TESTING	
+#include "math/vec3.h"
+#include "rendering/camera.h"
 
 void error_callback(int error, const char* description);
 static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -207,5 +201,3 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 	cam->rot.y += xoffset;
 	cam->rot.x += yoffset;
 }
-
-#endif

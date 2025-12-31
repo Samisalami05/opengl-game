@@ -1,8 +1,8 @@
 #include "resourcemanager.h"
-#include "hash.h"
-#include "hashmap.h"
-#include "shader.h"
-#include "texture.h"
+#include "util/hash.h"
+#include "util/hashmap.h"
+#include "core/shader.h"
+#include "core/texture.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>

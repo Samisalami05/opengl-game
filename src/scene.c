@@ -1,6 +1,6 @@
 #include "scene.h"
-#include "arraylist.h"
-#include "hashmap.h"
+#include "util/arraylist.h"
+#include "util/hashmap.h"
 #include <stdio.h>
 
 void scene_add_entity(scene* s, entity* e) { // Maybe remove these

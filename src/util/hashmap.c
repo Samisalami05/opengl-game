@@ -1,5 +1,5 @@
 #include "hashmap.h"
-#include "ivec3.h"
+#include "math/ivec3.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>

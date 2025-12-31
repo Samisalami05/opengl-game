@@ -1,9 +1,9 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 
-#include "material.h"
-#include "mesh.h"
-#include "vec3.h"
+#include "core/material.h"
+#include "core/mesh.h"
+#include "math/vec3.h"
 
 typedef struct entity {
 	vec3 position;

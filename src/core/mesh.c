@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <glad/glad.h>
-#include "arraylist.h"
-#include "hashmap.h"
-#include "ivec3.h"
+#include "util/arraylist.h"
+#include "util/hashmap.h"
+#include "math/ivec3.h"
 
 /* ------------------ Internal Declarations ------------------- */
 

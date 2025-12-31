@@ -1,7 +1,7 @@
-#include "arraylist.h"
-#include "hashmap.h"
-#include "ivec3.h"
-#include "mesh.h"
+#include "util/arraylist.h"
+#include "util/hashmap.h"
+#include "math/ivec3.h"
+#include "core/mesh.h"
 
 #include <stdio.h>
 #include <stdlib.h>

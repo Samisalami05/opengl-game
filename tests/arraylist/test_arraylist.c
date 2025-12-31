@@ -1,6 +1,6 @@
 #include "test_arraylist.h"
 #include <stdio.h>
-#include "../../src/arraylist.h"
+#include "util/arraylist.h"
 #include "../testing.h"
 
 #define INIT_ARRAYLIST(stride) arraylist a; arraylist_init(&a, stride);

@@ -2,8 +2,8 @@
 #define MESH_H
 
 #include <stddef.h>
-#include "vec3.h"
-#include "vec2.h"
+#include "math/vec3.h"
+#include "math/vec2.h"
 
 typedef struct vertex {
 	vec3 pos;

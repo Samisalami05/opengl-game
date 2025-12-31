@@ -1,12 +1,12 @@
-#include "rendering.h"
-#include "arraylist.h"
+#include "renderer.h"
+#include "util/arraylist.h"
 #include "camera.h"
 #include "entity.h"
-#include "light.h"
-#include "mat4.h"
-#include "material.h"
-#include "mesh.h"
-#include "shader.h"
+#include "lighting/light.h"
+#include "math/mat4.h"
+#include "core/material.h"
+#include "core/mesh.h"
+#include "core/shader.h"
 #include <glad/glad.h>
 #include <stdio.h>
 

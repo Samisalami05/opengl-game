@@ -1,5 +1,5 @@
 #include "test_hashmap.h"
-#include <hashmap.h>
+#include <util/hashmap.h>
 #include <stdint.h>
 #include <stdio.h>
 #include "../testing.h"

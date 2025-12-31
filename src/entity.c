@@ -1,5 +1,5 @@
 #include "entity.h"
-#include "arraylist.h"
+#include "util/arraylist.h"
 #include "scene.h"
 #include "scenemanager.h"
 
