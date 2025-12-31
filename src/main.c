@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "engine.h"
 #include "util/arraylist.h"
 #include "entity.h"
 #include "lighting/light.h"
@@ -22,33 +23,7 @@ static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 static float deltatime;
 
 int main(void) {
-    if (!glfwInit()) {
-		fprintf(stderr, "Failed to initialize glfw\n");
-        return 1;
-	}
-
-	glfwWindowHint(GLFW_DEPTH_BITS, 24);
-
-    GLFWwindow* window = glfwCreateWindow(640, 480, "game", NULL, NULL);
-    if (!window) {
-        glfwTerminate();
-		fprintf(stderr, "Failed to create glfw window\n");
-        return 1;
-    }
-
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	glfwSetErrorCallback(error_callback);
-    glfwMakeContextCurrent(window);
-
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-		fprintf(stderr, "Failed to load glad\n");
-		return 1;
-	}
-
-	glEnable(GL_DEPTH_TEST);
-
-	resource_manager_init();
-	scenemanager_init();
+    game* game = engine_init();
 	
 	mesh* cube = mesh_load_obj_new("assets/character.obj");
 	mesh* plane = mesh_load_obj_new("assets/cube.obj");
@@ -81,13 +56,13 @@ int main(void) {
 	arraylist_append(&scene->lights, &pointlight1);
 	arraylist_append(&scene->lights, &pointlight2);
 
-	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetCursorPosCallback(game->window, mouse_callback);
 
 	float last_frame = 0.0f;
 	
 	float time = 0;
 
-    while (!glfwWindowShouldClose(window))
+    while (!glfwWindowShouldClose(game->window))
     {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -95,7 +70,7 @@ int main(void) {
 		deltatime = current_frame - last_frame;
 		last_frame = current_frame;
 
-		process_input(window, deltatime);
+		process_input(game->window, deltatime);
 
 		time += deltatime / 8;
 
@@ -108,16 +83,13 @@ int main(void) {
 		
 		render_scene(sm_get_current_scene());
 
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(game->window);
         glfwPollEvents();
     }
 
 	//mesh_delete(triangle);
 	mesh_delete(cube);
-	scenemanager_deinit();
-	resource_manager_deinit();
-
-    glfwTerminate();
+	engine_deinit(game);
     return 0;
 }
 

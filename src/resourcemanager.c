@@ -25,12 +25,21 @@ uint64_t shader_hash(const void* v) {
 	return hash;
 }
 
+static void free_hashmap_content(hashmap* m) {
+	void** values = hashmap_values(m);
+	for (int i = 0; i < m->count; i++) {
+		free(values[i]);
+	}
+}
+
 void resource_manager_init() {
 	hashmap_init(&texture_map, sizeof(texture*), sizeof(char*), str_hash);
 	hashmap_init(&shader_map, sizeof(shader*), sizeof(shader_key), shader_hash);
 }
 
 void resource_manager_deinit() {
+	free_hashmap_content(&texture_map);
+	free_hashmap_content(&shader_map);
 	hashmap_deinit(&texture_map);
 	hashmap_deinit(&shader_map);
 }
