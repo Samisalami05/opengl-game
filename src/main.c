@@ -9,6 +9,7 @@
 #include "material.h"
 #include "mesh.h"
 #include "rendering.h"
+#include "resourcemanager.h"
 #include "scene.h"
 #include "scenemanager.h"
 #include "shader.h"
@@ -52,7 +53,8 @@ int main(void) {
 
 	glEnable(GL_DEPTH_TEST);
 
-	sm_init();
+	resource_manager_init();
+	scenemanager_init();
 	
 	mesh* cube = mesh_load_obj_new("assets/character.obj");
 	mesh* plane = mesh_load_obj_new("assets/cube.obj");
@@ -62,7 +64,6 @@ int main(void) {
 	material_init(&player_mat, MAT_COLOR_LIT);
 	ground_mat.tiling = (vec2){100.0f, 100.0f};
 	player_mat.shininess = 100.0f;
-	player_mat.color = (vec3){1.0f, 0.0f, 0.0f};
 	
 	entity* player = entity_create(cube, &player_mat);
 	entity* ground = entity_create(plane, &ground_mat);
@@ -71,15 +72,17 @@ int main(void) {
 	ground->scale.x = 100;
 	ground->scale.z = 100;
 	
-	ground_mat.albedo_tex = texture_create("assets/grass.jpg", GL_RGB);
+	ground_mat.albedo_tex = load_texture("assets/grass.jpg");
 	
 	scene* scene = sm_get_current_scene();
 	
 	light pointlight1, pointlight2;
 	light_init_point(&pointlight1, (vec3){2.0f, 8.0f, 1.0f});
 	light_init_point(&pointlight2, (vec3){-2.0f, 13.0f, -2.0f});
-	pointlight1.color = (vec3){1.0f, 1.0f, 0.8f};
-	pointlight2.color = (vec3){1.0f, 1.0f, 0.8f};
+	pointlight1.color = (vec3){1.0f, 0.5f, 0.2f};
+	pointlight2.color = (vec3){0.5f, 0.2f, 1.0f};
+	pointlight1.intensity = 0.5f;
+	pointlight2.intensity = 0.5f;
 
 	arraylist_append(&scene->lights, &pointlight1);
 	arraylist_append(&scene->lights, &pointlight2);
@@ -117,7 +120,8 @@ int main(void) {
 
 	//mesh_delete(triangle);
 	mesh_delete(cube);
-	sm_deinit();
+	scenemanager_deinit();
+	resource_manager_deinit();
 
     glfwTerminate();
     return 0;

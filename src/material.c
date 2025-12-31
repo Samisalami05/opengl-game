@@ -1,7 +1,9 @@
 #include "material.h"
+#include "resourcemanager.h"
 #include "shader.h"
 #include "texture.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 void material_init(material* m, material_type type) {
 	m->type = type;
@@ -15,15 +17,24 @@ void material_init(material* m, material_type type) {
 
 	switch (m->type) {
 		case MAT_COLOR_LIT:
-			shader_init(&m->shader, "shaders/basic.vert", "shaders/color_lit.frag");
+			m->shader = load_shader("shaders/basic.vert", "shaders/color_lit.frag");
 			break;
 		case MAT_COLOR_UNLIT:
-			shader_init(&m->shader, "shaders/basic.vert", "shaders/color_unlit.frag");
+			m->shader = load_shader("shaders/basic.vert", "shaders/color_unlit.frag");
 			break;
 		case MAT_TEXTURE_LIT:
-			shader_init(&m->shader, "shaders/basic.vert", "shaders/texture_lit.frag");
-			m->albedo_tex = texture_create("assets/white.png", GL_RGBA);
+			m->shader = load_shader("shaders/basic.vert", "shaders/texture_lit.frag");
+			m->albedo_tex = load_texture("assets/white.png");
 			m->tiling = (vec2){1.0f, 1.0f};
+			break;
+		case MAT_TEXTURE_UNLIT:
+			m->shader = load_shader("shaders/basic.vert", "shaders/texture_unlit.frag");
+			m->albedo_tex = load_texture("assets/white.png");
+			m->tiling = (vec2){1.0f, 1.0f};
+			break;
+		case MAT_UNINITIALIZED:
+			m->shader = NULL;
+			m->albedo_tex = NULL;
 			break;
 		default:
 			fprintf(stderr, "Material type not implemented\n");
@@ -46,13 +57,12 @@ void material_use(material* m) {
 	switch (m->type) {
 		case MAT_COLOR_LIT:
 			bind_material_lighting(m);	
-			shader_set_vec3(m->shader, "mat.color", m->color);
-			break;
 		case MAT_COLOR_UNLIT:
 			shader_set_vec3(m->shader, "mat.color", m->color);
 			break;
 		case MAT_TEXTURE_LIT:
 			bind_material_lighting(m);
+		case MAT_TEXTURE_UNLIT:
 			shader_set_int(m->shader, "mat.albedo_tex", 0);
 			shader_set_vec3(m->shader, "mat.color", m->color);
 			shader_set_vec2(m->shader, "mat.tiling", m->tiling);
@@ -65,5 +75,5 @@ void material_use(material* m) {
 
 void material_deinit(material* m) {
 	shader_deinit(m->shader);
-	texture_delete(m->albedo_tex);
+	m->albedo_tex = NULL;
 }

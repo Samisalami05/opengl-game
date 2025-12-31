@@ -3,8 +3,8 @@
 
 #include "scene.h"
 
-void sm_init();
-void sm_deinit();
+void scenemanager_init();
+void scenemanager_deinit();
 scene* sm_create_scene(char* name);
 void sm_load_scene(int scene_id);
 void sm_load_scene_name(char* name);

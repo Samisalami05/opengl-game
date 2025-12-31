@@ -154,6 +154,7 @@ char* shader_parse_new(const char* shader_path, size_t* size_out) {
 	FILE* fp = fopen(shader_path, "rb");
 	if (fp == NULL) {
 		fprintf(stderr, "shader parser: Cant open file %s: No such file or directory\n", shader_path);
+		perror("shader parser");
 		return NULL;
 	}
 
@@ -186,6 +187,7 @@ char* shader_parse_new(const char* shader_path, size_t* size_out) {
 		}
 	}
 
+	fclose(fp);
 	*size_out = size;
 	return content;
 }
@@ -218,37 +220,37 @@ void shader_init(shader* s, const char* vertsh, const char* fragsh) {
 	glDeleteShader(fragment);
 }
 
-void shader_use(shader s) {
-	glUseProgram(s.id);
+void shader_use(shader* s) {
+	glUseProgram(s->id);
 }
 
-void shader_deinit(shader s) {
-	glDeleteProgram(s.id);
+void shader_deinit(shader* s) {
+	glDeleteProgram(s->id);
 }
 
-void shader_set_int(shader s, const char* n, int v) {
-	glUniform1i(glGetUniformLocation(s.id, n), v);
+void shader_set_int(shader* s, const char* n, int v) {
+	glUniform1i(glGetUniformLocation(s->id, n), v);
 }
-void shader_set_uint(shader s, const char* n, unsigned int v) {
-	glUniform1ui(glGetUniformLocation(s.id, n), v);
-}
-
-void shader_set_float(shader s, const char* n, float v) {
-	glUniform1f(glGetUniformLocation(s.id, n), v);
+void shader_set_uint(shader* s, const char* n, unsigned int v) {
+	glUniform1ui(glGetUniformLocation(s->id, n), v);
 }
 
-void shader_set_vec2(shader s, const char* n, vec2 v) {
-	glUniform2f(glGetUniformLocation(s.id, n), v.x, v.y);
+void shader_set_float(shader* s, const char* n, float v) {
+	glUniform1f(glGetUniformLocation(s->id, n), v);
 }
 
-void shader_set_vec3(shader s, const char* n, vec3 v) {
-	glUniform3f(glGetUniformLocation(s.id, n), v.x, v.y, v.z);
+void shader_set_vec2(shader* s, const char* n, vec2 v) {
+	glUniform2f(glGetUniformLocation(s->id, n), v.x, v.y);
 }
 
-void shader_set_vec4(shader s, const char* n, vec4 v) {
-	glUniform4f(glGetUniformLocation(s.id, n), v.x, v.y, v.z, v.w);
+void shader_set_vec3(shader* s, const char* n, vec3 v) {
+	glUniform3f(glGetUniformLocation(s->id, n), v.x, v.y, v.z);
 }
 
-void shader_set_mat4(shader s, const char* n, mat4 v) {
-	glUniformMatrix4fv(glGetUniformLocation(s.id, n), 1, GL_FALSE, (const float*)v.data);
+void shader_set_vec4(shader* s, const char* n, vec4 v) {
+	glUniform4f(glGetUniformLocation(s->id, n), v.x, v.y, v.z, v.w);
+}
+
+void shader_set_mat4(shader* s, const char* n, mat4 v) {
+	glUniformMatrix4fv(glGetUniformLocation(s->id, n), 1, GL_FALSE, (const float*)v.data);
 }

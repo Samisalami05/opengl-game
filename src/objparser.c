@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-static uint64_t face_hash(void* v) {
-	ivec3* face = v;
+static uint64_t face_hash(const void* v) {
+	const ivec3* face = v;
 	return ((uint64_t)face->x << 42) | 
 		((uint64_t)face->y << 21) |
 		(uint64_t)face->z;

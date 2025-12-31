@@ -7,13 +7,13 @@
 
 #define INIT_HASHMAP(v_size, k_size, hash) hashmap m; hashmap_init(&m, v_size, k_size, hash);
 
-uint64_t test_hash(void* v) {
+uint64_t test_hash(const void* v) {
 	if (v == NULL) return 0;
-	int* i = (int*)v;
+	const int* i = v;
 	return *i;
 }
 
-uint64_t probe_hash(void* v) {
+uint64_t probe_hash(const void* v) {
 	return 0;
 }
 

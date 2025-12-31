@@ -9,13 +9,14 @@
 typedef enum material_type {
 	MAT_COLOR_LIT,
 	MAT_COLOR_UNLIT,
-	MAT_TEXTURE_LIT, // TODO: Implement these
+	MAT_TEXTURE_LIT,
 	MAT_TEXTURE_UNLIT,
+	MAT_UNINITIALIZED,
 } material_type;
 
 typedef struct material {
 	material_type type;
-	shader shader;
+	shader* shader;
 
 	texture* albedo_tex;
 	//texture* normal_tex;

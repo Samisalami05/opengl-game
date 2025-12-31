@@ -2,6 +2,7 @@
 #include "arraylist.h"
 #include "camera.h"
 #include "entity.h"
+#include "hash.h"
 #include "hashmap.h"
 #include "light.h"
 #include "material.h"
@@ -15,26 +16,15 @@ static arraylist sm_scenes;
 static hashmap sm_scene_names;
 static unsigned int sm_curr_scene_id;
 
-uint64_t sm_name_hash(void* v) { // TODO: Fix this hash function
-	char* name = v;
-	uint64_t hash = 0;
-	int id = 0;
-	while (*name) {
-		hash += (id*256)+(*(int*)name);
-		name++;
-	}
-	return hash;
-}
-
-void sm_init() {
+void scenemanager_init() {
 	arraylist_init(&sm_scenes, sizeof(scene));
-	hashmap_init(&sm_scene_names, sizeof(unsigned int), sizeof(char*), sm_name_hash);
+	hashmap_init(&sm_scene_names, sizeof(unsigned int), sizeof(char*), str_hash);
 	sm_curr_scene_id = 0;
 
 	sm_create_scene("Default Scene");
 }
 
-void sm_deinit() {
+void scenemanager_deinit() {
 	arraylist_deinit(&sm_scenes);
 	hashmap_deinit(&sm_scene_names);
 }
@@ -64,7 +54,7 @@ scene* sm_create_scene(char* name) {
 		.type = LIGHT_GLOBAL,
 		.color = {1.0f, 1.0f, 0.8f},
 		.dir = {0.5f, -0.5f, 0.2f},
-		.intensity = 0.5f,
+		.intensity = 0.4f,
 	};
 	arraylist_append(&s.lights, &sun);
 

@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef uint64_t (*hashfunc)(void*);
+typedef uint64_t (*hashfunc)(const void*);
 
 typedef struct bucket {
 	void* value;
@@ -25,8 +25,8 @@ void hashmap_init(hashmap* m, size_t v_size, size_t k_size, hashfunc hash);
 void hashmap_init_detailed(hashmap* m, size_t v_size, size_t k_size, size_t buckets, hashfunc hash);
 void hashmap_deinit(hashmap* m);
 
-void hashmap_put(hashmap* m, void* k, void* v);
-void* hashmap_get(hashmap* m, void* k);
+void* hashmap_put(hashmap* m, const void* k, const void* v);
+void* hashmap_get(hashmap* m, const void* k);
 void* hashmap_values(hashmap* m);
 void* hashmap_keys(hashmap* m);
 

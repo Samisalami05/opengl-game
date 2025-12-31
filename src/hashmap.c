@@ -52,10 +52,6 @@ static uint8_t expand(hashmap* m) {
 	}
 
 	free(old);
-
-	//printf("resizeing from %ld to %ld\n", prev_count, m->b_count);
-	//printf("resize complete\n");
-	
 	return 0;
 }
 
@@ -84,37 +80,32 @@ void hashmap_deinit(hashmap* m) {
 	m->buckets = NULL;
 }
 
-void printf_func(void* v) {
-	printf("%-3d", *(int*)v);
-}
-
-void hashmap_put(hashmap* m, void* k, void* v) {
-	//printf("inserting %d\n", *(int*)v);
+void* hashmap_put(hashmap* m, const void* k, const void* v) {
 	void* value = calloc(1, m->v_size);
 	memcpy(value, v, m->v_size);
 	void* key = calloc(1, m->k_size);
 	memcpy(key, k, m->k_size);
+	
+	void* ret = NULL;
 
 	if (m->count == m->b_count) {
 		if (expand(m)) {
 			free(value);
 			free(key);
-			return;
+			return NULL;
 		}
 	}
 
 	uint64_t p =  m->hash(key) % m->b_count;
 	int vpsl = 0;  // probe sequence length
 	while (m->buckets[p].key != NULL && m->buckets[p].value != NULL) {
-		//printf("vpsl: %d, p: %ld\n", vpsl, p);
 		if (vpsl >= m->b_count) {
 			if (expand(m)) {
 				free(value);
 				free(key);
-				return;
+				return NULL;
 			}
 			p = m->hash(key) % m->b_count;
-			//printf("new p: %ld\n", p);
 			vpsl = 0;
 			continue;
 		}
@@ -127,30 +118,36 @@ void hashmap_put(hashmap* m, void* k, void* v) {
 		}
 
 		if (vpsl > bucket->probe) {
-			//printf("swapping %d %d\n", *(int*)bucket->value, *(int*)value);
 			swap(bucket->value, value, m->v_size);
 			swap(bucket->key, key, m->k_size);
 			int tmp_probe = bucket->probe;
 			bucket->probe = vpsl;
 			vpsl = tmp_probe;
+			if (memcmp(bucket->key, k, m->k_size) == 0) {
+				ret = bucket->value;
+			}
 		}
 
 		p = (p + 1) % m->b_count;
 		vpsl++;
 	}
 
-	//printf("Found unoccupied slot %ld\n", p);
-
 	bucket_set_v(&m->buckets[p], m->v_size, value);
 	bucket_set_k(&m->buckets[p], m->k_size, key);
 	m->buckets[p].probe = vpsl;
 	m->count++;
 
+	if (memcmp(m->buckets[p].key, k, m->k_size) == 0) {
+		ret = m->buckets[p].value;
+	}
+
 	free(value);
 	free(key);
+
+	return ret;
 }
 
-void* hashmap_get(hashmap* m, void* k) {
+void* hashmap_get(hashmap* m, const void* k) {
 	uint64_t steps = 0;
 	uint64_t p = m->hash(k) % m->b_count;
 	while (1) {
