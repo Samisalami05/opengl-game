@@ -59,6 +59,7 @@ int main(void) {
 	float last_frame = 0.0f;
 	
 	float time = 0;
+	int i = 0;
 
     while (!glfwWindowShouldClose(game->window))
     {
@@ -81,7 +82,8 @@ int main(void) {
 		
 		render_scene(sm_get_current_scene());
 		
-		if ((int)(time * 100) % 10 == 0) printf("fps: %f\n", 1 / deltatime);
+		if (i % (int)(1000 * deltatime) == 0) printf("fps: %f\n", 1 / deltatime);
+		i += 1;
 
         glfwSwapBuffers(game->window);
         glfwPollEvents();
