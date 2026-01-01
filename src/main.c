@@ -59,6 +59,7 @@ int main(void) {
 	float last_frame = 0.0f;
 	
 	float time = 0;
+	int i = 0;
 
     while (!glfwWindowShouldClose(game->window))
     {
@@ -80,6 +81,9 @@ int main(void) {
 		sun->dir.z = sinf(time);
 		
 		render_scene(sm_get_current_scene());
+		
+		if (i % 10000 == 0) printf("fps: %f\n", 1 / deltatime);
+		i++;
 
         glfwSwapBuffers(game->window);
         glfwPollEvents();
@@ -133,26 +137,19 @@ static void process_input(GLFWwindow* window, float deltatime) {
 	}
 }
 
-char first_mouse = 1;
-float last_x = 320;
-float last_y = 240;
+static float last_x = 0;
+static float last_y = 0;
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 	scene* scene = sm_get_current_scene();
-	
-	if (first_mouse) {
-		last_x = xpos;
-		last_y = ypos;
-		first_mouse = 0;
-	}
 
 	float xoffset = xpos - last_x;
 	float yoffset = ypos - last_y;
 	last_x = xpos;
 	last_y = ypos;
 
-	float sensitivity = 0.5f;
-	xoffset *= sensitivity * deltatime;
-	yoffset *= sensitivity * deltatime;
+	float sensitivity = 0.005f;
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
 
 	camera* cam = &scene->cam;
 
