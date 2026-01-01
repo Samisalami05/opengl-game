@@ -14,6 +14,7 @@
 #include "scenemanager.h"
 #include "math/vec3.h"
 #include "rendering/camera.h"
+#include "math/mathutil.h"
 
 static void process_input(GLFWwindow* window, float deltatime);
 static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -82,7 +83,7 @@ int main(void) {
 		
 		render_scene(sm_get_current_scene());
 		
-		if (i % (int)(1000 * deltatime) == 0) printf("fps: %f\n", 1 / deltatime);
+		if (i % max((int)(1 / deltatime), 1) == 0) printf("fps: %f\n", 1 / deltatime);
 		i += 1;
 
         glfwSwapBuffers(game->window);
