@@ -59,7 +59,6 @@ int main(void) {
 	float last_frame = 0.0f;
 	
 	float time = 0;
-	int i = 0;
 
     while (!glfwWindowShouldClose(game->window))
     {
@@ -71,19 +70,18 @@ int main(void) {
 
 		process_input(game->window, deltatime);
 
-		time += deltatime / 8;
+		time += deltatime;
 
 		//e->rotation.y += deltatime / 2;
 
 		light* sun = arraylist_get(&scene->lights, 0);
 
-		sun->dir.x = cosf(time);
-		sun->dir.z = sinf(time);
+		sun->dir.x = cosf(time / 4);
+		sun->dir.z = sinf(time / 4);
 		
 		render_scene(sm_get_current_scene());
 		
-		if (i % 10000 == 0) printf("fps: %f\n", 1 / deltatime);
-		i++;
+		if ((int)(time * 100) % 10 == 0) printf("fps: %f\n", 1 / deltatime);
 
         glfwSwapBuffers(game->window);
         glfwPollEvents();
