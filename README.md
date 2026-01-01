@@ -14,3 +14,16 @@ The project is currently in the initial engine building process.
 * glad
 * OpenGL
 * stb\_image
+
+## Building
+
+### Linux
+```
+make -f LinuxMakefile
+```
+
+### Windows
+```
+cmake -S . -B build -G "MinGW Makefiles"
+cmake --build build
+```

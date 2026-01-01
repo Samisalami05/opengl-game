@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 /* ------------------ Internal Declarations ------------------- */
 
@@ -111,8 +112,13 @@ static void shader_compile_error(const char* path, unsigned int shader, char* so
 	int info_length;
 	char info_log[512];
 	glGetShaderInfoLog(shader, 512, &info_length, info_log);
+	
+	if (info_length < 1) {
+		fprintf(stderr, "shader: No compilation error log found for shader %s\n", path);
+		return;
+	}
 
-	char message[info_length - 8 + 1]; // 8 is the minimum size of the beginning of info log
+	char message[info_length + 1];
 	log_message(message, info_log, sizeof(message));
 
 	int tmp; // TODO: what does this do
