@@ -1,6 +1,6 @@
 #include "camera.h"
 #include "math/mat4.h"
-#include "math.h"
+#include <math.h>
 #include "math/vec3.h"
 
 void camera_init(camera* cam, float width, float height) {

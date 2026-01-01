@@ -17,7 +17,7 @@ TEST_OBJS := $(patsubst %.c,$(BUILDDIR)/%.o,$(TEST_SRCS))
 TEST_APP_OBJS := $(filter-out $(MAIN_OBJ),$(OBJS))
 
 CFLAGS := -Wall -ggdb
-INCLUDES := -Isrc -Ilibs/glfw-3.4/include -Ilibs/glad/include -Ilibs
+INCLUDES := -Isrc -Isrc/engine -Ilibs/glfw-3.4/include -Ilibs/glad/include -Ilibs
 LDLIBS := -lm -lglfw -ldl -lGL
 
 $(NAME): $(OBJS)

@@ -15,8 +15,6 @@
 #include "math/vec3.h"
 #include "rendering/camera.h"
 
-void error_callback(int error, const char* description);
-static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 static void process_input(GLFWwindow* window, float deltatime);
 static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 
@@ -91,18 +89,6 @@ int main(void) {
 	mesh_delete(cube);
 	engine_deinit(game);
     return 0;
-}
-
-void error_callback(int error, const char* description) {
-    fprintf(stderr, "%d Error: %s\n", error, description);
-}
-
-static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    glViewport(0, 0, width, height);
-	scene* scene = sm_get_current_scene();
-	scene->cam.width = width;
-	scene->cam.height = height;
 }
 
 static void process_input(GLFWwindow* window, float deltatime) {
