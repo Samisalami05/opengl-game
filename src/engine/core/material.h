@@ -32,7 +32,7 @@ typedef struct material {
 	vec3 specular;
 	float shininess;
 
-	vec3 emission;
+	vec3 emission; // TODO: Implement this
 	float emission_str;
 
 	vec2 tiling;
