@@ -17,13 +17,21 @@ The project is currently in the initial engine building process.
 
 ## Building
 
+The project is built using cmake and works for both linux and windows.
+The building is not tested on mac but might work.
+
 ### Linux
 ```
-make -f LinuxMakefile
+git clone https://github.com/Samisalami05/opengl-game.git
+cd opengl-game
+cmake -B build
+cmake --build build
 ```
 
 ### Windows
 ```
-cmake -S . -B build -G "MinGW Makefiles"
+git clone https://github.com/Samisalami05/opengl-game.git
+cd opengl-game
+cmake -B build -G "MinGW Makefiles"
 cmake --build build
 ```
