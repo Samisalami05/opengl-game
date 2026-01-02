@@ -2,11 +2,12 @@
 #include <stdio.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "core/cubemap.h"
 #include "engine.h"
 #include "util/arraylist.h"
 #include "entity.h"
 #include "lighting/light.h"
-#include "core/material.h"
+#include "material.h"
 #include "core/mesh.h"
 #include "rendering/renderer.h"
 #include "resourcemanager.h"
@@ -15,6 +16,7 @@
 #include "math/vec3.h"
 #include "rendering/camera.h"
 #include "math/mathutil.h"
+#include "core/cubemap.h"
 
 static void process_input(GLFWwindow* window, float deltatime);
 static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -23,20 +25,33 @@ static float deltatime;
 
 int main(void) {
     game* game = engine_init();
+
+	const char* skybox_faces[] = {
+		"assets/skybox/right.jpg",
+		"assets/skybox/left.jpg",
+		"assets/skybox/top.jpg",
+		"assets/skybox/bottom.jpg",
+		"assets/skybox/front.jpg",
+		"assets/skybox/back.jpg",
+	};
+
+	cubemap skybox;
+	cubemap_init(&skybox, skybox_faces);
 	
-	mesh* cube = mesh_load_obj_new("assets/character.obj");
+	mesh* cube = mesh_load_obj_new("assets/person.obj");
 	mesh* plane = mesh_load_obj_new("assets/cube.obj");
 
 	material ground_mat, player_mat;
 	material_init(&ground_mat, MAT_TEXTURE_LIT);
 	material_init(&player_mat, MAT_COLOR_LIT);
 	ground_mat.tiling = (vec2){100.0f, 100.0f};
-	player_mat.shininess = 100.0f;
+	player_mat.shininess = 1.0f;
 	
 	entity* player = entity_create(cube, &player_mat);
 	entity* ground = entity_create(plane, &ground_mat);
 
 	player->position.y += 10;
+	player->scale = (vec3){5, 5, 5};
 	ground->scale.x = 100;
 	ground->scale.z = 100;
 	

@@ -39,7 +39,7 @@ void texture_init(texture* t, const char* path) {
 	GLenum format = texture_format(channel_count);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, t->width, t->height, 0, format, GL_UNSIGNED_BYTE, data);
-	glGenerateMipmap(GL_TEXTURE_2D);
+	glGenerateMipmap(GL_TEXTURE_2D); // This should probably not be here
 
 	stbi_image_free(data);
 }

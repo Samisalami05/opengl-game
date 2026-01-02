@@ -196,6 +196,7 @@ mesh* mesh_load_obj(char* filepath) {
 }
 
 void mesh_delete(mesh *m) {
+	// TODO: delete buffers
 	free(m);
 }
 

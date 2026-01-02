@@ -1,10 +1,12 @@
 #include "renderer.h"
+#include "core/cubemap.h"
+#include "skybox.h"
 #include "util/arraylist.h"
 #include "camera.h"
 #include "entity.h"
 #include "lighting/light.h"
 #include "math/mat4.h"
-#include "core/material.h"
+#include "material.h"
 #include "core/mesh.h"
 #include "core/shader.h"
 #include <glad/glad.h>
@@ -38,7 +40,25 @@ void render_entity(entity* e, camera* cam) {
 	render_mesh(e->mesh, e->mat, cam);
 }
 
+void render_skybox(skybox* sb, camera* cam) {
+	glDepthMask(GL_FALSE);
+	shader_use(sb->shader);
+
+	mat4 view = camera_view_no_translate(cam);
+	mat4 proj = camera_proj(cam);
+	shader_set_mat4(sb->shader, "view", view);
+	shader_set_mat4(sb->shader, "projection", proj);
+
+	glBindVertexArray(sb->vao);
+	cubemap_use(&sb->cubemap, 0);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
+
+	glDepthMask(GL_TRUE);
+}
+
 void render_scene(scene* s) {
+	render_skybox(&s->skybox, &s->cam);
 	for (int i = 0; i < s->entities.count; i++) {
 		entity* e = &((entity*)s->entities.data)[i];
 		material_use(e->mat);

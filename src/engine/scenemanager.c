@@ -5,7 +5,7 @@
 #include "util/hash.h"
 #include "util/hashmap.h"
 #include "lighting/light.h"
-#include "core/material.h"
+#include "material.h"
 #include "core/mesh.h"
 #include "scene.h"
 #include <stdint.h>
@@ -36,27 +36,7 @@ scene* sm_create_scene(char* name) {
 	}
 
 	scene s;
-	s.id = sm_scenes.count;
-	s.name = name;
-	camera_init(&s.cam, 800, 800);
-	arraylist_init(&s.entities, sizeof(entity));
-	arraylist_init(&s.lights, sizeof(light));
-	
-	mesh* cube_mesh = mesh_load_obj_new("assets/cube.obj");
-	material* mat = malloc(sizeof(material));
-	material_init(mat, MAT_COLOR_UNLIT);
-
-	entity_init(&s.light_entity, cube_mesh, mat);
-	s.light_entity.scale = (vec3){0.5f, 0.5, 0.5f};
-
-	// Create default sun
-	light sun = {
-		.type = LIGHT_GLOBAL,
-		.color = {1.0f, 1.0f, 0.8f},
-		.dir = {0.5f, -0.5f, 0.2f},
-		.intensity = 0.2f,
-	};
-	arraylist_append(&s.lights, &sun);
+	scene_init(&s, sm_scenes.count, name);
 
 	arraylist_append(&sm_scenes, &s);
 	hashmap_put(&sm_scene_names, name, &s.id);

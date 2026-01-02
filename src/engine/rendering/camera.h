@@ -19,6 +19,7 @@ typedef struct camera {
 void camera_init(camera* cam, float width, float height);
 
 mat4 camera_view(camera* cam);
+mat4 camera_view_no_translate(camera* cam);
 
 mat4 camera_proj(camera* cam);
 

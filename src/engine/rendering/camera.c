@@ -27,6 +27,13 @@ mat4 camera_view(camera* cam) {
 	//return mat4_lookat(cam->pos, dest);
 }
 
+mat4 camera_view_no_translate(camera* cam) {
+	mat4 view;
+	mat4_identity(&view);
+	mat4_rotate(&view, vec3_inverse(cam->rot));
+	return view;
+}
+
 mat4 camera_proj(camera* cam) {
 	mat4 proj;
 	mat4_identity(&proj);

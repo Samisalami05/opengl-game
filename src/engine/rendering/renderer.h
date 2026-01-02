@@ -4,7 +4,7 @@
 #include "entity.h"
 #include "core/mesh.h"
 #include "scene.h"
-#include "core/material.h"
+#include "material.h"
 #include "rendering/camera.h"
 
 void render_mesh(mesh* m, material* mat, camera* cam);

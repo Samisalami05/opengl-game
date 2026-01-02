@@ -1,7 +1,7 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 
-#include "core/material.h"
+#include "material.h"
 #include "core/mesh.h"
 #include "math/vec3.h"
 
