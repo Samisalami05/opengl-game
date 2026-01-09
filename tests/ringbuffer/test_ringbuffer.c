@@ -59,7 +59,7 @@ uint8_t test_ringbuffer_remove() {
 	}
 
 	for (int i = 0; i < count; i++) {
-		long* v = ringbuffer_remove(&rb);
+		long* v = ringbuffer_remove_copy(&rb);
 		TEST_ASSERT(*v == i);
 		free(v);
 	}
@@ -80,7 +80,7 @@ uint8_t test_ringbuffer_remove_raw() {
 	}
 
 	for (int i = 0; i < count; i++) {
-		long* v = ringbuffer_remove_raw(&rb);
+		long* v = ringbuffer_remove(&rb);
 		TEST_ASSERT(*v == i);
 	}
 

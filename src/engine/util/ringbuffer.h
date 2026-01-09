@@ -15,8 +15,8 @@ void ringbuffer_init(ringbuffer* rb, size_t v_size);
 void ringbuffer_deinit(ringbuffer* rb);
 
 void ringbuffer_append(ringbuffer* rb, void* v);
+void* ringbuffer_remove_copy(ringbuffer* rb);
 void* ringbuffer_remove(ringbuffer* rb);
-void* ringbuffer_remove_raw(ringbuffer* rb);
 void* ringbuffer_peek(ringbuffer* rb);
 
 #endif
