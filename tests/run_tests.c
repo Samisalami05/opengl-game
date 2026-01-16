@@ -2,6 +2,7 @@
 #include "hashmap/test_hashmap.h"
 #include "ringbuffer/test_ringbuffer.h"
 #include "shader_parsing/test_shader_parsing.h"
+#include "slotmap/test_slotmap.h"
 #include <stdio.h>
 #include "testing.h"
 
@@ -12,6 +13,7 @@ int main(void) {
 	EXECUTE_TEST(test_hashmap);
 	EXECUTE_TEST(test_shader_parsing);
 	EXECUTE_TEST(test_ringbuffer)
+	EXECUTE_TEST(test_slotmap);
 	if (g_test_env.failed == 0) 
 		printf("\n%s===== TESTS PASSED =====%s\n", COL_GREEN, COL_ENDC);
 	else 
