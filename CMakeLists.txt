@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.23)
-project(opengl-game)
+project(opengl-game LANGUAGES C CXX)
 
 set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 enable_testing()
 
@@ -16,6 +19,10 @@ add_subdirectory(libs/glfw-3.4)
 # GLAD
 add_library(glad STATIC libs/glad/glad.c)
 target_include_directories(glad PUBLIC libs/glad/include)
+
+# ASSIMP
+set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
+add_subdirectory(libs/assimp)
 
 file(GLOB_RECURSE APP_SRC
     src/engine/*.c
@@ -33,8 +40,9 @@ target_include_directories(engine PUBLIC
     libs
     libs/glfw-3.4/include
 )
+
 target_link_libraries(engine PUBLIC glad)
-target_link_libraries(engine PRIVATE glfw)
+target_link_libraries(engine PRIVATE glfw assimp)
 
 if (WIN32)
     target_link_libraries(engine PRIVATE opengl32)

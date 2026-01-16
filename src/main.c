@@ -4,6 +4,7 @@
 #include <GLFW/glfw3.h>
 #include "core/cubemap.h"
 #include "engine.h"
+#include "engine/modelloader.h"
 #include "util/arraylist.h"
 #include "entity.h"
 #include "lighting/light.h"
@@ -17,6 +18,7 @@
 #include "rendering/camera.h"
 #include "math/mathutil.h"
 #include "core/cubemap.h"
+#include "modelloader.h"
 
 static void process_input(GLFWwindow* window, float deltatime);
 static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -26,17 +28,8 @@ static float deltatime;
 int main(void) {
     game* game = engine_init();
 
-	const char* skybox_faces[] = {
-		"assets/skybox/right.jpg",
-		"assets/skybox/left.jpg",
-		"assets/skybox/top.jpg",
-		"assets/skybox/bottom.jpg",
-		"assets/skybox/front.jpg",
-		"assets/skybox/back.jpg",
-	};
-
-	cubemap skybox;
-	cubemap_init(&skybox, skybox_faces);
+	model m;
+	load_model(&m, "assets/car.obj");
 	
 	mesh* cube = mesh_load_obj_new("assets/person.obj");
 	mesh* plane = mesh_load_obj_new("assets/cube.obj");

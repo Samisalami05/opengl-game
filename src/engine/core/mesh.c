@@ -10,11 +10,11 @@
 
 /* ------------------ Internal Declarations ------------------- */
 
-static void mesh_init(mesh* m);
+static void init_buffers(mesh* m);
 
 /* -------------------- Internal Functions -------------------- */
 
-static void mesh_init(mesh* m) {
+static void init_buffers(mesh* m) {
 	glGenVertexArrays(1, &m->vao);
 	glBindVertexArray(m->vao);
 
@@ -49,9 +49,19 @@ mesh* mesh_create(vertex* vertices, int vertex_count, unsigned int* indices, int
 	m->vertex_count = vertex_count;
 	m->index_count = index_count;
 	
-	mesh_init(m);
+	init_buffers(m);
 
 	return m;
+}
+
+void mesh_init(mesh* m, vertex* vertices, int vertex_count, unsigned int* indices, int index_count) {
+	m->vertices = vertices;
+	m->indices = indices;
+
+	m->vertex_count = vertex_count;
+	m->index_count = index_count;
+	
+	init_buffers(m);
 }
 
 static uint64_t face_hash(const void* v) {
@@ -198,6 +208,10 @@ mesh* mesh_load_obj(char* filepath) {
 void mesh_delete(mesh *m) {
 	// TODO: delete buffers
 	free(m);
+}
+
+void mesh_deinit(mesh* m) {
+	// TODO: delete buffers
 }
 
 void mesh_use(mesh *m) {

@@ -26,10 +26,12 @@ typedef struct mesh {
 // --- Mesh ---
 
 mesh* mesh_create(vertex* vertices, int vertex_count, unsigned int* indices, int index_count);
+void mesh_init(mesh* m, vertex* vertices, int vertex_count, unsigned int* indices, int index_count);
 mesh* mesh_load_obj(char* filepath);
 mesh* mesh_load_obj_new(char* filepath);
 
 void mesh_delete(mesh* m);
+void mesh_deinit(mesh* m);
 void mesh_use(mesh* m);
 
 // --- Vertex ---

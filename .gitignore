@@ -5,3 +5,4 @@ main
 runtests
 vgcore*
 /assets/sponza.obj
+/build_tmp

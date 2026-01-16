@@ -1,7 +1,7 @@
 CC := gcc
 NAME := main
 SOURCEDIR := src
-BUILDDIR := build
+BUILDDIR := build_tmp
 LIBSDIR := libs
 TESTDIR := tests
 
