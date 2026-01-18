@@ -26,6 +26,23 @@ void render_mesh(mesh* m, material* mat, camera* cam) {
 	glDrawElements(GL_TRIANGLES, m->index_count, GL_UNSIGNED_INT, 0);
 }
 
+void render_model(model* m, camera* cam, vec3 pos, vec3 rot, vec3 scale) {
+	for (int i = 0; i < m->mesh_count; i++) {
+		material* mat = &m->materials[m->mesh_mat_indices[i]];
+		material_use(mat);
+
+		mat4 model;
+		mat4_identity(&model);
+
+		mat4_translate(&model, pos);
+		mat4_rotate(&model, rot);
+		mat4_scale_v3(&model, scale);
+
+		shader_set_mat4(mat->shader, "model", model);
+		render_mesh(&m->meshes[i], mat, cam);
+	}
+}
+
 void render_entity(entity* e, camera* cam) {
 	material_use(e->mat);
 

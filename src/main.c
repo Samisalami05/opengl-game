@@ -5,6 +5,8 @@
 #include "core/cubemap.h"
 #include "engine.h"
 #include "engine/modelloader.h"
+#include "inputmanager.h"
+#include "keys.h"
 #include "util/arraylist.h"
 #include "entity.h"
 #include "lighting/light.h"
@@ -19,6 +21,8 @@
 #include "math/mathutil.h"
 #include "core/cubemap.h"
 #include "modelloader.h"
+#include "util/util.h"
+#include <math.h>
 
 static void process_input(GLFWwindow* window, float deltatime);
 static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -29,7 +33,7 @@ int main(void) {
     game* game = engine_init();
 
 	model m;
-	load_model(&m, "assets/car.obj");
+	load_model(&m, "assets/diner/scene.gltf");
 	
 	mesh* cube = mesh_load_obj_new("assets/person.obj");
 	mesh* plane = mesh_load_obj_new("assets/cube.obj");
@@ -53,7 +57,7 @@ int main(void) {
 	scene* scene = sm_get_current_scene();
 	
 	light pointlight1, pointlight2;
-	light_init_point(&pointlight1, (vec3){2.0f, 8.0f, 1.0f});
+	light_init_point(&pointlight1, (vec3){2.0f, 3.0f, 1.0f});
 	light_init_point(&pointlight2, (vec3){-2.0f, 13.0f, -2.0f});
 	pointlight1.color = (vec3){1.0f, 0.5f, 0.2f};
 	pointlight2.color = (vec3){0.5f, 0.2f, 1.0f};
@@ -72,8 +76,7 @@ int main(void) {
 
     while (!glfwWindowShouldClose(game->window))
     {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		float current_frame = glfwGetTime();
 		deltatime = current_frame - last_frame;
 		last_frame = current_frame;
@@ -82,24 +85,33 @@ int main(void) {
 
 		time += deltatime;
 
-		//e->rotation.y += deltatime / 2;
+		//player->rotation.y += deltatime / 2;
 
 		light* sun = arraylist_get(&scene->lights, 0);
 
 		sun->dir.x = cosf(time / 4);
 		sun->dir.z = sinf(time / 4);
 		
-		render_scene(sm_get_current_scene());
-		
+		// FPS counter
 		if (i % max((int)(1 / deltatime), 1) == 0) printf("fps: %f\n", 1 / deltatime);
 		i += 1;
 
-        glfwSwapBuffers(game->window);
-        glfwPollEvents();
+		inputman_update(game->window);
+
+		// Rendering
+		render_scene(sm_get_current_scene());
+		render_model(&m, &sm_get_current_scene()->cam,
+			(vec3){0},
+			(vec3){0},
+			(vec3){3.0f, 3.0f, 3.0f}
+		);
+		
+		engine_end_frame(game);
     }
 
 	//mesh_delete(triangle);
 	mesh_delete(cube);
+	model_deinit(&m);
 	engine_deinit(game);
     return 0;
 }
@@ -112,56 +124,50 @@ static void process_input(GLFWwindow* window, float deltatime) {
 
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
 		vec3 move = camera_right(*cam);
-		vec3_mul_f(&move, deltatime * camera_speed);
-		vec3_sub_v3(&cam->pos, move);
+		move = vec3_mul_f(move, deltatime * camera_speed);
+		cam->pos = vec3_sub_v3(cam->pos, move);
 	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
 		vec3 move = camera_right(*cam);
-		vec3_mul_f(&move, deltatime * camera_speed);
-		vec3_add_v3(&cam->pos, move);
+		move = vec3_mul_f(move, deltatime * camera_speed);
+		cam->pos = vec3_add_v3(cam->pos, move);
 	}
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
 		vec3 move = camera_forward(*cam);
-		vec3_mul_f(&move, deltatime * camera_speed);
-		vec3_add_v3(&cam->pos, move);
+		move = vec3_mul_f(move, deltatime * camera_speed);
+		cam->pos = vec3_add_v3(cam->pos, move);
 		//vec3_sub_v3(&cam->pos, move);
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
 		vec3 move = camera_forward(*cam);
-		vec3_mul_f(&move, deltatime * camera_speed);
-		vec3_sub_v3(&cam->pos, move);
+		move = vec3_mul_f(move, deltatime * camera_speed);
+		cam->pos = vec3_sub_v3(cam->pos, move);
 		//vec3_add_v3(&cam->pos, move);
 	}
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
 		vec3 move = {0.0f, 1.0f, 0.0f};
-		vec3_mul_f(&move, deltatime * camera_speed);
-		vec3_add_v3(&cam->pos, move);
+		move = vec3_mul_f(move, deltatime * camera_speed);
+		cam->pos = vec3_add_v3(cam->pos, move);
 		//vec3_sub_v3(&cam->pos, move);
 	}
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
 		vec3 move = {0.0f, 1.0f, 0.0f};
-		vec3_mul_f(&move, deltatime * camera_speed);
-		vec3_sub_v3(&cam->pos, move);
+		move = vec3_mul_f(move, deltatime * camera_speed);
+		cam->pos = vec3_sub_v3(cam->pos, move);
 		//vec3_add_v3(&cam->pos, move);
 	}
 }
+// TODO: move these into camera
 
 static float last_x = 0;
 static float last_y = 0;
 void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
 	scene* scene = sm_get_current_scene();
+	camera* cam = &scene->cam;
 
 	float xoffset = xpos - last_x;
 	float yoffset = ypos - last_y;
 	last_x = xpos;
 	last_y = ypos;
-
-	float sensitivity = 0.005f;
-	xoffset *= sensitivity;
-	yoffset *= sensitivity;
-
-	camera* cam = &scene->cam;
-
-	cam->rot.y += xoffset;
-	cam->rot.x += yoffset;
+	camera_mouse_input(cam, xoffset, yoffset);
 }

@@ -1,12 +1,19 @@
 #ifndef MODELLOADER_H
 #define MODELLOADER_H
 
-#include "util/arraylist.h"
+#include "core/mesh.h"
+#include "material.h"
+#include <stdint.h>
 
 typedef struct model {
-	arraylist meshes;
+	mesh* meshes;
+	uint32_t mesh_count;
+	material* materials;
+	uint32_t material_count;
+	uint32_t* mesh_mat_indices;
 } model;
 
 void load_model(model* m, const char* file);
+void model_deinit(model* m);
 
 #endif

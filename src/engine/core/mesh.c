@@ -10,22 +10,22 @@
 
 /* ------------------ Internal Declarations ------------------- */
 
-static void init_buffers(mesh* m);
+static void init_buffers(mesh* m, vertex* vertices, uint32_t* indices);
 
 /* -------------------- Internal Functions -------------------- */
 
-static void init_buffers(mesh* m) {
+static void init_buffers(mesh* m, vertex* vertices, uint32_t* indices) {
 	glGenVertexArrays(1, &m->vao);
 	glBindVertexArray(m->vao);
 
 	glGenBuffers(1, &m->vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, m->vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * m->vertex_count, m->vertices, GL_STATIC_DRAW); // TODO: Option to change draw mode
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * m->vertex_count, vertices, GL_STATIC_DRAW); // TODO: Option to change draw mode
 	
 	glGenBuffers(1, &m->ebo);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ebo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, m->index_count * sizeof(unsigned int), m->indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, m->index_count * sizeof(uint32_t), indices, GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)0);
@@ -41,27 +41,22 @@ static void init_buffers(mesh* m) {
 
 // --- Mesh ---
 
-mesh* mesh_create(vertex* vertices, int vertex_count, unsigned int* indices, int index_count) {
+mesh* mesh_create(vertex* vertices, uint32_t vertex_count, uint32_t* indices, uint32_t index_count) {
 	mesh* m = malloc(sizeof(mesh));
-	m->vertices = vertices;
-	m->indices = indices;
 
 	m->vertex_count = vertex_count;
 	m->index_count = index_count;
 	
-	init_buffers(m);
+	init_buffers(m, vertices, indices);
 
 	return m;
 }
 
-void mesh_init(mesh* m, vertex* vertices, int vertex_count, unsigned int* indices, int index_count) {
-	m->vertices = vertices;
-	m->indices = indices;
-
+void mesh_init(mesh* m, vertex* vertices, uint32_t vertex_count, uint32_t* indices, uint32_t index_count) {
 	m->vertex_count = vertex_count;
 	m->index_count = index_count;
 	
-	init_buffers(m);
+	init_buffers(m, vertices, indices);
 }
 
 static uint64_t face_hash(const void* v) {
@@ -112,7 +107,7 @@ mesh* mesh_load_obj(char* filepath) {
 	}
 
 	hashmap vertex_map;
-	hashmap_init(&vertex_map, sizeof(unsigned int), sizeof(ivec3), face_hash);
+	hashmap_init(&vertex_map, sizeof(uint32_t), sizeof(ivec3), face_hash);
 
 	arraylist positions, normals, texcoords;
 	arraylist_init(&positions, sizeof(vec3));
@@ -120,7 +115,7 @@ mesh* mesh_load_obj(char* filepath) {
 	arraylist_init(&texcoords, sizeof(vec2));
 	
 	arraylist indices, vertices;
-	arraylist_init(&indices, sizeof(unsigned int));
+	arraylist_init(&indices, sizeof(uint32_t));
 	arraylist_init(&vertices, sizeof(vertex));
 
 	char c;
@@ -170,14 +165,14 @@ mesh* mesh_load_obj(char* filepath) {
 						.uv     = f_id.y >= 0 ? ((vec2*)texcoords.data)[f_id.y - 1] : (vec2){0, 0},
 					};
 
-					unsigned int index = vertices.count;
+					uint32_t index = vertices.count;
 					//printf("index: %d\n", index);
 					//vertex_print(v);
 					arraylist_append(&vertices, &v);
 					hashmap_put(&vertex_map, &f_id, &index);
 				}
 
-				unsigned int* ind = hashmap_get(&vertex_map, &f_id);
+				uint32_t* ind = hashmap_get(&vertex_map, &f_id);
 				arraylist_append(&indices, ind);
 			}
 		}
@@ -198,11 +193,11 @@ mesh* mesh_load_obj(char* filepath) {
 	}
 
 	for (int i = 0; i < indices.count; i++) {
-		printf("%d ", *((unsigned int*)indices.data + i));
+		printf("%d ", *((uint32_t*)indices.data + i));
 	}
 	printf("\n");
 
-	return mesh_create((vertex*)vertices.data, vertices.count, (unsigned int*)indices.data, indices.count);
+	return mesh_create((vertex*)vertices.data, vertices.count, (uint32_t*)indices.data, indices.count);
 }
 
 void mesh_delete(mesh *m) {

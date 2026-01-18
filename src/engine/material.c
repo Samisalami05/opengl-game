@@ -74,6 +74,6 @@ void material_use(material* m) {
 }
 
 void material_deinit(material* m) {
-	shader_deinit(m->shader);
+	m->shader = NULL;
 	m->albedo_tex = NULL;
 }

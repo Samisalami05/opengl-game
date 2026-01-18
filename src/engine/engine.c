@@ -1,5 +1,6 @@
 #include "engine.h"
 #include "GLFW/glfw3.h"
+#include "inputmanager.h"
 #include "resourcemanager.h"
 #include "scenemanager.h"
 #include <stdio.h>
@@ -34,10 +35,13 @@ static GLFWwindow* init_glfw() {
         return NULL;
     }
 
+	// Callbacks
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetErrorCallback(error_callback);
-    glfwMakeContextCurrent(window);
-	
+	glfwSetKeyCallback(window, inputman_key_callback);
+    
+	glfwMakeContextCurrent(window);
+
 	return window;
 }
 
@@ -73,6 +77,15 @@ game* engine_init() {
 	return g;
 }
 
+void engine_begin_frame(game* g) {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void engine_end_frame(game* g) {
+    glfwSwapBuffers(g->window);
+    glfwPollEvents();
+}
+
 // Deinitializers
 static void deinit_glfw(game* g) {
 	glfwDestroyWindow(g->window);	
@@ -86,3 +99,4 @@ void engine_deinit(game* g) {
 
 	free(g);
 }
+

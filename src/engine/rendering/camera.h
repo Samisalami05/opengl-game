@@ -6,7 +6,8 @@
 
 typedef struct camera {
 	vec3 pos;
-	vec3 rot;
+	float pitch;
+	float yaw;
 
 	float fov;
 	float width;
@@ -26,5 +27,8 @@ mat4 camera_proj(camera* cam);
 vec3 camera_forward(const camera cam);
 vec3 camera_right(const camera cam);
 vec3 camera_up(const camera cam);
+
+void camera_mouse_input(camera* cam, double dx, double dy);
+void camera_key_input(camera* cam);
 
 #endif

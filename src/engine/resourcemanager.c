@@ -3,12 +3,13 @@
 #include "util/hashmap.h"
 #include "core/shader.h"
 #include "core/texture.h"
+#include "util/hashmap_str.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
-static hashmap texture_map;
+static hashmap_str texture_map;
 static hashmap shader_map;
 
 typedef struct shader_key {
@@ -25,33 +26,49 @@ uint64_t shader_hash(const void* v) {
 	return hash;
 }
 
-static void free_hashmap_content(hashmap* m) {
-	void** values = hashmap_values(m);
-	for (int i = 0; i < m->count; i++) {
-		free(values[i]);
+static void free_texture_map() {
+	bucket_str* buckets = texture_map.buckets;
+	for (int i = 0; i < texture_map.b_count; i++) {
+		if (buckets[i].value != NULL) {
+			texture** tex = buckets[i].value;
+			texture_deinit(*tex);
+			free(*tex);
+		}
 	}
+	hashmap_str_deinit(&texture_map);
+}
+
+static void free_shader_map() {
+	bucket* buckets = shader_map.buckets;
+	for (int i = 0; i < shader_map.b_count; i++) {
+		if (buckets[i].value != NULL) {
+			shader** shadr = buckets[i].value;
+			shader_deinit(*shadr);
+			free(*shadr);
+		}
+	}
+	hashmap_deinit(&shader_map);
 }
 
 void resource_manager_init() {
-	hashmap_init(&texture_map, sizeof(texture*), sizeof(char*), str_hash);
+	hashmap_str_init(&texture_map, sizeof(texture*), str_hash);
 	hashmap_init(&shader_map, sizeof(shader*), sizeof(shader_key), shader_hash);
 }
 
 void resource_manager_deinit() {
-	free_hashmap_content(&texture_map);
-	free_hashmap_content(&shader_map);
-	hashmap_deinit(&texture_map);
-	hashmap_deinit(&shader_map);
+	free_texture_map();
+	free_shader_map();
 }
 
 texture* load_texture(const char* path) {
-	texture** stored = hashmap_get(&texture_map, path);
+	printf("loading texture: %s\n", path);
+	texture** stored = hashmap_str_get(&texture_map, path);
 	if (stored != NULL)
 		return *stored;
 	
 	texture* new_tex = malloc(sizeof(texture));
 	texture_init(new_tex, path);
-	return *(texture**)hashmap_put(&texture_map, path, &new_tex);
+	return *(texture**)hashmap_str_put(&texture_map, path, &new_tex);
 }
 
 shader* load_shader(const char* vertex, const char* fragment) {

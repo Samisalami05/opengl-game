@@ -2,6 +2,7 @@
 #define MESH_H
 
 #include <stddef.h>
+#include <stdint.h>
 #include "math/vec3.h"
 #include "math/vec2.h"
 
@@ -9,14 +10,12 @@ typedef struct vertex {
 	vec3 pos;
 	vec2 uv;
 	vec3 normal;
+	// TODO: add tangent
 } vertex;
 
 typedef struct mesh {
-	vertex* vertices;
-	unsigned int* indices;
-
-	int vertex_count;
-	int index_count;
+	uint32_t vertex_count;
+	uint32_t index_count;
 
 	unsigned int vao;
 	unsigned int vbo;
@@ -25,8 +24,8 @@ typedef struct mesh {
 
 // --- Mesh ---
 
-mesh* mesh_create(vertex* vertices, int vertex_count, unsigned int* indices, int index_count);
-void mesh_init(mesh* m, vertex* vertices, int vertex_count, unsigned int* indices, int index_count);
+mesh* mesh_create(vertex* vertices, uint32_t vertex_count, uint32_t* indices, uint32_t index_count);
+void mesh_init(mesh* m, vertex* vertices, uint32_t vertex_count, uint32_t* indices, uint32_t index_count);
 mesh* mesh_load_obj(char* filepath);
 mesh* mesh_load_obj_new(char* filepath);
 

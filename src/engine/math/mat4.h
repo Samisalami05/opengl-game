@@ -23,7 +23,8 @@ void mat4_rotate_z(mat4* m, const float a);
 
 void mat4_rotate(mat4* m, const vec3 v);
 
-void mat4_projection(mat4* m, float fov, float width, float height, float near_clip, float far_clip);
+// Dont do identity before this
+void mat4_projection(mat4* m, float fov, float aspect, float near_clip, float far_clip);
 
 void mat4_print(mat4 m);
 

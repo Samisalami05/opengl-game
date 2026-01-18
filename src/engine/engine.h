@@ -11,6 +11,8 @@ typedef struct game {
 } game;
 
 game* engine_init();
+void engine_begin_frame(game* g);
+void engine_end_frame(game* g);
 void engine_deinit(game* g);
 
 #endif

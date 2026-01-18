@@ -20,34 +20,25 @@ mat4 mat4_lookat(vec3 eye, vec3 target) {
 	mat4 m;
 	mat4_identity(&m);
 
-	vec3_sub_v3(&eye, target);
-	vec3 forward = vec3_normilized(eye);
-	vec3 right = vec3_cross(forward, (vec3){0.0f, 1.0f, 0.0f});
-	vec3 up = vec3_cross(right, forward);
-	
-	// Column 0
-    m.data[index_to_1d(0,0)] = right.x;
-    m.data[index_to_1d(0,1)] = right.y;
-    m.data[index_to_1d(0,2)] = right.z;
-    m.data[index_to_1d(0,3)] = 0.0f;
+	vec3 f = vec3_normalized(vec3_sub_v3(target, eye));
+	vec3 r = vec3_normalized(vec3_cross(f, (vec3){0.0f, 1.0f, 0.0f}));
+	vec3 u = vec3_cross(r, f);
 
-    // Column 1
-    m.data[index_to_1d(1,0)] = up.x;
-    m.data[index_to_1d(1,1)] = up.y;
-    m.data[index_to_1d(1,2)] = up.z;
-    m.data[index_to_1d(1,3)] = 0.0f;
+    m.data[0] = r.x;
+    m.data[1] = u.x;
+    m.data[2] = -f.x;
 
-    // Column 2
-    m.data[index_to_1d(2,0)] = -forward.x;
-    m.data[index_to_1d(2,1)] = -forward.y;
-    m.data[index_to_1d(2,2)] = -forward.z;
-    m.data[index_to_1d(2,3)] = 0.0f;
+    m.data[4] = r.y;
+    m.data[5] = u.y;
+    m.data[6] = -f.y;
 
-    // Column 3 (translation)
-    m.data[index_to_1d(3,0)] = -vec3_dot(right, eye);
-    m.data[index_to_1d(3,1)] = -vec3_dot(up, eye);
-    m.data[index_to_1d(3,2)] = vec3_dot(forward, eye);
-    m.data[index_to_1d(3,3)] = 1.0f;
+    m.data[8] = r.z;
+    m.data[9] = u.z;
+    m.data[10] = -f.z;
+
+    m.data[12] = -vec3_dot(r, eye);
+    m.data[13] = -vec3_dot(u, eye);
+    m.data[14] =  vec3_dot(f, eye);
 
 	return m;
 }
@@ -157,8 +148,7 @@ void mat4_rotate(mat4* m, const vec3 v) {
 	mat4_mul(m, ry);
 	mat4_mul(m, rx);}
 
-void mat4_projection(mat4* m, float fov, float width, float height, float near_clip, float far_clip) {
-	float aspect = width / height;
+void mat4_projection(mat4* m, float fov, float aspect, float near_clip, float far_clip) {
 	float wow = tanf(fov * 0.5f * (M_PI / 180.0f));
 	float t = wow * near_clip;
 	float b = -t;
