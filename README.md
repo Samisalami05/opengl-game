@@ -14,6 +14,7 @@ The project is currently in the initial engine building process.
 * glad
 * OpenGL
 * stb\_image
+* assimp
 
 ## Building
 
