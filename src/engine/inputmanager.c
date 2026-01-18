@@ -13,6 +13,7 @@ static uint8_t prev_mouse[MOUSE_BUTTON_LAST] = {0};
 
 static vec2 mouse_pos = {0};
 static vec2 mouse_delta = {0};
+static vec2 scroll_delta = {0};
 
 void inputman_init() {}
 void inputman_deinit() {}
@@ -53,6 +54,27 @@ void inputman_cursor_callback(GLFWwindow* window, double xpos, double ypos) {
 	mouse_pos.y = ypos;
 }
 
+void inputman_scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+	scroll_delta.x += xoffset;
+	scroll_delta.y += yoffset;
+}
+
+void inputman_joystick_callback(int jid, int event)
+{
+    if (event == GLFW_CONNECTED)
+    {
+        // The joystick was connected
+		printf("joystick connected %d\n", jid);
+    }
+    else if (event == GLFW_DISCONNECTED)
+    {
+        // The joystick was disconnected
+		printf("joystick disconnected %d\n", jid);
+    }
+}
+
+// Keyboard
+
 uint8_t isKeyDown(keycode key) {
 	return curr_keys[key];
 }
@@ -82,6 +104,8 @@ float getInputAxis(axis a) {
 	return input;
 }
 
+// Mouse
+
 uint8_t isMouseDown(mousebutton button) {
 	return curr_mouse[button];
 }
@@ -103,3 +127,12 @@ vec2 getMouseDelta() {
 	mouse_delta = (vec2){0};
 	return delta;
 }
+
+vec2 getScrollDelta() {
+	vec2 delta = scroll_delta;
+	scroll_delta = (vec2){0};
+	return delta;
+}
+
+// Gamepad
+

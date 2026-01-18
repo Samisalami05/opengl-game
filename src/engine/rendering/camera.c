@@ -80,11 +80,13 @@ void camera_key_input(camera* cam, float deltatime) {
 	float horizontal = getInputAxis(AXIS_HORIZONTAL);
 	float vertical = getInputAxis(AXIS_VERTICAL);
 
+	vec2 input = vec2_normalized((vec2){ horizontal, vertical });
+
 	vec3 forward = camera_forward(*cam);
 	vec3 right = camera_right(*cam);
 
-	forward = vec3_mul_f(forward, vertical * camera_speed * deltatime);
-	right = vec3_mul_f(right, horizontal * camera_speed * deltatime);
+	forward = vec3_mul_f(forward, input.y * camera_speed * deltatime);
+	right = vec3_mul_f(right, input.x * camera_speed * deltatime);
 
 	cam->pos = vec3_add_v3(cam->pos, forward);
 	cam->pos = vec3_add_v3(cam->pos, right);

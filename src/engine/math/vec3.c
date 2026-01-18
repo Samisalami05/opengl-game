@@ -3,11 +3,12 @@
 #include <stdio.h>
 
 float vec3_magnitude(const vec3 v) {
-	return sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+	return sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
 }
 
 void vec3_normalize(vec3* v) {
 	float mag = vec3_magnitude(*v);
+	if (mag <= 0) return;
 
 	v->x /= mag;
 	v->y /= mag;
@@ -16,6 +17,7 @@ void vec3_normalize(vec3* v) {
 
 vec3 vec3_normalized(const vec3 v) {
 	float mag = vec3_magnitude(v);
+	if (mag <= 0) return v;
 
 	return (vec3){
 		.x = v.x / mag,

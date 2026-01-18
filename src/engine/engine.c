@@ -41,6 +41,8 @@ static GLFWwindow* init_glfw() {
 	glfwSetKeyCallback(window, inputman_key_callback);
 	glfwSetMouseButtonCallback(window, inputman_mouse_callback);
 	glfwSetCursorPosCallback(window, inputman_cursor_callback);
+	glfwSetScrollCallback(window, inputman_scroll_callback);
+	glfwSetJoystickCallback(inputman_joystick_callback);
 
 	glfwMakeContextCurrent(window);
 
