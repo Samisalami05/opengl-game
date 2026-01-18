@@ -7,7 +7,8 @@
 #include "math/vec3.h"
 #include "util/util.h"
 
-const float sensitivity = 0.005f;
+const float mouse_sensitivity = 0.005f;
+const float gamepad_sensitivity = 0.0008f;
 const float camera_speed = 10.0f;
 
 void camera_init(camera* cam, float width, float height) {
@@ -68,19 +69,23 @@ vec3 camera_up(const camera cam) {
 
 void camera_mouse_input(camera* cam) {
 	vec2 mouse = getMouseDelta();
-	mouse = vec2_mul_f(mouse, sensitivity);
+	vec2 joystick = getJoystickDelta(GAMEPAD_DEFAULT_ID, GAMEPAD_JOYSTICK_RIGHT);
 
-	cam->yaw += mouse.x;
-	cam->pitch = clampf(cam->pitch - mouse.y, -M_PI / 2, M_PI / 2);
+	mouse = vec2_mul_f(mouse, mouse_sensitivity);
+	joystick = vec2_mul_f(joystick, gamepad_sensitivity);
+
+	mouse.y *= -1; // Flip mouse y
+	
+	vec2 input = vec2_add_v(mouse, joystick);
+
+	cam->yaw += input.x;
+	cam->pitch = clampf(cam->pitch + input.y, -M_PI / 2.001f, M_PI / 2.001f);
 }
 
 void camera_key_input(camera* cam, float deltatime) {
 	float camera_speed = 10.0f;
 
-	float horizontal = getInputAxis(AXIS_HORIZONTAL);
-	float vertical = getInputAxis(AXIS_VERTICAL);
-
-	vec2 input = vec2_normalized((vec2){ horizontal, vertical });
+	vec2 input = getInputAxes(INPUT_GROUP_MOVEMENT);
 
 	vec3 forward = camera_forward(*cam);
 	vec3 right = camera_right(*cam);
@@ -94,10 +99,15 @@ void camera_key_input(camera* cam, float deltatime) {
 	vec3 up = {0.0f, 1.0f, 0.0f};
 	vec3 move = vec3_mul_f(up, deltatime * camera_speed);
 	
-	if (isKeyDown(KEY_SPACE)) {
+	if (isKeyDown(KEY_SPACE) || isGamepadButtonDown(GAMEPAD_DEFAULT_ID, GAMEPAD_BUTTON_A)) {
 		cam->pos = vec3_add_v3(cam->pos, move);
 	}
-	if (isKeyDown(KEY_LEFT_SHIFT)) {
+	if (isKeyDown(KEY_LEFT_SHIFT) || isGamepadButtonDown(GAMEPAD_DEFAULT_ID, GAMEPAD_BUTTON_B)) {
 		cam->pos = vec3_sub_v3(cam->pos, move);
 	}
+
+	float up_move = getGamepadTrigger(GAMEPAD_DEFAULT_ID, GAMEPAD_TRIGGER_RIGHT);
+	up_move -= getGamepadTrigger(GAMEPAD_DEFAULT_ID, GAMEPAD_TRIGGER_LEFT);
+
+	cam->pos.y += up_move * camera_speed * deltatime;
 }

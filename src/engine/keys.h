@@ -125,7 +125,8 @@ typedef enum {
 	KEY_RIGHT_SUPER,
 	KEY_MENU,
 
-	KEY_UNDEFINED // ERROR
+	KEY_UNDEFINED, // ERROR
+	KEY_LAST = KEY_MENU
 } keycode;
 
 typedef enum {
@@ -143,10 +144,46 @@ typedef enum {
 	MOUSE_BUTTON_MIDDLE = MOUSE_BUTTON_3,
 } mousebutton;
 
+typedef enum {
+	GAMEPAD_JOYSTICK_RIGHT,
+	GAMEPAD_JOYSTICK_LEFT,
+} gamepad_joystick;
+
+typedef enum {
+	GAMEPAD_TRIGGER_RIGHT,
+	GAMEPAD_TRIGGER_LEFT,
+} gamepad_trigger;
+
+typedef enum {
+	GAMEPAD_BUTTON_A,
+	GAMEPAD_BUTTON_B,
+	GAMEPAD_BUTTON_X,
+	GAMEPAD_BUTTON_Y,
+	GAMEPAD_BUTTON_LEFT_BUMPER,
+	GAMEPAD_BUTTON_RIGHT_BUMPER,
+	GAMEPAD_BUTTON_BACK,
+	GAMEPAD_BUTTON_START,
+	GAMEPAD_BUTTON_GUIDE,
+	GAMEPAD_BUTTON_LEFT_THUMB,
+	GAMEPAD_BUTTON_RIGHT_THUMB, 
+	GAMEPAD_BUTTON_DPAD_UP,
+	GAMEPAD_BUTTON_DPAD_RIGHT,
+	GAMEPAD_BUTTON_DPAD_DOWN,
+	GAMEPAD_BUTTON_DPAD_LEFT,
+	GAMEPAD_BUTTON_LAST = GAMEPAD_BUTTON_DPAD_LEFT,
+	GAMEPAD_BUTTON_CROSS = GAMEPAD_BUTTON_A,
+	GAMEPAD_BUTTON_CIRCLE = GAMEPAD_BUTTON_B,
+	GAMEPAD_BUTTON_SQUARE = GAMEPAD_BUTTON_X,
+	GAMEPAD_BUTTON_TRIANGLE = GAMEPAD_BUTTON_Y,
+} gamepad_button;
+
 int keycode_to_glfw(keycode key);
 keycode glfw_to_keycode(int key);
 
 int mousebutton_to_glfw(mousebutton button);
 mousebutton glfw_to_mousebutton(int button);
+
+int gamepadbutton_to_glfw(gamepad_button button);
+gamepad_button glfw_to_gamepadbutton(int button);
 
 #endif

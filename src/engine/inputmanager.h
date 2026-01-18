@@ -6,11 +6,6 @@
 #include "math/vec2.h"
 #include <stdint.h>
 
-typedef enum {
-	AXIS_HORIZONTAL,
-	AXIS_VERTICAL,
-} axis;
-
 void inputman_init();
 void inputman_deinit();
 void inputman_update(GLFWwindow* window);
@@ -25,8 +20,6 @@ uint8_t isKeyDown(keycode key); // TODO: Maybe switch to snake-case
 uint8_t isKeyPressed(keycode key);
 uint8_t isKeyReleased(keycode key);
 
-float getInputAxis(axis a);
-
 uint8_t isMouseDown(mousebutton button);
 uint8_t isMousePressed(mousebutton button);
 uint8_t isMouseReleased(mousebutton button);
@@ -34,5 +27,23 @@ uint8_t isMouseReleased(mousebutton button);
 vec2 getMousePosition();
 vec2 getMouseDelta();
 vec2 getScrollDelta();
+
+#define GAMEPAD_DEFAULT_ID 16
+
+uint8_t isGamepadButtonDown(uint8_t id, gamepad_button button);
+uint8_t isGamepadButtonPressed(uint8_t id, gamepad_button button);
+uint8_t isGamepadButtonReleased(uint8_t id, gamepad_button button);
+
+vec2 getJoystickDelta(uint8_t id, gamepad_joystick stick);
+float getGamepadTrigger(uint8_t id, gamepad_trigger trigger);
+
+typedef enum {
+	INPUT_GROUP_MOVEMENT,
+	INPUT_GROUP_ORIENTATION,
+} input_group;
+
+vec2 getInputAxes(input_group group);
+
+void print_gamepad_button(gamepad_button button);
 
 #endif

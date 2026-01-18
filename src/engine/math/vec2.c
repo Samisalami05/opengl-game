@@ -16,6 +16,13 @@ vec2 vec2_normalized(const vec2 v) {
 	};
 }
 
+vec2 vec2_add_v(const vec2 v1, const vec2 v2) {
+	return (vec2){
+		.x = v1.x + v2.x,
+		.y = v1.y + v2.y
+	};
+}
+
 vec2 vec2_mul_f(const vec2 v1, const float v2) {
 	return (vec2) {
 		.x = v1.x * v2,

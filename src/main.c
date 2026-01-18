@@ -4,6 +4,8 @@
 #include <GLFW/glfw3.h>
 #include "core/cubemap.h"
 #include "engine.h"
+#include "engine/inputmanager.h"
+#include "engine/keys.h"
 #include "engine/modelloader.h"
 #include "inputmanager.h"
 #include "keys.h"
@@ -79,20 +81,8 @@ int main(void) {
 
 		camera_key_input(&scene->cam, deltatime);
 		camera_mouse_input(&scene->cam);
-		
-		GLFWgamepadstate state;
 
-		if (glfwGetGamepadState(GLFW_JOYSTICK_1, &state)) {
-			float lx = state.axes[GLFW_GAMEPAD_AXIS_LEFT_X];
-			float ly = state.axes[GLFW_GAMEPAD_AXIS_LEFT_Y];
-			float rx = state.axes[GLFW_GAMEPAD_AXIS_RIGHT_X];
-			float ry = state.axes[GLFW_GAMEPAD_AXIS_RIGHT_Y];
-
-			printf("%f, %f\n", rx, ry);
-
-			int a = state.buttons[GLFW_GAMEPAD_BUTTON_A];
-			int b = state.buttons[GLFW_GAMEPAD_BUTTON_B];
-		}
+		if (isGamepadButtonDown(GAMEPAD_DEFAULT_ID, GAMEPAD_BUTTON_X)) printf("%f, %f\n", getJoystickDelta(GAMEPAD_DEFAULT_ID, GAMEPAD_JOYSTICK_LEFT).x, getJoystickDelta(GAMEPAD_DEFAULT_ID, GAMEPAD_JOYSTICK_LEFT).y);
 
 		time += deltatime;
 
