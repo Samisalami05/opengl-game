@@ -256,3 +256,32 @@ keycode glfw_to_keycode(int key) {
 	}
 	return KEY_UNDEFINED;
 }
+
+int mousebutton_to_glfw(mousebutton button) {
+	switch (button) {
+		case MOUSE_BUTTON_1: return GLFW_MOUSE_BUTTON_1;
+		case MOUSE_BUTTON_2: return GLFW_MOUSE_BUTTON_2;
+		case MOUSE_BUTTON_3: return GLFW_MOUSE_BUTTON_3;
+		case MOUSE_BUTTON_4: return GLFW_MOUSE_BUTTON_4;
+		case MOUSE_BUTTON_5: return GLFW_MOUSE_BUTTON_5;
+		case MOUSE_BUTTON_6: return GLFW_MOUSE_BUTTON_6;
+		case MOUSE_BUTTON_7: return GLFW_MOUSE_BUTTON_7;
+		case MOUSE_BUTTON_8: return GLFW_MOUSE_BUTTON_8;
+	}
+	return GLFW_MOUSE_BUTTON_1;
+}
+
+mousebutton glfw_to_mousebutton(int button) {
+	switch (button) {
+		case GLFW_MOUSE_BUTTON_1: return MOUSE_BUTTON_1;
+		case GLFW_MOUSE_BUTTON_2: return MOUSE_BUTTON_2;
+		case GLFW_MOUSE_BUTTON_3: return MOUSE_BUTTON_3;
+		case GLFW_MOUSE_BUTTON_4: return MOUSE_BUTTON_4;
+		case GLFW_MOUSE_BUTTON_5: return MOUSE_BUTTON_5;
+		case GLFW_MOUSE_BUTTON_6: return MOUSE_BUTTON_6;
+		case GLFW_MOUSE_BUTTON_7: return MOUSE_BUTTON_7;
+		case GLFW_MOUSE_BUTTON_8: return MOUSE_BUTTON_8;
+	}
+	return MOUSE_BUTTON_1;
+}
+

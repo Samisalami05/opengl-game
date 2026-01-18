@@ -1,7 +1,9 @@
 #include "camera.h"
+#include "inputmanager.h"
 #include "math/mat4.h"
 #include <math.h>
 #include <string.h>
+#include "math/vec2.h"
 #include "math/vec3.h"
 #include "util/util.h"
 
@@ -64,14 +66,36 @@ vec3 camera_up(const camera cam) {
     return vec3_normalized(vec3_cross(right, forward));
 }
 
-void camera_mouse_input(camera* cam, double dx, double dy) {
-	dx *= sensitivity;
-	dy *= sensitivity;
+void camera_mouse_input(camera* cam) {
+	vec2 mouse = getMouseDelta();
+	mouse = vec2_mul_f(mouse, sensitivity);
 
-	cam->yaw += dx;
-	cam->pitch = clampf(cam->pitch - dy, -M_PI / 2, M_PI / 2);
+	cam->yaw += mouse.x;
+	cam->pitch = clampf(cam->pitch - mouse.y, -M_PI / 2, M_PI / 2);
 }
 
-void camera_key_input(camera* cam) {
+void camera_key_input(camera* cam, float deltatime) {
+	float camera_speed = 10.0f;
 
+	float horizontal = getInputAxis(AXIS_HORIZONTAL);
+	float vertical = getInputAxis(AXIS_VERTICAL);
+
+	vec3 forward = camera_forward(*cam);
+	vec3 right = camera_right(*cam);
+
+	forward = vec3_mul_f(forward, vertical * camera_speed * deltatime);
+	right = vec3_mul_f(right, horizontal * camera_speed * deltatime);
+
+	cam->pos = vec3_add_v3(cam->pos, forward);
+	cam->pos = vec3_add_v3(cam->pos, right);
+
+	vec3 up = {0.0f, 1.0f, 0.0f};
+	vec3 move = vec3_mul_f(up, deltatime * camera_speed);
+	
+	if (isKeyDown(KEY_SPACE)) {
+		cam->pos = vec3_add_v3(cam->pos, move);
+	}
+	if (isKeyDown(KEY_LEFT_SHIFT)) {
+		cam->pos = vec3_sub_v3(cam->pos, move);
+	}
 }

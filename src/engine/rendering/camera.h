@@ -28,7 +28,7 @@ vec3 camera_forward(const camera cam);
 vec3 camera_right(const camera cam);
 vec3 camera_up(const camera cam);
 
-void camera_mouse_input(camera* cam, double dx, double dy);
-void camera_key_input(camera* cam);
+void camera_mouse_input(camera* cam);
+void camera_key_input(camera* cam, float deltatime);
 
 #endif

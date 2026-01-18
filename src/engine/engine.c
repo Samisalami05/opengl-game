@@ -39,7 +39,9 @@ static GLFWwindow* init_glfw() {
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetErrorCallback(error_callback);
 	glfwSetKeyCallback(window, inputman_key_callback);
-    
+	glfwSetMouseButtonCallback(window, inputman_mouse_callback);
+	glfwSetCursorPosCallback(window, inputman_cursor_callback);
+
 	glfwMakeContextCurrent(window);
 
 	return window;
@@ -59,6 +61,7 @@ static uint8_t init_opengl() {
 static void init_managers() {
 	resource_manager_init();
 	scenemanager_init();
+	inputman_init();
 }
 
 game* engine_init() {
@@ -95,8 +98,9 @@ static void deinit_glfw(game* g) {
 void engine_deinit(game* g) {
 	scenemanager_deinit();
 	resource_manager_deinit();
-	deinit_glfw(g);
+	inputman_deinit();
 
+	deinit_glfw(g);
 	free(g);
 }
 

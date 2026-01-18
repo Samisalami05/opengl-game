@@ -11,3 +11,13 @@ double clamp(double v, double min, double max) {
 	if (v > max) return max;
 	return v;
 }
+
+float lerpf(float a, float b, float f)
+{
+    return a * (1.0 - f) + (b * f);
+}
+
+double lerp(double a, double b, double f)
+{
+    return a * (1.0 - f) + (b * f);
+}

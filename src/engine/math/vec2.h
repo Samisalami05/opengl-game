@@ -6,6 +6,8 @@ typedef struct vec2 {
 	float y;
 } vec2;
 
+vec2 vec2_mul_f(const vec2 v1, const float v2);
+
 void vec2_print(const vec2 v);
 
 #endif

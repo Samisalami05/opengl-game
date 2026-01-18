@@ -24,9 +24,6 @@
 #include "util/util.h"
 #include <math.h>
 
-static void process_input(GLFWwindow* window, float deltatime);
-static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-
 static float deltatime;
 
 int main(void) {
@@ -57,17 +54,16 @@ int main(void) {
 	scene* scene = sm_get_current_scene();
 	
 	light pointlight1, pointlight2;
-	light_init_point(&pointlight1, (vec3){2.0f, 3.0f, 1.0f});
-	light_init_point(&pointlight2, (vec3){-2.0f, 13.0f, -2.0f});
+	light_init_point(&pointlight1, (vec3){2.0f, 6.0f, 1.0f});
+	light_init_point(&pointlight2, (vec3){-2.0f, 16.0f, -2.0f});
 	pointlight1.color = (vec3){1.0f, 0.5f, 0.2f};
 	pointlight2.color = (vec3){0.5f, 0.2f, 1.0f};
-	pointlight1.intensity = 0.5f;
+	pointlight1.intensity = 0.7f;
 	pointlight2.intensity = 0.5f;
+	pointlight1.range = 10.0f;
 
 	arraylist_append(&scene->lights, &pointlight1);
 	arraylist_append(&scene->lights, &pointlight2);
-
-	glfwSetCursorPosCallback(game->window, mouse_callback);
 
 	float last_frame = 0.0f;
 	
@@ -81,7 +77,8 @@ int main(void) {
 		deltatime = current_frame - last_frame;
 		last_frame = current_frame;
 
-		process_input(game->window, deltatime);
+		camera_key_input(&scene->cam, deltatime);
+		camera_mouse_input(&scene->cam);
 
 		time += deltatime;
 
@@ -101,7 +98,7 @@ int main(void) {
 		// Rendering
 		render_scene(sm_get_current_scene());
 		render_model(&m, &sm_get_current_scene()->cam,
-			(vec3){0},
+			(vec3){0.0f, 2.5f, 0.0f},
 			(vec3){0},
 			(vec3){3.0f, 3.0f, 3.0f}
 		);
@@ -114,60 +111,4 @@ int main(void) {
 	model_deinit(&m);
 	engine_deinit(game);
     return 0;
-}
-
-static void process_input(GLFWwindow* window, float deltatime) {
-	scene* scene = sm_get_current_scene();
-	camera* cam = &scene->cam;
-
-	float camera_speed = 10.0f;
-
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		vec3 move = camera_right(*cam);
-		move = vec3_mul_f(move, deltatime * camera_speed);
-		cam->pos = vec3_sub_v3(cam->pos, move);
-	}
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		vec3 move = camera_right(*cam);
-		move = vec3_mul_f(move, deltatime * camera_speed);
-		cam->pos = vec3_add_v3(cam->pos, move);
-	}
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		vec3 move = camera_forward(*cam);
-		move = vec3_mul_f(move, deltatime * camera_speed);
-		cam->pos = vec3_add_v3(cam->pos, move);
-		//vec3_sub_v3(&cam->pos, move);
-	}
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		vec3 move = camera_forward(*cam);
-		move = vec3_mul_f(move, deltatime * camera_speed);
-		cam->pos = vec3_sub_v3(cam->pos, move);
-		//vec3_add_v3(&cam->pos, move);
-	}
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-		vec3 move = {0.0f, 1.0f, 0.0f};
-		move = vec3_mul_f(move, deltatime * camera_speed);
-		cam->pos = vec3_add_v3(cam->pos, move);
-		//vec3_sub_v3(&cam->pos, move);
-	}
-	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-		vec3 move = {0.0f, 1.0f, 0.0f};
-		move = vec3_mul_f(move, deltatime * camera_speed);
-		cam->pos = vec3_sub_v3(cam->pos, move);
-		//vec3_add_v3(&cam->pos, move);
-	}
-}
-// TODO: move these into camera
-
-static float last_x = 0;
-static float last_y = 0;
-void mouse_callback(GLFWwindow* window, double xpos, double ypos) {
-	scene* scene = sm_get_current_scene();
-	camera* cam = &scene->cam;
-
-	float xoffset = xpos - last_x;
-	float yoffset = ypos - last_y;
-	last_x = xpos;
-	last_y = ypos;
-	camera_mouse_input(cam, xoffset, yoffset);
 }
