@@ -92,9 +92,11 @@ void mat4_scale(mat4* m, const float s) {
 }
 
 void mat4_scale_v3(mat4* m, const vec3 v) {
-	m->data[index_to_1d(0, 0)] *= v.x;
-	m->data[index_to_1d(1, 1)] *= v.y;
-	m->data[index_to_1d(2, 2)] *= v.z;
+	for (int i = 0; i < 3; i++) {
+        m->data[index_to_1d(i,0)] *= v.x;
+        m->data[index_to_1d(i,1)] *= v.y;
+        m->data[index_to_1d(i,2)] *= v.z;
+    }
 }
 
 void mat4_translate(mat4* m, const vec3 v) {
@@ -146,7 +148,8 @@ void mat4_rotate(mat4* m, const vec3 v) {
 
 	mat4_mul(m, rz);
 	mat4_mul(m, ry);
-	mat4_mul(m, rx);}
+	mat4_mul(m, rx);
+}
 
 void mat4_projection(mat4* m, float fov, float aspect, float near_clip, float far_clip) {
 	float wow = tanf(fov * 0.5f * (M_PI / 180.0f));

@@ -18,7 +18,7 @@ void scene_init(scene* s, unsigned int id, char* name) {
 	material_init(mat, MAT_COLOR_UNLIT);
 
 	entity_init(&s->light_entity, cube_mesh, mat);
-	s->light_entity.scale = (vec3){0.5f, 0.5, 0.5f};
+	s->light_entity.scale = (vec3){0.5f, 0.5f, 0.5f};
 
 	// Create default sun
 	light sun = {

@@ -8,7 +8,8 @@
 
 static int line_offset(char* source, int line);
 static void print_line(char* source, int line);
-static int line_tabs(char* source, int line);
+static int line_tabs(const char* line);
+static int line_tabs_source(char* source, int line);
 static void print_location_begin(int line);
 static void print_error_location(char* source, int line, int column);
 static int str_skip_chars_off(const char* str, char c, int count);
@@ -54,7 +55,16 @@ static void print_line(char* source, int line) {
 	printf("\n");
 }
 
-static int line_tabs(char* source, int line) {
+static int line_tabs(const char* line) {
+	int tabs = 0;
+	while (*line == '\t') {
+		tabs++;
+		line++;
+	}
+	return tabs;
+}
+
+static int line_tabs_source(char* source, int line) {
 	int offset = line_offset(source, line);
 	if (offset == -1) {
 		fprintf(stderr, "shader: Could not print line %d: Does not exist in shader\n", line);
@@ -82,15 +92,32 @@ static void print_error_location(char* source, int line, int column) {
 	print_line(source, line);
 
 	print_location_begin(-1);
-	int tabs = line_tabs(source, line);
+	int tabs = line_tabs_source(source, line);
 	for (int i = 0; i < tabs; i++) {
-		printf("\t");
+		fprintf(stderr, "\t");
 	}
 
 	for (int i = tabs - 1; i < column; i++) {
-		printf(" ");
+		fprintf(stderr, " ");
 	}
-	printf("^\n");
+	fprintf(stderr, "^\n");
+}
+
+static void print_error_line(const char* line, const char* message, const char* path, int line_num, int column) {
+	fprintf(stderr, "%s:%d:%d: %s", path, line_num, column, message);
+	print_location_begin(line_num);
+	printf("%s", line);
+
+	print_location_begin(-1);
+	int tabs = line_tabs(line);
+	for (int i = 0; i < tabs; i++) {
+		fprintf(stderr, "\t");
+	}
+
+	for (int i = tabs - 1; i < column; i++) {
+		fprintf(stderr, " ");
+	}
+	fprintf(stderr, "^\n");
 }
 
 static int str_skip_chars_off(const char* str, char c, int count) {
@@ -159,49 +186,6 @@ static char* expand_str(char* str, size_t new_size) {
 static char* shader_parse_include(const char* shader_path, size_t* size_out) {
 	FILE* fp = fopen(shader_path, "rb");
 	if (fp == NULL) {
-		fprintf(stderr, "shader: Cant include file %s: No such file or directory\n", shader_path);
-		return NULL;
-	}
-
-	size_t size = 0;
-	char* content = NULL;
-
-	char line[1024];
-	while (fgets(line, sizeof(line), fp) != NULL) {
-		size_t line_size = strlen(line);
-		if (strncmp(line, "#include ", 9) == 0) {
-			char include_path[256];
-            sscanf(line, "#include \"%255[^\"]\"", include_path);
-
-			size_t inc_size;
-			char* include_content = shader_parse_include(include_path, &inc_size);
-			if (include_content == NULL) {
-				free(content);
-				return NULL;
-			}
-
-			size += inc_size;
-			content = realloc(content, size + 1); // +1 for \0
-			strcat(content, include_content);
-			free(include_content);
-		}
-		else {
-			size += line_size;
-			content = expand_str(content, size + 1); // p1 for \0
-			strcat(content, line);
-		}
-	}
-
-	fclose(fp);
-	*size_out = size;
-	return content;
-}
-
-/* ------------------ External Declarations ------------------- */
-
-char* shader_parse(const char* shader_path) {
-	FILE* fp = fopen(shader_path, "rb");
-	if (fp == NULL) {
 		fprintf(stderr, "shader: Cant open file %s: No such file or directory\n", shader_path);
 		return NULL;
 	}
@@ -209,17 +193,22 @@ char* shader_parse(const char* shader_path) {
 	size_t size = 0;
 	char* content = NULL;
 
+	int line_num;
 	char line[1024];
 	while (fgets(line, sizeof(line), fp) != NULL) {
 		size_t line_size = strlen(line);
 		if (strncmp(line, "#include ", 9) == 0) {
 			char include_path[256];
             sscanf(line, "#include \"%255[^\"]\"", include_path);
+			if (strcmp(shader_path, include_path) == 0) {
+				print_error_line(line, "Shader cant include itself\n", shader_path, line_num, 8);
+				continue;
+			}
 
 			size_t inc_size;
 			char* include_content = shader_parse_include(include_path, &inc_size);
 			if (include_content == NULL) {
-				free(content);
+				if (content != NULL) free(content);
 				return NULL;
 			}
 
@@ -233,10 +222,18 @@ char* shader_parse(const char* shader_path) {
 			content = expand_str(content, size + 1); // p1 for \0
 			strcat(content, line);
 		}
+		line_num++;
 	}
 
 	fclose(fp);
+	if (size_out != NULL) *size_out = size;
 	return content;
+}
+
+/* ------------------ External Declarations ------------------- */
+
+char* shader_parse(const char* shader_path) {
+	return shader_parse_include(shader_path, NULL);
 }
 
 void shader_init(shader* s, const char* vertsh, const char* fragsh) {

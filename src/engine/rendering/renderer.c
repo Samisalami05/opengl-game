@@ -33,7 +33,6 @@ void render_model(model* m, camera* cam, vec3 pos, vec3 rot, vec3 scale) {
 
 		mat4 model;
 		mat4_identity(&model);
-
 		mat4_translate(&model, pos);
 		mat4_rotate(&model, rot);
 		mat4_scale_v3(&model, scale);
@@ -53,7 +52,6 @@ void render_entity(entity* e, camera* cam) {
 	mat4_scale_v3(&model, e->scale);
 
 	shader_set_mat4(e->mat->shader, "model", model);
-
 	render_mesh(e->mesh, e->mat, cam);
 }
 
@@ -112,5 +110,4 @@ void render_scene(scene* s) {
 			render_entity(&s->light_entity, &s->cam);
 		}
 	}
-	// TODO: Render skybox
 }

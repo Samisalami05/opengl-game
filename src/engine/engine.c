@@ -79,14 +79,19 @@ game* engine_init() {
 	}
 	g->window = window;
 	g->deltatime = 0.001f;
+	g->last_frame = 0.0f;
 	return g;
 }
 
 void engine_begin_frame(game* g) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	float current_frame = glfwGetTime();
+	g->deltatime = current_frame - g->last_frame;
+	g->last_frame = current_frame;
 }
 
 void engine_end_frame(game* g) {
+	inputman_update(g->window);
     glfwSwapBuffers(g->window);
     glfwPollEvents();
 }

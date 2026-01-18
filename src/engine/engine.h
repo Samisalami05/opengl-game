@@ -8,6 +8,7 @@
 typedef struct game {
 	GLFWwindow* window;
 	float deltatime;
+	float last_frame;
 } game;
 
 game* engine_init();
