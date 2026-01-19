@@ -32,6 +32,15 @@ struct material {
 uniform material mat;
 uniform vec3 view_pos;
 
+const float near = 0.1f;
+const float far = 200.0f;
+
+float linear_depth(float depth) 
+{
+    float z = depth * 2.0f - 1.0f;
+    return (2.0f * near * far) / (far + near - z * (far - near));	
+}
+
 void main()
 {
 	vec3 normal = normalize(Normal);
@@ -43,8 +52,9 @@ void main()
 		result += calc_light(light, mat, normal, view_dir, WorldPos);
 	}
 
-	FragColor = vec4(result * texture(mat.albedo_tex, TexCoord * mat.tiling).rgb * mat.color, 1.0);
-
+	FragColor = vec4(result * mat.color, 1.0) * texture(mat.albedo_tex, TexCoord * mat.tiling);
+	
+	//FragColor = vec4(vec3(linear_depth(gl_FragCoord.z) / far), 1);
 	//FragColor = vec4(TexCoord.x, TexCoord.y, 0.0f, 1.0f);
 	//FragColor = texture(mat.albedo_tex, TexCoord);
 	//FragColor = vec4(Pos.x / 32.0f, Pos.y / 32.0f, Pos.z / 32.0f, 1.0f);

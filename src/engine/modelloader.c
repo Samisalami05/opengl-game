@@ -18,7 +18,6 @@
 
 
 static void load_mesh(struct aiMesh* aimesh, mesh* m, uint32_t uv_index) {
-
 	int vertex_count = aimesh->mNumVertices;
 	int index_count = aimesh->mNumFaces * 3;
 
@@ -63,7 +62,7 @@ static uint32_t load_material(struct aiMaterial* aimat, material* mat, const cha
     struct aiString path;
 	uint32_t uv_index = 0;
     if (aiGetMaterialTexture(aimat, AI_MATKEY_BASE_COLOR_TEXTURE, &path, NULL, &uv_index, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
-        char full_path[1024];
+		char full_path[1024];
         snprintf(full_path, sizeof(full_path), "%s%s", modelpath, path.data);
 
 		material_init(mat, MAT_TEXTURE_LIT);

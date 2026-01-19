@@ -38,6 +38,16 @@ static void material_set_lights(material* mat, arraylist* lights) {
 
 }
 
+static void shader_set_mvp(shader* s, vec3 pos, vec3 rot, vec3 scale) {
+	mat4 model;
+	mat4_identity(&model);
+	mat4_translate(&model, pos);
+	mat4_rotate(&model, rot);
+	mat4_scale_v3(&model, scale);
+
+	shader_set_mat4(s, "model", model);
+}
+
 void render_mesh(mesh* m, material* mat, camera* cam) {
 	material_use(mat);
 	shader_set_vec3(mat->shader, "view_pos", cam->pos);
@@ -58,14 +68,8 @@ void render_model(model* m, camera* cam, vec3 pos, vec3 rot, vec3 scale) {
 		
 		material_use(mat);
 		material_set_lights(mat, &sm_get_current_scene()->lights);
-
-		mat4 model;
-		mat4_identity(&model);
-		mat4_translate(&model, pos);
-		mat4_rotate(&model, rot);
-		mat4_scale_v3(&model, scale);
-
-		shader_set_mat4(mat->shader, "model", model);
+		
+		shader_set_mvp(mat->shader, pos, rot, scale);
 		render_mesh(&m->meshes[i], mat, cam);
 	}
 }

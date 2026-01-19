@@ -8,7 +8,7 @@
 #include "util/util.h"
 
 const float mouse_sensitivity = 0.005f;
-const float gamepad_sensitivity = 0.0008f;
+const float gamepad_sensitivity = 3.0f;
 const float camera_speed = 10.0f;
 
 void camera_init(camera* cam, float width, float height) {
@@ -67,12 +67,12 @@ vec3 camera_up(const camera cam) {
     return vec3_normalized(vec3_cross(right, forward));
 }
 
-void camera_mouse_input(camera* cam) {
+void camera_mouse_input(camera* cam, float deltatime) {
 	vec2 mouse = getMouseDelta();
 	vec2 joystick = getJoystickDelta(GAMEPAD_DEFAULT_ID, GAMEPAD_JOYSTICK_RIGHT);
 
 	mouse = vec2_mul_f(mouse, mouse_sensitivity);
-	joystick = vec2_mul_f(joystick, gamepad_sensitivity);
+	joystick = vec2_mul_f(joystick, gamepad_sensitivity * deltatime);
 
 	mouse.y *= -1; // Flip mouse y
 	

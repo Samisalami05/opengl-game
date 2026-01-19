@@ -72,7 +72,7 @@ int main(void) {
     {
 		engine_begin_frame(game);
 		camera_key_input(&scene->cam, game->deltatime);
-		camera_mouse_input(&scene->cam);
+		camera_mouse_input(&scene->cam, game->deltatime);
 
 		player->rotation.y += game->deltatime / 2;
 

@@ -46,6 +46,8 @@ static GLFWwindow* init_glfw() {
 
 	glfwMakeContextCurrent(window);
 
+	glfwSwapInterval(1); // Enable vsync
+
 	return window;
 }
 
@@ -56,6 +58,8 @@ static uint8_t init_opengl() {
 	}
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  
 
 	return 1;
 }
