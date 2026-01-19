@@ -17,7 +17,7 @@
 #include <stdlib.h>
 
 
-static void load_mesh(struct aiMesh* aimesh, mesh* m) {
+static void load_mesh(struct aiMesh* aimesh, mesh* m, uint32_t uv_index) {
 
 	int vertex_count = aimesh->mNumVertices;
 	int index_count = aimesh->mNumFaces * 3;
@@ -28,12 +28,18 @@ static void load_mesh(struct aiMesh* aimesh, mesh* m) {
 	for (int i = 0; i < aimesh->mNumVertices; i++) {
 		struct aiVector3D vert = aimesh->mVertices[i];
 		struct aiVector3D normal = aimesh->mNormals[i];
-		struct aiVector3D* tex_coord = &aimesh->mTextureCoords[0][i];
+		
+		vec2 uv = {0.0f, 0.0f};
+
+		if (aimesh->mTextureCoords[uv_index]) {
+			struct aiVector3D texcoord = aimesh->mTextureCoords[uv_index][i];
+			uv = (vec2){ texcoord.x, texcoord.y };
+		}
 
 		vertices[i] = (vertex){
-			.pos = (vec3){ vert.x, vert.y, vert.z },
-			.normal = (vec3){ normal.x, normal.y, normal.z },
-			.uv = tex_coord != NULL ? (vec2){ tex_coord->x, tex_coord->y } : (vec2){ 0 },
+			.pos    = { vert.x, vert.y, vert.z },
+			.normal = { normal.x, normal.y, normal.z },
+			.uv     = uv,
 		};
 	}
 
@@ -53,31 +59,36 @@ static void get_directory(const char* filepath, char* out) {
     if (last) *(last + 1) = '\0';
 }
 
-static void load_material(struct aiMaterial* aimat, material* mat, const char* modelpath) {
-    material_init(mat, MAT_COLOR_LIT); // Default material
-
+static uint32_t load_material(struct aiMaterial* aimat, material* mat, const char* modelpath) {
     struct aiString path;
-    if (aiGetMaterialTexture(aimat, AI_MATKEY_BASE_COLOR_TEXTURE, &path, NULL, NULL, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
+	uint32_t uv_index = 0;
+    if (aiGetMaterialTexture(aimat, AI_MATKEY_BASE_COLOR_TEXTURE, &path, NULL, &uv_index, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
         char full_path[1024];
         snprintf(full_path, sizeof(full_path), "%s%s", modelpath, path.data);
 
-        mat->type = MAT_TEXTURE_LIT;
+		material_init(mat, MAT_TEXTURE_LIT);
         mat->albedo_tex = load_texture(full_path);
+		return uv_index;
 	}
 
+    material_init(mat, MAT_COLOR_LIT); // Default material
+	
     struct aiColor4D ambient;
     if (aiGetMaterialColor(aimat, AI_MATKEY_COLOR_AMBIENT, &ambient) == AI_SUCCESS) {
         mat->color = (vec3){ ambient.r, ambient.g, ambient.b };
     }
+
+	return uv_index;
 }
 
 void load_model(model* m, const char* file) {
 	const struct aiScene* scene = aiImportFile(
         file,
         aiProcess_Triangulate |
-        aiProcess_FlipUVs |
         aiProcess_JoinIdenticalVertices |
-		aiProcess_PreTransformVertices
+		aiProcess_PreTransformVertices |
+		aiProcess_GenNormals |
+		aiProcess_CalcTangentSpace
     );
 
 	if (!scene) {
@@ -98,16 +109,18 @@ void load_model(model* m, const char* file) {
 	
 	m->material_count = scene->mNumMaterials;
 	m->materials = malloc(sizeof(material) * scene->mNumMaterials);
-
-	for (int i = 0; i < scene->mNumMeshes; i++) {
-		struct aiMesh* aimesh = scene->mMeshes[i];
-		load_mesh(aimesh, &m->meshes[i]);
-		m->mesh_mat_indices[i] = aimesh->mMaterialIndex;
-	}
+	uint32_t uv_indices[scene->mNumMaterials];
 
 	for (int i = 0; i < scene->mNumMaterials; i++) {
 		struct aiMaterial* aimat = scene->mMaterials[i];
-		load_material(aimat, &m->materials[i], dir);
+		uv_indices[i] = load_material(aimat, &m->materials[i], dir);
+	}
+
+	for (int i = 0; i < scene->mNumMeshes; i++) {
+		struct aiMesh* aimesh = scene->mMeshes[i];
+		m->mesh_mat_indices[i] = aimesh->mMaterialIndex;
+
+		load_mesh(aimesh, &m->meshes[i], uv_indices[aimesh->mMaterialIndex]);
 	}
 
     aiReleaseImport(scene);

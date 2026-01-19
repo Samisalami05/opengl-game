@@ -46,7 +46,7 @@ void main()
 	FragColor = vec4(result * texture(mat.albedo_tex, TexCoord * mat.tiling).rgb * mat.color, 1.0);
 
 	//FragColor = vec4(TexCoord.x, TexCoord.y, 0.0f, 1.0f);
-	//FragColor = texture(tex, TexCoord);
+	//FragColor = texture(mat.albedo_tex, TexCoord);
 	//FragColor = vec4(Pos.x / 32.0f, Pos.y / 32.0f, Pos.z / 32.0f, 1.0f);
 	//FragColor = vec4((Normal.x + 1.0f) / 2.0f, (Normal.y + 1.0f) / 2.0f, (Normal.z + 1.0f) / 2.0f, 1.0f);
 

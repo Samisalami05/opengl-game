@@ -1,5 +1,6 @@
 #include "renderer.h"
 #include "core/cubemap.h"
+#include "scenemanager.h"
 #include "skybox.h"
 #include "util/arraylist.h"
 #include "camera.h"
@@ -11,6 +12,31 @@
 #include "core/shader.h"
 #include <glad/glad.h>
 #include <stdio.h>
+
+static void material_set_lights(material* mat, arraylist* lights) {
+	shader_set_int(mat->shader, "light_count", lights->count);
+
+	char* base = "lights";
+
+	for (int j = 0; j < lights->count; j++) {
+		light* light = arraylist_get(lights, j);
+		char location[50];
+		sprintf(location, "%s[%d].%s", base, j, "type");
+		shader_set_int(mat->shader, location, light->type);
+		sprintf(location, "%s[%d].%s", base, j, "intensity");
+		shader_set_float(mat->shader, location, light->intensity);
+		sprintf(location, "%s[%d].%s", base, j, "range");
+		shader_set_float(mat->shader, location, light->range);
+
+		sprintf(location, "%s[%d].%s", base, j, "color");
+		shader_set_vec3(mat->shader, location, light->color);
+		sprintf(location, "%s[%d].%s", base, j, "dir");
+		shader_set_vec3(mat->shader, location, light->dir);
+		sprintf(location, "%s[%d].%s", base, j, "position");
+		shader_set_vec3(mat->shader, location, light->position);
+	}
+
+}
 
 void render_mesh(mesh* m, material* mat, camera* cam) {
 	material_use(mat);
@@ -29,7 +55,9 @@ void render_mesh(mesh* m, material* mat, camera* cam) {
 void render_model(model* m, camera* cam, vec3 pos, vec3 rot, vec3 scale) {
 	for (int i = 0; i < m->mesh_count; i++) {
 		material* mat = &m->materials[m->mesh_mat_indices[i]];
+		
 		material_use(mat);
+		material_set_lights(mat, &sm_get_current_scene()->lights);
 
 		mat4 model;
 		mat4_identity(&model);
@@ -77,28 +105,7 @@ void render_scene(scene* s) {
 	for (int i = 0; i < s->entities.count; i++) {
 		entity* e = &((entity*)s->entities.data)[i];
 		material_use(e->mat);
-		shader_set_int(e->mat->shader, "light_count", s->lights.count);
-
-		char* base = "lights";
-
-		for (int j = 0; j < s->lights.count; j++) {
-			light* light = arraylist_get(&s->lights, j);
-			char location[50];
-			sprintf(location, "%s[%d].%s", base, j, "type");
-			shader_set_int(e->mat->shader, location, light->type);
-			sprintf(location, "%s[%d].%s", base, j, "intensity");
-			shader_set_float(e->mat->shader, location, light->intensity);
-			sprintf(location, "%s[%d].%s", base, j, "range");
-			shader_set_float(e->mat->shader, location, light->range);
-
-			sprintf(location, "%s[%d].%s", base, j, "color");
-			shader_set_vec3(e->mat->shader, location, light->color);
-			sprintf(location, "%s[%d].%s", base, j, "dir");
-			shader_set_vec3(e->mat->shader, location, light->dir);
-			sprintf(location, "%s[%d].%s", base, j, "position");
-			shader_set_vec3(e->mat->shader, location, light->position);
-		}
-
+		material_set_lights(e->mat, &s->lights);
 		render_entity(e, &s->cam);
 	}
 

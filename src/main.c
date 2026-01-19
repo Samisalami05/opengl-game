@@ -88,7 +88,8 @@ int main(void) {
 		}
 
 		// Rendering
-		render_scene(sm_get_current_scene());
+		//render_scene(sm_get_current_scene());
+		//render_mesh(cube, &m.materials[0], &sm_get_current_scene()->cam);
 		render_model(&m, &sm_get_current_scene()->cam,
 			(vec3){0.0f, 0.5f, 0.0f},
 			(vec3){0},

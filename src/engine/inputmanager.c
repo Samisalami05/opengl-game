@@ -206,7 +206,6 @@ vec2 getJoystickDelta(uint8_t id, gamepad_joystick stick) { // TODO: apply deadz
 		vec2 right;
 		right.x = state.axes[GLFW_GAMEPAD_AXIS_RIGHT_X];
 		right.y = -state.axes[GLFW_GAMEPAD_AXIS_RIGHT_Y];
-
 		if (vec2_magnitude(right) > GAMEPAD_DEADZONE)
 			ret = right;
 	}

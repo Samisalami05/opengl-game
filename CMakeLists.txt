@@ -13,6 +13,12 @@ set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
+add_custom_target(clean-engine
+    COMMAND ${CMAKE_COMMAND} -E rm -rf
+        ${CMAKE_BINARY_DIR}/CMakeFiles/engine.dir
+        $<TARGET_FILE:engine>
+)
+
 # GLFW
 add_subdirectory(libs/glfw-3.4)
 
