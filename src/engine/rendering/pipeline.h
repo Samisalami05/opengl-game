@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <sys/types.h>
 
+
 /*
  * Shadow pass – render depth from light POV
  * Geometry pass – fill G-buffer (for deferred)
@@ -39,10 +40,10 @@ typedef struct render_pass {
 	render_texture color_tex;
 	render_texture depth_tex;
 	
-	void (*renderpass_init)(struct render_pass* rp);
-	void (*renderpass_execute)(struct render_pass* rp, render_context* context, render_targets* targets);
-	void (*renderpass_resize)(struct render_pass* rp, uint32_t width, uint32_t height); // glViewport(0, 0, rp->width, rp->height);
-	void (*renderpass_deinit)(struct render_pass* rp);
+	void (*init)(struct render_pass* rp);
+	void (*execute)(struct render_pass* rp, render_context* context, render_targets* targets);
+	void (*resize)(struct render_pass* rp, uint32_t width, uint32_t height); // glViewport(0, 0, rp->width, rp->height);
+	void (*deinit)(struct render_pass* rp);
 
 	void* data;
 } render_pass;
@@ -50,6 +51,12 @@ typedef struct render_pass {
 typedef struct {
 	render_pass* passes;
 	uint32_t count;
+	render_targets targets;
 } render_pipeline;
+
+void render_pipeline_init(render_pipeline* pipeline, uint32_t width, uint32_t height);
+void render_pipeline_deinit(render_pipeline* pipeline);
+void execute_render_passes(render_pipeline* pipeline, render_context* context);
+void render_pipeline_resize(render_pipeline* pipeline, uint32_t width, uint32_t height);
 
 #endif
