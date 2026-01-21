@@ -1,12 +1,14 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
+#include "rendering/renderer.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stdint.h>
 
 typedef struct game {
 	GLFWwindow* window;
+	renderer renderer;
 	float deltatime;
 	float last_frame;
 } game;

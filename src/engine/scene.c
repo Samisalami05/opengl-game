@@ -9,7 +9,7 @@
 void scene_init(scene* s, unsigned int id, char* name) {
 	s->id = id;
 	s->name = name;
-	camera_init(&s->cam, 800, 800);
+	camera_init(&s->cam, 640, 480);
 	arraylist_init(&s->entities, sizeof(entity));
 	arraylist_init(&s->lights, sizeof(light));
 	

@@ -88,13 +88,14 @@ int main(void) {
 		}
 
 		// Rendering
+		render(&game->renderer, &m, 1, &sm_get_current_scene()->cam);
 		//render_scene(sm_get_current_scene());
 		//render_mesh(cube, &m.materials[0], &sm_get_current_scene()->cam);
-		render_model(&m, &sm_get_current_scene()->cam,
-			(vec3){0.0f, 0.5f, 0.0f},
-			(vec3){0},
-			(vec3){3.0f, 3.0f, 3.0f}
-		);
+		//render_model(&m, &sm_get_current_scene()->cam,
+		//	(vec3){0.0f, 0.5f, 0.0f},
+		//	(vec3){0},
+		//	(vec3){3.0f, 3.0f, 3.0f}
+		//);
 		
 		engine_end_frame(game);
     }

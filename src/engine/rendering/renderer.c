@@ -1,5 +1,6 @@
 #include "renderer.h"
 #include "core/cubemap.h"
+#include "rendering/pipeline.h"
 #include "scenemanager.h"
 #include "skybox.h"
 #include "util/arraylist.h"
@@ -46,6 +47,28 @@ static void shader_set_mvp(shader* s, vec3 pos, vec3 rot, vec3 scale) {
 	mat4_scale_v3(&model, scale);
 
 	shader_set_mat4(s, "model", model);
+}
+
+void renderer_init(renderer* r, uint32_t width, uint32_t height) {
+	render_pipeline_init(&r->pipeline, width, height);
+	r->context = (render_context) {
+		.camera = NULL,
+		.drawlist = NULL,
+		.draw_count = 0,
+		.frame_index = 0
+	};
+}
+
+void renderer_deinit(renderer* r) {
+	render_pipeline_deinit(&r->pipeline);
+}
+
+void render(renderer* r, model* models, uint32_t count, camera* cam) {
+	r->context.drawlist = models;
+	r->context.draw_count = count;
+	r->context.camera = cam;
+	execute_render_passes(&r->pipeline, &r->context);
+	r->context.frame_index++;
 }
 
 void render_mesh(mesh* m, material* mat, camera* cam) {

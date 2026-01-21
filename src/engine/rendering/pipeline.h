@@ -27,7 +27,9 @@ typedef struct {
 
 // Stores shared targets among passes
 typedef struct {
-	render_texture shadow_map; // Example
+	render_texture opaque_tex;
+	render_texture depth_tex;
+	render_texture shadow_map;
 	render_texture lighting_result;
 } render_targets;
 
@@ -37,10 +39,8 @@ typedef struct render_pass {
 	uint32_t height;
 
 	uint32_t fbo;
-	render_texture color_tex;
-	render_texture depth_tex;
+	render_texture color_tex; // TODO: should add more
 	
-	void (*init)(struct render_pass* rp);
 	void (*execute)(struct render_pass* rp, render_context* context, render_targets* targets);
 	void (*resize)(struct render_pass* rp, uint32_t width, uint32_t height); // glViewport(0, 0, rp->width, rp->height);
 	void (*deinit)(struct render_pass* rp);

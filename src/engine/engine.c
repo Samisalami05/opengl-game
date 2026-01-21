@@ -1,10 +1,15 @@
 #include "engine.h"
 #include "GLFW/glfw3.h"
 #include "inputmanager.h"
+#include "rendering/pipeline.h"
+#include "rendering/renderer.h"
 #include "resourcemanager.h"
 #include "scenemanager.h"
 #include <stdio.h>
 #include <stdlib.h>
+
+#define WINDOW_WIDTH 640
+#define WINDOW_HEIGHT 480
 
 // Callbacks
 static void error_callback(int error, const char* description) {
@@ -13,7 +18,10 @@ static void error_callback(int error, const char* description) {
 
 static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
+	game* g = glfwGetWindowUserPointer(window);
     glViewport(0, 0, width, height);
+	render_pipeline_resize(&g->renderer.pipeline, width, height);
+
 	scene* scene = sm_get_current_scene();
 	scene->cam.width = width;
 	scene->cam.height = height;
@@ -58,6 +66,7 @@ static uint8_t init_opengl() {
 	}
 
 	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_TRUE);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  
 
@@ -84,6 +93,11 @@ game* engine_init() {
 	g->window = window;
 	g->deltatime = 0.001f;
 	g->last_frame = 0.0f;
+
+	glfwSetWindowUserPointer(window, g);
+
+	renderer_init(&g->renderer, WINDOW_WIDTH, WINDOW_HEIGHT);
+
 	return g;
 }
 
@@ -110,6 +124,7 @@ void engine_deinit(game* g) {
 	scenemanager_deinit();
 	resource_manager_deinit();
 	inputman_deinit();
+	renderer_deinit(&g->renderer);
 
 	deinit_glfw(g);
 	free(g);
