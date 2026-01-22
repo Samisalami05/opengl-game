@@ -5,9 +5,9 @@
 #include <stdio.h>
 
 typedef struct {
+	uint32_t target;
 	uint32_t internal_format;
 	uint32_t format;
-	uint32_t target;
 	uint32_t type;
 } rt_data;
 
@@ -32,9 +32,22 @@ static rt_data get_data(rt_type type) {
 				.target = GL_TEXTURE_2D,
 				.internal_format = GL_DEPTH24_STENCIL8,
 				.format = GL_DEPTH_STENCIL,
-				.type = GL_UNSIGNED_BYTE,
+				.type = GL_UNSIGNED_BYTE, // TODO: maybe should be float
 			};
 	}
+}
+
+static void set_parameters(rt_type type) {
+	if (type == RENDER_TEX_COLOR) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	}
+	else {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
 void render_texture_init(render_texture* rt, uint32_t width, uint32_t height, rt_type type)
@@ -49,38 +62,17 @@ void render_texture_init(render_texture* rt, uint32_t width, uint32_t height, rt
 
 	rt_data data = get_data(type); // TODO: use data
 
-    if (type == RENDER_TEX_COLOR) {
-        rt->format = GL_RGBA8;
 
-        glTexImage2D(
-            GL_TEXTURE_2D, 0,
-            GL_RGBA8,
-            width, height, 0,
-            GL_RGBA,
-            GL_UNSIGNED_BYTE,
-            NULL
-        );
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    }
-    else if (type == RENDER_TEX_DEPTH) {
-        rt->format = GL_DEPTH_COMPONENT24;
-
-        glTexImage2D(
-            GL_TEXTURE_2D, 0,
-            GL_DEPTH_COMPONENT24,
-            width, height, 0,
-            GL_DEPTH_COMPONENT,
-            GL_FLOAT,
-            NULL
-        );
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    }
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	rt->format = data.internal_format;
+	glTexImage2D(
+		data.target, 0,
+		data.internal_format,
+		width, height, 0,
+        data.format,
+        data.type,
+        NULL
+    );
+	set_parameters(type);		
 }
 
 void render_texture_deinit(render_texture* rt) {
@@ -94,25 +86,17 @@ void render_texture_resize(render_texture* rt, uint32_t width, uint32_t height) 
 
     glBindTexture(GL_TEXTURE_2D, rt->handle);
 
-    if (rt->type == RENDER_TEX_COLOR) {
-        glTexImage2D(
-            GL_TEXTURE_2D, 0,
-            GL_RGBA8,
-            width, height, 0,
-            GL_RGBA,
-            GL_UNSIGNED_BYTE,
-            NULL
-        );
-    } else if (rt->type == RENDER_TEX_DEPTH) {
-        glTexImage2D(
-            GL_TEXTURE_2D, 0,
-            GL_DEPTH_COMPONENT24,
-            width, height, 0,
-            GL_DEPTH_COMPONENT,
-            GL_FLOAT,
-            NULL
-        );
-    }}
+	rt_data data = get_data(rt->type);
+
+	glTexImage2D(
+		data.target, 0,
+		data.internal_format,
+		width, height, 0,
+        data.format,
+        data.type,
+        NULL
+    );
+}
 
 void render_texture_bind(render_texture* rt, uint32_t unit) {
 	glActiveTexture(GL_TEXTURE0 + unit);
