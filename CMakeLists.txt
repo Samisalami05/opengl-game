@@ -28,6 +28,7 @@ target_include_directories(glad PUBLIC libs/glad/include)
 
 # ASSIMP
 set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
+include_directories(/usr/include/minizip)
 add_subdirectory(libs/assimp)
 
 file(GLOB_RECURSE APP_SRC

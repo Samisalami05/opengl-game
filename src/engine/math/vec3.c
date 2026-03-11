@@ -99,7 +99,7 @@ vec3 vec3_mul_f(const vec3 v1, const float v2) {
 }
 
 vec3 vec3_div_f(const vec3 v1, const float v2) {
-	return (vec3) { // TODO: handle zero division
+	return (vec3) {
 		.x = v1.x / v2,
 		.y = v1.y / v2,
 		.z = v1.z / v2

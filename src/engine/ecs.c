@@ -1,5 +1,6 @@
 #include "ecs.h"
 #include "entity.h"
+#include "scenemanager.h"
 #include "util/arraylist.h"
 #include "util/hashmap.h"
 #include "util/slotmap.h"
@@ -31,29 +32,40 @@ static uint64_t component_hash(const void* v) {
 }
 
 // Returns entity id
-entity2 create_entity(ecs* ecs) {
+entity2 create_entity() {
+	scene* s = sm_get_current_scene();
+	if (s == NULL) return INVALID_ENTITY;
+
 	hashmap comps; // Stores components by id
 	hashmap_init(&comps, sizeof(component), sizeof(entity2), component_hash);
 
-	uint64_t id = slotmap_add(&ecs->components, &comps);
+	uint64_t id = slotmap_add(&s->ecs.components, &comps);
 	return id;
 }
 
-void destroy_entity(ecs* ecs, entity2 e) {
+void destroy_entity(entity2 e) {
+	scene* s = sm_get_current_scene();
+	if (s == NULL) return;
+
 	// TODO: optimization is to clear the hashmap
-	hashmap* comps = &((hashmap*)ecs->components.data)[e];
+	hashmap* comps = &((hashmap*)s->ecs.components.data)[e];
+	
 	hashmap_deinit(comps);
-	slotmap_remove(&ecs->components, e);
+	slotmap_remove(&s->ecs.components, e);
 }
 
+// TODO: what happens if you add more than of the same component type.
 // The returned pointer becomes unusable after components on entity is changed
-void* add_component(ecs* ecs, entity2 e, comp_id id) {
+void* add_component(entity2 e, comp_id id) {
 	if (id >= _types.count) {
 		fprintf(stderr, "Invalid component id %ld: The component type does not exist\n", id);
 		return NULL;
 	}
 
-	hashmap* comps = &((hashmap*)ecs->components.data)[e];
+	scene* s = sm_get_current_scene();
+	if (s == NULL) return NULL;
+
+	hashmap* comps = &((hashmap*)s->ecs.components.data)[e];
 	component_type* c_type = arraylist_get(&_types, id);
 
 	component c = {
@@ -67,14 +79,18 @@ void* add_component(ecs* ecs, entity2 e, comp_id id) {
 	return c.data;
 }
 
-void* get_component(ecs* ecs, entity2 e, comp_id id) {
+void* get_component(entity2 e, comp_id id) {
 	if (id >= _types.count) {
 		fprintf(stderr, "Invalid component id %ld: The component type does not exist\n", id);
 		return NULL;
 	}
 
-	hashmap* comps = &((hashmap*)ecs->components.data)[e];
+	scene* s = sm_get_current_scene();
+	if (s == NULL) return NULL;
+
+	hashmap* comps = &((hashmap*)s->ecs.components.data)[e];
 	
 	component* c = hashmap_get(comps, &id);
+	if (c == NULL) return NULL;
 	return c->data;
 }

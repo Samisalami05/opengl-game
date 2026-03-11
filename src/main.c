@@ -64,9 +64,9 @@ int main(void) {
 	
 	scene* scene = sm_get_current_scene();
 
-	entity2 ent = create_entity(&scene->ecs);
-	add_component(&scene->ecs, ent, 0);
-	int* comp = get_component(&scene->ecs, ent, 0);
+	entity2 ent = create_entity();
+	add_component(ent, 0);
+	int* comp = get_component(ent, 0);
 
 	printf("value %d\n", *comp);
 	

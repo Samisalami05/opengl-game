@@ -1,9 +1,9 @@
 #ifndef VEC2_H
 #define VEC2_H
 
-typedef struct vec2 {
-	float x;
-	float y;
+typedef union vec2 {
+	struct { float x, y; };
+	struct { float data[2]; };
 } vec2;
 
 float vec2_magnitude(const vec2 v);

@@ -1,10 +1,12 @@
 #ifndef VEC3_H
 #define VEC3_H
 
-typedef struct vec3 {
-	float x;
-	float y;
-	float z;
+#include "math/vec2.h"
+typedef union {
+	struct { float x, y, z; };
+	struct { vec2 xy; float __pad1; };
+	struct { float __pad2; vec2 yz; };
+	struct { float data[3]; };
 } vec3;
 
 float vec3_magnitude(const vec3 v);
