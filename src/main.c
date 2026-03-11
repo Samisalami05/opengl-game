@@ -7,11 +7,7 @@
 #include "ecs.h"
 #include "engine.h"
 #include "engine/engine.h"
-#include "engine/inputmanager.h"
-#include "engine/keys.h"
 #include "engine/modelloader.h"
-#include "inputmanager.h"
-#include "keys.h"
 #include "util/arraylist.h"
 #include "entity.h"
 #include "lighting/light.h"
@@ -23,10 +19,7 @@
 #include "scenemanager.h"
 #include "math/vec3.h"
 #include "rendering/camera.h"
-#include "math/mathutil.h"
-#include "core/cubemap.h"
 #include "modelloader.h"
-#include "util/util.h"
 #include <math.h>
 
 static void int_init(void* v) {
