@@ -24,18 +24,26 @@ void arraylist_init(arraylist* a, size_t stride) {
 	a->stride = stride;
 }
 
-void arraylist_append(arraylist* a, void* data) {
-	if (expand_if_necessary(a)) return;
-	memcpy(a->data + a->count * a->stride, data, a->stride);
-	a->count++;
+void arraylist_deinit(arraylist* a) {
+	if (a->data != NULL)
+		free(a->data);
+	a->data = NULL;
 }
 
-void arraylist_set(arraylist* a, void* data, uint64_t index) {
+uint8_t arraylist_append(arraylist* a, void* data) {
+	if (expand_if_necessary(a)) return 0;
+	memcpy(a->data + a->count * a->stride, data, a->stride);
+	a->count++;
+	return 1;
+}
+
+uint8_t arraylist_set(arraylist* a, void* data, uint64_t index) {
 	if (index < 0 || index >= a->count) {
 		fprintf(stderr, "arraylist: Index %ld out of bounds in list with count %d\n", index, a->count);
-		return;
+		return 0;
 	}
 	memcpy(a->data + index * a->stride, data, a->stride);
+	return 1;
 }
 
 void* arraylist_get(arraylist* a, uint64_t index) {
@@ -54,22 +62,26 @@ void* arraylist_get_last(arraylist* a) {
 	return a->data + (a->count - 1) * a->stride;
 }
 
-void arraylist_remove(arraylist* a, uint64_t index) {
+uint8_t arraylist_remove(arraylist* a, uint64_t index) {
+	if (a->count == 0) {
+		fprintf(stderr, "arraylist: Cant remove last element from a empty list\n");
+		return 0;
+	}
+
 	if (index < a->count - 1)
 		memcpy(a->data + index * a->stride, a->data + (index + 1) * a->stride, (a->count - index - 1) * a->stride);
 
 	a->count--;
-}
-void arraylist_remove_last(arraylist* a) {
-	if (a->count == 0) {
-		fprintf(stderr, "arraylist: Cant remove last element from a empty list\n");
-		return;
-	}
-	a->count--;
+	return 1;
 }
 
-void arraylist_deinit(arraylist* a) {
-	if (a->data != NULL)
-		free(a->data);
-	a->data = NULL;
+uint8_t arraylist_remove_last(arraylist* a) {
+	if (a->count == 0) {
+		fprintf(stderr, "arraylist: Cant remove last element from a empty list\n");
+		return 0;
+	}
+	a->count--;
+	return 1;
 }
+
+

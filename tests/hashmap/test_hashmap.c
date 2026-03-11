@@ -79,8 +79,11 @@ uint8_t test_hashmap_put_probe() {
 		hashmap_put(&m, &v, &v);
 	}
 
-	int* values = hashmap_values(&m);
-	int* keys = hashmap_keys(&m);
+	int values[m.count];
+	int keys[m.count];
+	
+	hashmap_values(&m, values);
+	hashmap_keys(&m, keys);
 
 	for (int i = 0; i < m.count; i++) {
 		int v = values[i];
@@ -88,9 +91,6 @@ uint8_t test_hashmap_put_probe() {
 		TEST_ASSERT(v == i);
 		TEST_ASSERT(k == i);
 	}
-
-	free(values);
-	free(keys);
 
 	hashmap_deinit(&m);
 	return 1;
@@ -106,8 +106,11 @@ uint8_t test_hashmap_put_resize() {
 		hashmap_put(&m, &v, &k);
 	}
 
-	int* values = hashmap_values(&m);
-	int* keys = hashmap_keys(&m);
+	int values[m.count];
+	int keys[m.count];
+	
+	hashmap_values(&m, values);
+	hashmap_keys(&m, keys);
 
 	for (int i = 0; i < m.count; i++) {
 		int v = values[i];
@@ -115,9 +118,6 @@ uint8_t test_hashmap_put_resize() {
 		TEST_ASSERT(v == i);
 		TEST_ASSERT(k == i);
 	}
-
-	free(values);
-	free(keys);
 
 	hashmap_deinit(&m);
 	return 1;

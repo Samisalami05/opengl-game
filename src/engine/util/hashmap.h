@@ -27,8 +27,8 @@ void hashmap_deinit(hashmap* m);
 
 void* hashmap_put(hashmap* m, const void* k, const void* v);
 void* hashmap_get(hashmap* m, const void* k);
-void* hashmap_values(hashmap* m);
-void* hashmap_keys(hashmap* m);
+void hashmap_values(hashmap* m, void* out);
+void hashmap_keys(hashmap* m, void* out);
 
 void hashmap_clear(hashmap* m);
 

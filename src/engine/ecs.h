@@ -27,6 +27,7 @@ typedef uint64_t comp_id;
 typedef struct {
     comp_id id;
     void* data;
+	// TODO: bool for debug drawing
 } component;
 
 /**
@@ -39,6 +40,7 @@ typedef struct {
     void (*deinit)(void*);
     void (*update)(void*, float);
     void (*render)(void*);
+	void (*render_debug)(void*);
 } component_type;
 
 typedef struct {
@@ -73,7 +75,7 @@ void ecs_deinit(ecs* ecs);
  * Creates an entity in the entity component system.
  *
  * @note The function uses the currently loaded scene.
- * @return On success returns the entity, else returns NULL.
+ * @return On success returns the entity, else returns INVALID_ENTITY.
  */
 entity2 create_entity();
 

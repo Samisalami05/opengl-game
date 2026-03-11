@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "components/transform.h"
 #include "core/cubemap.h"
 #include "ecs.h"
 #include "engine.h"
@@ -22,18 +23,14 @@
 #include "modelloader.h"
 #include <math.h>
 
-static void int_init(void* v) {
-	*((int*)v) = 4;
-	printf("Component initailized\n");
-}
-
 int main(void) {
 	component_type type = {
-		.size = sizeof(int),
-		.init = int_init,
-		.deinit = NULL,
-		.render = NULL,
-		.update = NULL,
+		.size = sizeof(transform),
+		.init = transform_init,
+		.deinit = transform_deinit,
+		.update = transform_update,
+		.render = transform_render,
+		.render_debug = transform_render_debug,
 	};
 
 	register_component(type);
@@ -49,14 +46,14 @@ int main(void) {
 	material ground_mat, player_mat;
 	material_init(&ground_mat, MAT_TEXTURE_LIT);
 	material_init(&player_mat, MAT_COLOR_LIT);
-	ground_mat.tiling = (vec2){100.0f, 100.0f};
+	ground_mat.tiling = (vec2){{ 100.0f, 100.0f }};
 	player_mat.shininess = 100.0f;
 	
 	entity* player = entity_create(cube, &player_mat);
 	entity* ground = entity_create(plane, &ground_mat);
 
 	player->position.y += 2.5f;
-	player->scale = (vec3){5, 5, 5};
+	player->scale = (vec3){{ 5, 5, 5 }};
 	ground->scale.x = 100;
 	ground->scale.z = 100;
 	
@@ -64,17 +61,19 @@ int main(void) {
 	
 	scene* scene = sm_get_current_scene();
 
-	entity2 ent = create_entity();
+	entity2 ent = create_entity(); // TODO: figure out why this code does stuff to the lighting
 	add_component(ent, 0);
-	int* comp = get_component(ent, 0);
+	transform* comp = get_component(ent, 0);
 
-	printf("value %d\n", *comp);
+	vec3_print(comp->position);
+
+	destroy_entity(ent);
 	
 	light pointlight1, pointlight2;
-	light_init_point(&pointlight1, (vec3){2.0f, 6.0f, 1.0f});
-	light_init_point(&pointlight2, (vec3){-2.0f, 16.0f, -2.0f});
-	pointlight1.color = (vec3){1.0f, 0.5f, 0.2f};
-	pointlight2.color = (vec3){0.5f, 0.2f, 1.0f};
+	light_init_point(&pointlight1, (vec3){{ 2.0f, 6.0f, 1.0f }});
+	light_init_point(&pointlight2, (vec3){{ -2.0f, 16.0f, -2.0f }});
+	pointlight1.color = (vec3){{ 1.0f, 0.5f, 0.2f }};
+	pointlight2.color = (vec3){{ 0.5f, 0.2f, 1.0f }};
 	pointlight1.intensity = 0.7f;
 	pointlight2.intensity = 0.5f;
 	pointlight1.range = 10.0f;

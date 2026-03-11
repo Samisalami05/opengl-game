@@ -48,9 +48,19 @@ void destroy_entity(entity2 e) {
 	if (s == NULL) return;
 
 	// TODO: optimization is to clear the hashmap
-	hashmap* comps = &((hashmap*)s->ecs.components.data)[e];
+	hashmap* compmap = &((hashmap*)s->ecs.components.data)[e];
 	
-	hashmap_deinit(comps);
+	component comps[compmap->count];
+	hashmap_values(compmap, comps);
+	for (int i = 0; i < compmap->count; i++) {
+		component_type type = ((component_type*)_types.data)[comps[i].id];
+		if (type.deinit)
+			type.deinit(comps->data);
+
+		free(comps[i].data);
+	}
+	
+	hashmap_deinit(compmap);
 	slotmap_remove(&s->ecs.components, e);
 }
 

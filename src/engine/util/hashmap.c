@@ -170,32 +170,28 @@ void* hashmap_get(hashmap* m, const void* k) {
 	return m->buckets[p].value;
 }
 
-void* hashmap_values(hashmap* m) {
-	void* values = malloc(m->count * m->v_size);
+void hashmap_values(hashmap* m, void* out) {
 	int index = 0;
 	for (int i = 0; i < m->b_count; i++) {
 		if (m->buckets[i].key != NULL && m->buckets[i].value != NULL) {
-			memcpy(values + (index * m->v_size), m->buckets[i].value, m->v_size);
+			memcpy(out + (index * m->v_size), m->buckets[i].value, m->v_size);
 			index++;
 		}
 		if (index >= m->count) // Every value is taken out
 			break;
 	}
-	return values;
 }
 
-void* hashmap_keys(hashmap* m) {
-	void* keys = malloc(m->count * m->k_size);
+void hashmap_keys(hashmap* m, void* out) {
 	int index = 0;
 	for (int i = 0; i < m->b_count; i++) {
 		if (m->buckets[i].key != NULL && m->buckets[i].value != NULL) {
-			memcpy(keys + (index * m->k_size), m->buckets[i].key, m->k_size);
+			memcpy(out + (index * m->k_size), m->buckets[i].key, m->k_size);
 			index++;
 		}
 		if (index >= m->count) // Every value is taken out
 			break;
 	}
-	return keys;
 }
 
 void hashmap_clear(hashmap* m) {
