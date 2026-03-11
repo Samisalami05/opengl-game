@@ -1,5 +1,6 @@
 #include "hashmap.h"
 #include "math/ivec3.h"
+#include <assimp/cimport.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -195,6 +196,11 @@ void* hashmap_keys(hashmap* m) {
 			break;
 	}
 	return keys;
+}
+
+void hashmap_clear(hashmap* m) {
+	memset(m->buckets, 0, sizeof(bucket) * m->b_count);
+	m->count = 0;
 }
 
 void hashmap_print(hashmap* m, void(*v_print)(void*), void(*k_print)(void*)) {

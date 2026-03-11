@@ -1,4 +1,5 @@
 #include "arraylist.h"
+#include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -29,17 +30,17 @@ void arraylist_append(arraylist* a, void* data) {
 	a->count++;
 }
 
-void arraylist_set(arraylist* a, void* data, int index) {
+void arraylist_set(arraylist* a, void* data, uint64_t index) {
 	if (index < 0 || index >= a->count) {
-		fprintf(stderr, "arraylist: Index %d out of bounds in list with count %d\n", index, a->count);
+		fprintf(stderr, "arraylist: Index %ld out of bounds in list with count %d\n", index, a->count);
 		return;
 	}
 	memcpy(a->data + index * a->stride, data, a->stride);
 }
 
-void* arraylist_get(arraylist* a, int index) {
+void* arraylist_get(arraylist* a, uint64_t index) {
 	if (index < 0 || index >= a->count) {
-		fprintf(stderr, "arraylist: Index %d out of bounds in list with count %d\n", index, a->count);
+		fprintf(stderr, "arraylist: Index %ld out of bounds in list with count %d\n", index, a->count);
 		return NULL;
 	}
 	return a->data + index * a->stride;
@@ -53,7 +54,7 @@ void* arraylist_get_last(arraylist* a) {
 	return a->data + (a->count - 1) * a->stride;
 }
 
-void arraylist_remove(arraylist* a, int index) {
+void arraylist_remove(arraylist* a, uint64_t index) {
 	if (index < a->count - 1)
 		memcpy(a->data + index * a->stride, a->data + (index + 1) * a->stride, (a->count - index - 1) * a->stride);
 

@@ -1,6 +1,7 @@
 #ifndef SCENE_H
 #define SCENE_H
 
+#include "ecs.h"
 #include "skybox.h"
 #include "util/arraylist.h"
 #include "entity.h"
@@ -10,15 +11,18 @@
 
 typedef struct scene {
 	unsigned int id;
-	char* name;
+	char name[128];
 	arraylist entities;
 	arraylist lights;
 	entity light_entity;
 	camera cam;
 	skybox skybox;
+
+	ecs ecs;
 } scene;
 
 void scene_init(scene* s, unsigned int id, char* name);
+// TODO: deinit function
 void scene_add_entity(scene* s, entity* e);
 void scene_remove_entity(scene* s, int index);
 void scene_print(scene* s);

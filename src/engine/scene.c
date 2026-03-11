@@ -1,17 +1,21 @@
 #include "scene.h"
+#include "ecs.h"
 #include "lighting/light.h"
 #include "skybox.h"
 #include "util/arraylist.h"
 #include "util/hashmap.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 void scene_init(scene* s, unsigned int id, char* name) {
 	s->id = id;
-	s->name = name;
+	strcpy(s->name, name);
 	camera_init(&s->cam, 640, 480);
 	arraylist_init(&s->entities, sizeof(entity));
 	arraylist_init(&s->lights, sizeof(light));
+	
+	ecs_init(&s->ecs);
 	
 	mesh* cube_mesh = mesh_load_obj_new("assets/cube.obj");
 	material* mat = malloc(sizeof(material));

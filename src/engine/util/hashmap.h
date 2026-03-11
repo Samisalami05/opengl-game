@@ -30,6 +30,8 @@ void* hashmap_get(hashmap* m, const void* k);
 void* hashmap_values(hashmap* m);
 void* hashmap_keys(hashmap* m);
 
+void hashmap_clear(hashmap* m);
+
 void hashmap_print(hashmap* m, void(*v_print)(void*), void(*k_print)(void*));
 
 #endif

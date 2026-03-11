@@ -1,8 +1,10 @@
 #include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "core/cubemap.h"
+#include "ecs.h"
 #include "engine.h"
 #include "engine/engine.h"
 #include "engine/inputmanager.h"
@@ -27,7 +29,22 @@
 #include "util/util.h"
 #include <math.h>
 
+static void int_init(void* v) {
+	*((int*)v) = 4;
+	printf("Component initailized\n");
+}
+
 int main(void) {
+	component_type type = {
+		.size = sizeof(int),
+		.init = int_init,
+		.deinit = NULL,
+		.render = NULL,
+		.update = NULL,
+	};
+
+	register_component(type);
+
     game* game = engine_init();
 
 	model m;
@@ -53,6 +70,12 @@ int main(void) {
 	ground_mat.albedo_tex = load_texture("assets/grass.jpg");
 	
 	scene* scene = sm_get_current_scene();
+
+	entity2 ent = create_entity(&scene->ecs);
+	add_component(&scene->ecs, ent, 0);
+	int* comp = get_component(&scene->ecs, ent, 0);
+
+	printf("value %d\n", *comp);
 	
 	light pointlight1, pointlight2;
 	light_init_point(&pointlight1, (vec3){2.0f, 6.0f, 1.0f});

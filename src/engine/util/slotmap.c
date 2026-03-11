@@ -55,6 +55,7 @@ void slotmap_deinit(slotmap* sm) {
 	free(sm->occupied_bits);
 }
 
+// Returns slot of added value
 uint64_t slotmap_add(slotmap* sm, void* value) {
 	if (sm->free.count > 0) {
 		uint64_t index = *(uint64_t*)ringbuffer_peek(&sm->free);
