@@ -1,5 +1,5 @@
 #include "slotmap.h"
-#include "engine/util/ringbuffer.h"
+#include "util/ringbuffer.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>

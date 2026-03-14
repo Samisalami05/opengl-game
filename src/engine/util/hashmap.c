@@ -1,6 +1,4 @@
 #include "hashmap.h"
-#include "math/ivec3.h"
-#include <assimp/cimport.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>

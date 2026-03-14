@@ -7,3 +7,10 @@ runtests
 vgcore*
 /assets/sponza.obj
 /build_tmp
+libs/**/build/
+
+# nob
+nob
+nob.exe
+nob.old
+deps.d
