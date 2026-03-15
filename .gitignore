@@ -8,6 +8,7 @@ vgcore*
 /assets/sponza.obj
 /build_tmp
 libs/**/build/
+a.out
 
 # nob
 nob

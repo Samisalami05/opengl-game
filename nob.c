@@ -1,12 +1,12 @@
+#define NOB_IMPLEMENTATION
+//#define NOB_NO_ECHO
+#include "nob_ext.h"
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/ucontext.h>
 
-#define NOB_IMPLEMENTATION
-//#define NOB_NO_ECHO
-#include "nob_ext.h"
 
 #define BUILD_FOLDER "build"
 #define SRC_FOLDER "src"
@@ -66,7 +66,7 @@ typedef struct {
 
 typedef struct {
 	const char* build_dir;
-	const char* src_dir;
+const char* src_dir;
 	libraries libs;
 } project;
 
@@ -98,9 +98,46 @@ void add_external_lib(libraries* libs, external_lib lib);
 Nob_Cmd lib_includes(libraries libs);
 Nob_Cmd lib_links(libraries libs);
 
+
+
 int main(int argc, char* argv[]) {
 	nob_set_log_handler(nob_cancer_log_handler);
 	NOB_GO_REBUILD_URSELF(argc, argv);
+
+	Nob_Comp_Opts opts = {
+		.build_type = NOB_BUILD_INCREMENTAL,
+		.dest_path = "build",
+	};
+
+	Nob_Comp_Args args = {
+		.opts = opts,
+		.includes = {0},
+		.links = {0},
+		.flags = {0},
+	};
+
+	
+	Nob_Object_File obj = nob_construct_obj("src/engine/util/hashmap.c", args);
+	if (obj.path == NULL) return 1;
+
+	if (!nob_build_object(obj, args)) return 1;
+	//Nob_Proc proc = nob_build_object_async(obj, args);
+	//if (proc == NOB_INVALID_PROC) return 1;
+	//if (proc != NOB_NONEXISTING_PROC && !nob_proc_wait(proc)) return 1;
+
+	Nob_File_Paths files = {0};
+	nob_file_search_rec("src/engine", &files);
+
+	for (int i = 0; i < files.count; i++) {
+		printf("path: %s\n", files.items[i]);
+	}
+
+	Nob_Object_Files objs = nob_construct_objs(files, args);
+	for (int i = 0; i < objs.count; i++) {
+		printf("obj: %s\n", objs.items[i].path);
+	}
+
+	return 0;
 
 	project proj = {
 		.build_dir = BUILD_FOLDER,
