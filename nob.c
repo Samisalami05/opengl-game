@@ -106,6 +106,7 @@ int main(int argc, char* argv[]) {
 
 	Nob_Comp_Opts opts = {
 		.build_type = NOB_BUILD_INCREMENTAL,
+		.name = "main",
 		.dest_path = "build",
 	};
 
@@ -116,26 +117,66 @@ int main(int argc, char* argv[]) {
 		.flags = {0},
 	};
 
+	Nob_Target main = nob_construct_target("main", "src/main.c", NOB_COMP_EXECUTABLE);
+	nob_target_include(&main, "wow", "ayo");
 	
-	Nob_Object_File obj = nob_construct_obj("src/engine/util/hashmap.c", args);
-	if (obj.path == NULL) return 1;
 
-	if (!nob_build_object(obj, args)) return 1;
-	//Nob_Proc proc = nob_build_object_async(obj, args);
-	//if (proc == NOB_INVALID_PROC) return 1;
-	//if (proc != NOB_NONEXISTING_PROC && !nob_proc_wait(proc)) return 1;
+	Nob_Target engine = nob_construct_target("engine", "src/engine", NOB_COMP_SHARED);
+	Nob_Target glfw = nob_construct_target("glfw", "libs/glfw-3.4", NOB_COMP_CMD);
+	Nob_Target glad = nob_construct_target("glad", "libs/glad", NOB_COMP_CHILD);
+	Nob_Target assimp = nob_construct_target("assimp", "libs/assimp", NOB_COMP_CMD);
+	
+	nob_target_dependency(&main, &engine);
+	nob_target_dependency(&engine, &glfw, &glad, &assimp);
 
+	nob_build_target(main);
+
+
+	/*
+	Nob_Target main = nob_construct_target("main", "src/main.c", NOB_COMP_EXECUTABLE);
+	nob_target_include(main, "src/engine");
+	nob_target_dependency(main, engine);
+
+	Nob_Target engine = nob_construct_target("engine", "src/engine", NOB_COMP_SHARED);
+	nob_target_link(&main, engine);
+	nob_target_dependency(engine, glfw);
+
+
+	// GLFW
+	Nob_Target glfw = nob_construct_target("glfw", "libs/glfw-3.4", NOB_COMP_CMD);
+	nob_target_add_cmd(glfw, "cmake", "-B", "build");
+	nob_target_add_links(glfw, "-lglfw");
+
+
+	nob_build_target(main);
+	*/
+
+	return 0;
+
+	nob_cmd_append(&args.includes, "-Isrc/engine", "-Ilibs/glad/include", "-Ilibs");
+
+	
 	Nob_File_Paths files = {0};
-	nob_file_search_rec("src/engine", &files);
-
-	for (int i = 0; i < files.count; i++) {
-		printf("path: %s\n", files.items[i]);
-	}
+	if (!nob_file_search_rec("src", &files, ".c")) return 1;
 
 	Nob_Object_Files objs = nob_construct_objs(files, args);
-	for (int i = 0; i < objs.count; i++) {
-		printf("obj: %s\n", objs.items[i].path);
-	}
+
+	if (!nob_build_objects(objs, args)) return 1;
+
+	if (!nob_link_objects(objs, args)) return 1;
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	return 0;
 

@@ -1,7 +1,7 @@
 #ifndef DEBUG_RENDERER_H
 #define DEBUG_RENDERER_H
 
-#include "vec3.h"
+#include "math/vec3.h"
 
 void debug_set_color(vec3 color);
 void debug_render_line(vec3 p1, vec3 p2);

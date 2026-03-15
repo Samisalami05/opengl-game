@@ -21,7 +21,6 @@
 
 #ifndef _GNU_SOURCE
 #	define _GNU_SOURCE
-#include <stdio.h>
 #endif
 
 #ifdef _WIN32
@@ -30,9 +29,11 @@
 #	include <sys/mman.h>
 #endif
 
+#include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "nob.h"
 
@@ -58,6 +59,7 @@ typedef enum {
 
 typedef struct { // TODO maybe add flags here
 	Nob_Build_Type build_type;
+	const char* name;
 	const char* dest_path;
 	//const char* file_extenstion;
 } Nob_Comp_Opts;
@@ -69,13 +71,15 @@ typedef struct {
 	Nob_Cmd flags;
 } Nob_Comp_Args;
 
-// --- Util ---
+// --- Nob-like functions ---
 
 // Only waits for the necessary amount of processes before adding the new one.
 // Can be more efficient that 'nob_procs_append_with_flush' with different process
 // loads.
 NOBDEF bool nob_procs_append(Nob_Procs *procs, Nob_Proc proc, size_t max_procs_count);
 NOBDEF Nob_Fd nob_fd_create(const char* name);
+
+// --- Build helpers ---
 
 NOBDEF Nob_Cmd nob_file_deps(const char* path, Nob_Comp_Args args);
 NOBDEF Nob_Object_File nob_construct_obj(const char* path, Nob_Comp_Args args);
@@ -85,8 +89,8 @@ NOBDEF bool nob_obj_should_build(Nob_Object_File obj);
 
 NOBDEF bool nob_file_walk(Nob_Walk_Entry entry);
 NOBDEF bool nob_file_walk_rec(Nob_Walk_Entry entry);
-NOBDEF bool nob_dir_files(const char* path, Nob_File_Paths* files);
-NOBDEF bool nob_dir_files_rec(const char* path, Nob_File_Paths* files);
+NOBDEF bool nob_file_search(const char* path, Nob_File_Paths* files, const char* ext);
+NOBDEF bool nob_file_search_rec(const char* path, Nob_File_Paths* files, const char* ext);
 
 // TODO: async is deprecated, use cmd opts
 NOBDEF Nob_Proc nob_build_object_async(Nob_Object_File obj, Nob_Comp_Args args);
@@ -94,10 +98,174 @@ NOBDEF Nob_Procs nob_build_objects_async(Nob_Object_Files objs, Nob_Comp_Args ar
 NOBDEF bool nob_build_object(Nob_Object_File obj, Nob_Comp_Args args);
 NOBDEF bool nob_build_objects(Nob_Object_Files objs, Nob_Comp_Args args);
 
+NOBDEF bool nob_link_objects(Nob_Object_Files objs, Nob_Comp_Args args);
+
+// --- Build System ---
+
+typedef enum {
+	NOB_COMP_CHILD, // Compiled with its parent target
+	NOB_COMP_EXECUTABLE,
+	NOB_COMP_SHARED,
+	NOB_COMP_STATIC,
+	NOB_COMP_CMD,
+} Nob_Comp_Type;
+
+typedef struct Nob_Target Nob_Target;
+
+typedef struct Nob_Targets {
+    Nob_Target** items;
+	size_t count;
+	size_t capacity;
+} Nob_Targets;
+
+typedef struct Nob_Target {
+    const char* name;
+    const char* path;
+    Nob_Comp_Type type;
+
+    Nob_Cmd build_cmd;
+
+    Nob_Cmd includes;
+    Nob_Cmd links;
+    Nob_Cmd flags;
+
+    Nob_Targets dependencies;
+} Nob_Target;
+
+
+NOBDEF Nob_Target nob_construct_target(const char* name, const char* path, Nob_Comp_Type type);
 
 
 
+NOBDEF void nob__target_include(Nob_Target* target, size_t n, ...);
+#define nob_target_include(target, ...) nob__target_include(target, sizeof((const char*[]){__VA_ARGS__})/sizeof(const char*), __VA_ARGS__)
+
+NOBDEF void nob__target_dependency(Nob_Target* target, size_t n, ...);
+#define nob_target_dependency(target, ...) nob__target_dependency(target, sizeof((Nob_Target*[]){__VA_ARGS__})/sizeof(Nob_Target*), __VA_ARGS__)
+
+NOBDEF void nob__target_link(Nob_Target* target, size_t n, ...);
+#define nob_target_link(target, ...) nob__target_link(target, sizeof((const char*[]){__VA_ARGS__})/sizeof(const char*), __VA_ARGS__)
+
+NOBDEF bool nob_target_has_dep(Nob_Target target, const char* dep_name);
+NOBDEF bool nob_build_target(Nob_Target target);
+
+#define NOB_IMPLEMENTATION
 #ifdef NOB_IMPLEMENTATION
+
+NOBDEF Nob_Target nob_construct_target(const char* name, const char* path, Nob_Comp_Type type) {
+	return (Nob_Target){
+		.name = name,
+		.path = path,
+		.type = type,
+		.build_cmd = {0},
+		.includes = {0},
+		.links = {0},
+		.flags = {0},
+		.dependencies = {0},
+	};
+}
+
+NOBDEF void nob__target_include(Nob_Target* target, size_t n, ...) {
+	va_list args;
+	va_start(args, n);
+	for (size_t i = 0; i < n; i++) {
+		const char* include = va_arg(args, const char*);
+		nob_cmd_append(&target->includes, include);
+	}
+	va_end(args);
+}
+
+NOBDEF void nob__target_dependency(Nob_Target* target, size_t n, ...) {
+	va_list args;
+	va_start(args, n);
+	for (size_t i = 0; i < n; i++) {
+		Nob_Target* dep = va_arg(args, Nob_Target*);
+		nob_da_append(&target->dependencies, dep);
+	}
+	va_end(args);
+}
+
+NOBDEF void nob__target_link(Nob_Target* target, size_t n, ...) {
+	va_list args;
+	va_start(args, n);
+	for (size_t i = 0; i < n; i++) {
+		const char* link = va_arg(args, const char*);
+		nob_cmd_append(&target->links, link);
+	}
+	va_end(args);
+}
+
+NOBDEF bool nob_target_has_dep(Nob_Target target, const char* dep_name) {
+	for (int i = 0; i < target.dependencies.count; i++) {
+		
+	}
+}
+
+typedef struct {
+	Nob_Cmd built_targets;
+	Nob_Object_Files objs;
+
+    Nob_Cmd includes; // Maybe store as Comp_Args
+    Nob_Cmd links;
+} Nob_Build_Cache;
+
+static Nob_Build_Cache _cache = {0};
+
+NOBDEF bool nob_build_target(Nob_Target target) {
+	for (int i = 0; i < _cache.built_targets.count; i++) {
+		if (strcmp(_cache.built_targets.items[i], target.name) == 0) return true;
+	}
+
+	for (int i = 0; i < target.dependencies.count; i++) {
+		if (!nob_build_target(*target.dependencies.items[i])) return false;
+	}
+
+	nob_log(NOB_INFO, "Building target %s", target.name);
+
+
+
+
+	switch (target.type) {
+		case NOB_COMP_CHILD: {
+				Nob_File_Paths files = {0};
+				nob_file_search_rec(target.path, &files, ".c");
+				//nob_construct_objs(files, args);
+			}
+
+		case NOB_COMP_EXECUTABLE: {
+				// Should clear cache sources
+			}
+		case NOB_COMP_SHARED:
+		case NOB_COMP_STATIC:
+		case NOB_COMP_CMD: {
+			if (target.build_cmd.items == NULL || target.build_cmd.count == 0) {
+				nob_log(NOB_ERROR, "Cant build target %s with command: Does not contain a build command", target.name);
+				return false;
+			}
+			Nob_Cmd cmd = {0};
+
+			// TODO: support for windows
+			Nob_String_Builder builder = {0}; // TODO: dont use bash, use chdir with execvp
+			nob_sb_append_cstr(&builder, "pushd ");
+			nob_sb_append_cstr(&builder, target.path);
+			nob_sb_append_cstr(&builder, " && ");
+	
+			for (int i = 0; i < target.build_cmd.count; i++) {
+				nob_sb_append_cstr(&builder, target.build_cmd.items[i]);
+				nob_sb_append_buf(&builder, " ", 1);
+			}
+			nob_sb_append_cstr(&builder, "&& popd");
+			nob_sb_append_null(&builder);
+			//nob_cmd_append(&cmd, "&&", "popd", ">/dev/null");
+			
+			nob_cmd_append(&cmd, "bash", "-c", builder.items);
+			if (!nob_cmd_run(&cmd)) return false;
+		}
+	}
+	return true;
+}
+
+// --- Nob-like functions ---
 
 NOBDEF bool nob_procs_append(Nob_Procs *procs, Nob_Proc proc, size_t max_procs_count)
 {
@@ -198,14 +366,12 @@ NOBDEF Nob_Cmd nob_file_deps(const char* path, Nob_Comp_Args args) {
 	if (fd == NOB_INVALID_FD) return (Nob_Cmd){0};
 
 	nob_cc(&cmd);
-	for (int i = 0; i < includes.count; i++) {
+	for (size_t i = 0; i < includes.count; i++) {
 		nob_cmd_append(&cmd, includes.items[i]);
 	}
 	nob_cmd_append(&cmd, "-MM", path);
 
-
-	Nob_Cmd_Opt opts = {0};
-	Nob_Proc proc = nob__cmd_start_process(cmd, NULL, &fd, &fd);
+	Nob_Proc proc = nob__cmd_start_process(cmd, NULL, &fd, NULL);
 	if (proc == NOB_INVALID_PROC) return (Nob_Cmd){0};
 	if (!nob_proc_wait(proc)) return (Nob_Cmd){0};
 
@@ -233,7 +399,7 @@ NOBDEF Nob_Cmd nob_file_deps(const char* path, Nob_Comp_Args args) {
 // Error if path is null in returned object file.
 NOBDEF Nob_Object_File nob_construct_obj(const char* path, Nob_Comp_Args args) {
 	Nob_File_Type type = nob_get_file_type(path);
-	if (type == -1) return (Nob_Object_File){NULL, NULL, {0}};
+	if (type == (Nob_File_Type)-1) return (Nob_Object_File){NULL, NULL, {0}};
 	switch (type) {
 		case NOB_FILE_SYMLINK: 
 		case NOB_FILE_OTHER: 
@@ -256,7 +422,7 @@ NOBDEF Nob_Object_File nob_construct_obj(const char* path, Nob_Comp_Args args) {
 
 NOBDEF Nob_Object_Files nob_construct_objs(Nob_File_Paths paths, Nob_Comp_Args args) {
 	Nob_Object_Files objs = {0};
-	for (int i = 0; i < paths.count; i++) {
+	for (size_t i = 0; i < paths.count; i++) {
 		Nob_Object_File obj = nob_construct_obj(paths.items[i], args);
 		if (obj.path == NULL) continue; // TODO: maybe return error
 		nob_da_append(&objs, obj);
@@ -270,7 +436,7 @@ NOBDEF bool nob_obj_should_build(Nob_Object_File obj) {
 
 	Nob_Time_Stamp last_modified = nob_get_file_stat(obj.path).last_modified;
 
-	for (int i = 0; i < obj.deps.count; i++) {
+	for (size_t i = 0; i < obj.deps.count; i++) {
 		if (!nob_file_exists(obj.deps.items[i])) {
 			nob_log(NOB_ERROR, "Dependency %s does not exist", obj.deps.items[i]);
 			return true;
@@ -285,6 +451,11 @@ NOBDEF bool nob_obj_should_build(Nob_Object_File obj) {
 	return false;
 }
 
+typedef struct { // TODO: make internal/hidden
+	Nob_File_Paths* files;
+	const char* ext;
+} Nob_File_Walk_Data;
+
 NOBDEF bool nob_file_walk(Nob_Walk_Entry entry) {
 	if (entry.level > 1) return false;
 	return nob_file_walk_rec(entry);
@@ -297,24 +468,29 @@ NOBDEF bool nob_file_walk_rec(Nob_Walk_Entry entry) {
 		default: ;
 	}
 
-	Nob_File_Paths* files = entry.data;
+	Nob_File_Walk_Data* data = entry.data;
+	Nob_File_Paths* files = data->files;
+
+	char* entry_ext = nob_temp_file_ext(entry.path);
+	if (data->ext != NULL && strcmp(entry_ext, data->ext) != 0) return true;
+
 	nob_da_append(files, nob_temp_strdup(entry.path));
 	return true;
 }
 
 // Does not search in sub directories, the given path can be a file.
-NOBDEF bool nob_file_search(const char* path, Nob_File_Paths* files) {
+NOBDEF bool nob_file_search(const char* path, Nob_File_Paths* files, const char* ext) {
 	Nob_Walk_Dir_Opt opt = {
-		.data = files,
+		.data = &(Nob_File_Walk_Data){.files = files, .ext = ext},
 		.post_order = false,
 	};
 	return nob_walk_dir_opt(path, nob_file_walk, opt); 
 }
 
 // Searches the whole directory and its subdirectories, the given path can be a file.
-NOBDEF bool nob_file_search_rec(const char* path, Nob_File_Paths* files) {
+NOBDEF bool nob_file_search_rec(const char* path, Nob_File_Paths* files, const char* ext) {
 	Nob_Walk_Dir_Opt opt = {
-		.data = files,
+		.data = &(Nob_File_Walk_Data){.files = files, .ext = ext},
 		.post_order = false,
 	};
 	return nob_walk_dir_opt(path, nob_file_walk_rec, opt); 
@@ -347,12 +523,12 @@ NOBDEF Nob_Proc nob_build_object_async(Nob_Object_File obj, Nob_Comp_Args args) 
 	nob_cc(&cmd);
 
 	// Add flags
-	for (int i = 0; i < args.flags.count; i++) {
+	for (size_t i = 0; i < args.flags.count; i++) {
 		nob_cmd_append(&cmd, args.flags.items[i]);
 	}
 
 	// Add includes
-	for (int i = 0; i < args.includes.count; i++) {
+	for (size_t i = 0; i < args.includes.count; i++) {
 		nob_cmd_append(&cmd, args.includes.items[i]);
 	}
 
@@ -368,7 +544,7 @@ NOBDEF Nob_Proc nob_build_object_async(Nob_Object_File obj, Nob_Comp_Args args) 
 NOBDEF Nob_Procs nob_build_objects_async(Nob_Object_Files objs, Nob_Comp_Args args) {
 	Nob_Procs procs = {0};
 
-	for (int i = 0; i < objs.count; i++) {
+	for (size_t i = 0; i < objs.count; i++) {
 		Nob_Proc proc = nob_build_object_async(objs.items[i], args);
 		if (proc == NOB_NONEXISTING_PROC) continue;
 		if (proc == INVALID_PROC) {
@@ -395,6 +571,31 @@ NOBDEF bool nob_build_objects(Nob_Object_Files objs, Nob_Comp_Args args) {
 	if (procs.items == NULL && procs.count == SIZE_MAX) return false;
 
 	if (!nob_procs_wait(procs)) return false;
+	return true;
+}
+
+NOBDEF bool nob_link_objects(Nob_Object_Files objs, Nob_Comp_Args args) {
+	if (objs.count == 0) {
+		nob_log(NOB_ERROR, "Unable to link objects: No objects provided to linking");
+		return false;
+	}
+
+	Nob_Cmd cmd = {0};
+	nob_cc(&cmd);
+
+
+	for (size_t i = 0; i < objs.count; i++) {
+		nob_cmd_append(&cmd, objs.items[i].path);
+	}
+
+	nob_cc_output(&cmd, args.opts.name); // TODO: store in args
+
+	Nob_Cmd links = args.links;
+	for (size_t i = 0; i < links.count; i++) {
+		nob_cmd_append(&cmd, links.items[i]);
+	}
+
+	if (!nob_cmd_run(&cmd)) return false;
 	return true;
 }
 
