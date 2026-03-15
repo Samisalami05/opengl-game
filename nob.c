@@ -5,19 +5,19 @@
 #include <sys/ucontext.h>
 
 #define NOB_IMPLEMENTATION
-#define NOB_NO_ECHO
-#include "nob.h"
+//#define NOB_NO_ECHO
+#include "nob_ext.h"
 
-#define CC "gcc"
 #define BUILD_FOLDER "build"
 #define SRC_FOLDER "src"
 #define SRC_EXTENSION ".c"
 #define NAME "main"
 
+// Is a .o object file
 typedef struct {
     const char* path;
 	Nob_Cmd deps;
-} target;
+} object;
 
 typedef enum {
 	BUILD_CLEAN,
@@ -70,13 +70,22 @@ typedef struct {
 	libraries libs;
 } project;
 
+//
+//
+// target glfw = construct_lib("glfw");
+// target_include_dir(glfw, "path/to/include");
+// target_link("-lglfw");
+// target_set_path("path/to/glfw");
+//
+// add_lib(&proj, glfw);
+
 
 
 
 // ---- Util ----
 uint8_t strcmpe(const char* str, const char* end, int str_len);
-target construct_target(const char* path, comp_opts opts, Nob_Cmd includes);
-bool target_should_build(target t);
+object construct_object(const char* path, comp_opts opts, Nob_Cmd includes);
+bool object_should_build(object obj);
 Nob_Cmd file_deps(const char* path, Nob_Cmd includes);
 bool walk_func(Nob_Walk_Entry entry);
 
@@ -96,8 +105,24 @@ int main(int argc, char* argv[]) {
 	project proj = {
 		.build_dir = BUILD_FOLDER,
 		.src_dir = SRC_FOLDER,
-		.libs = 0,
+		.libs = {0},
 	};
+
+	add_external_lib(&proj.libs, (external_lib) {
+		.name = "engine",
+		.cmd = NULL,
+		.include_path = "-Isrc/engine",
+		.path = NULL,
+		.links = NULL,
+	});
+
+	add_external_lib(&proj.libs, (external_lib) {
+		.name = "libs",
+		.cmd = NULL,
+		.include_path = "-Ilibs",
+		.path = NULL,
+		.links = (const char*[]){"-Llibs", NULL},
+	});
 
 	add_external_lib(&proj.libs, (external_lib) {
 		.name = "math",
@@ -112,7 +137,7 @@ int main(int argc, char* argv[]) {
 		.cmd = (const char*[]){"cmake", "-B", "build", "&&", "cmake", "--build", "build", NULL},
 		.include_path = "-Ilibs/glfw-3.4/include",
 		.path = "libs/glfw-3.4",
-		.links = (const char*[]){"-Llibs/glfw-3.4/build/src/libglfw3.a", NULL},
+		.links = (const char*[]){"-lglfw", NULL},
 	});
 
 	add_external_lib(&proj.libs, (external_lib) {
@@ -128,7 +153,8 @@ int main(int argc, char* argv[]) {
 		.cmd = (const char*[]){"cmake", "CMakeLists.txt", "&&", "cmake", "--build", ".", NULL},
 		.include_path = "-Ilibs/assimp/include",
 		.path = "libs/assimp",
-		.links = NULL,
+		.links = (const char*[]){"-lassimp", NULL},
+
 	});
 	
 	add_external_lib(&proj.libs, (external_lib) {
@@ -139,21 +165,7 @@ int main(int argc, char* argv[]) {
 		.links = (const char*[]){"-lGL", "-ldl", NULL},
 	});
 
-	add_external_lib(&proj.libs, (external_lib) {
-		.name = "engine",
-		.cmd = NULL,
-		.include_path = "-Isrc/engine",
-		.path = NULL,
-		.links = NULL,
-	});
 
-	add_external_lib(&proj.libs, (external_lib) {
-		.name = "libs",
-		.cmd = NULL,
-		.include_path = "-Ilibs",
-		.path = NULL,
-		.links = NULL,
-	});
 
 
 	build_project(proj, BUILD_INCREMENTAL);
@@ -269,30 +281,24 @@ comp_data build_libs(libraries libs, comp_opts opts) {
 void add_external_lib(libraries* libs, external_lib lib) {
 	if (libs->count >=libs->capacity) {
 		libs->capacity = libs->capacity == 0 ? 4 : libs->capacity * 2;
-		libs->libs = realloc(libs->libs, libs->capacity * sizeof(external_lib));
+		libs->libs = NOB_REALLOC(libs->libs, libs->capacity * sizeof(external_lib)); // TODO: memory leak
 	}
 	libs->libs[libs->count] = lib;
 	libs->count++;
 }
 
 bool link_objects(comp_data* data, int count, libraries libs) {
-	if (count == 0 || count >= 1 && data[0].objects.count == 0) {
+	if (count == 0 || (count >= 1 && data[0].objects.count == 0)) {
 		nob_log(NOB_ERROR, "No objects provided to linking");
 		return false;
 	}
 	Nob_Cmd cmd = {0};
-	nob_cmd_append(&cmd, CC);
+	nob_cc(&cmd);
 
-	Nob_Cmd includes = lib_includes(libs);
-	for (int i = 0; i < includes.count; i++) {
-		nob_cmd_append(&cmd, includes.items[i]);
-	}
-
-
-	Nob_Cmd links = lib_links(libs);
-	for (int i = 0; i < links.count; i++) {
-		nob_cmd_append(&cmd, links.items[i]);
-	}
+	//Nob_Cmd includes = lib_includes(libs);
+	//for (int i = 0; i < includes.count; i++) {
+	//	nob_cmd_append(&cmd, includes.items[i]);
+	//}
 
 	for (int i = 0; i < count; i++) {
 		if (data[i].error) continue;
@@ -305,6 +311,12 @@ bool link_objects(comp_data* data, int count, libraries libs) {
 	}
 
 	nob_cc_output(&cmd, NAME);
+
+	Nob_Cmd links = lib_links(libs);
+	for (int i = 0; i < links.count; i++) {
+		nob_cmd_append(&cmd, links.items[i]);
+	}
+
 	if (!nob_cmd_run(&cmd)) return false;
 	return true;
 }
@@ -312,7 +324,7 @@ bool link_objects(comp_data* data, int count, libraries libs) {
 comp_data build_objects(comp_opts opts, libraries libs) {
 	if (!nob_file_exists(opts.source_path)) {
 		nob_log(NOB_ERROR, "Cant build objects: The source folder '%s' does not exist", opts.source_path);
-		return (comp_data){.objects = (Nob_Cmd){0}, .procs = (Nob_Procs){0}, .error = 1};
+		return (comp_data){.objects = {0}, .procs = {0}, .error = 1};
 	}
 	comp_args args = {.opts = opts, .data = {0}, .includes = lib_includes(libs)};
 
@@ -322,9 +334,14 @@ comp_data build_objects(comp_opts opts, libraries libs) {
 		.data = &args,
 		.post_order = false,
 	};
-	if (!nob_walk_dir_opt(opts.source_path, walk_func, opt)) return (comp_data){0, 0, 1};
+	if (!nob_walk_dir_opt(opts.source_path, walk_func, opt)) return (comp_data){.objects = {0}, .procs = {0}, .error = 1};
 	return args.data;
 }
+
+bool build_failed() {
+	nob_log(NOB_ERROR, "BUILD FAILED");
+	return false;
+}	
 
 bool build_project(project proj, build_type type) {
 	nob_log(NOB_INFO, "--- BUILDING LIBS ---");
@@ -339,24 +356,24 @@ bool build_project(project proj, build_type type) {
 
 	comp_data data[2] = {0};
 	data[0] = build_libs(proj.libs, opts);
-	if (data[0].error) return false;
+	if (data[0].error) return build_failed();
 
 
 	nob_log(NOB_INFO, "--- BUILDING SOURCES ---");
 
 	data[1] = build_objects(opts, proj.libs);
-	if (data[1].error) return false;
+	if (data[1].error) return build_failed();
 
 	nob_log(NOB_INFO, "--- LINKING EXECUTABLE ---");
 
-	if (!link_objects(data, 2, proj.libs)) return false;
+	if (!link_objects(data, 2, proj.libs)) return build_failed();
 	return true;
 }
 
 Nob_Cmd file_deps(const char* path, Nob_Cmd includes) {
 	Nob_Cmd cmd = {0};
 
-	nob_cmd_append(&cmd, CC);
+	nob_cc(&cmd);
 	for (int i = 0; i < includes.count; i++) {
 		nob_cmd_append(&cmd, includes.items[i]);
 	}
@@ -400,11 +417,11 @@ Nob_Cmd file_deps(const char* path, Nob_Cmd includes) {
 	return deps;
 }
 
-target construct_target(const char* path, comp_opts opts, Nob_Cmd includes) {
+object construct_object(const char* path, comp_opts opts, Nob_Cmd includes) {
 	// TODO: replace file extension with .o
 	char* bin_path = nob_temp_sprintf("%s/%s.o", opts.dest_path, path);
 
-	return (target){
+	return (object){
 		.path = bin_path,
 		.deps = file_deps(path, includes),
 	};
@@ -416,18 +433,18 @@ uint8_t strcmpe(const char* str, const char* end, int str_len) {
 	return strcmp(str + str_len - end_len, end) == 0;
 }
 
-bool target_should_build(target t) {
-	if (!nob_file_exists(t.path)) return true;
+bool object_should_build(object obj) {
+	if (!nob_file_exists(obj.path)) return true;
 
-	Nob_Time_Stamp last_modified = nob_get_file_stat(t.path).last_modified;
+	Nob_Time_Stamp last_modified = nob_get_file_stat(obj.path).last_modified;
 
-	for (int i = 0; i < t.deps.count; i++) {
-		if (!nob_file_exists(t.deps.items[i])) {
-			nob_log(NOB_ERROR, "Dependency %s does not exist", t.deps.items[i]);
+	for (int i = 0; i < obj.deps.count; i++) {
+		if (!nob_file_exists(obj.deps.items[i])) {
+			nob_log(NOB_ERROR, "Dependency %s does not exist", obj.deps.items[i]);
 			return true;
 		}
 
-		Nob_File_Stat dep_stat = nob_get_file_stat(t.deps.items[i]);
+		Nob_File_Stat dep_stat = nob_get_file_stat(obj.deps.items[i]);
 
 		if (nob_ts_is_newer(dep_stat.last_modified, last_modified)) {
 			return true;
@@ -451,19 +468,19 @@ bool walk_func(Nob_Walk_Entry entry) {
 	unsigned long len = strlen(entry.path);
 	if (!strcmpe(entry.path, opts.file_extenstion, len)) return true;
 
-	target t = construct_target(entry.path, opts, args->includes);
+	object obj = construct_object(entry.path, opts, args->includes);
 
-	nob_cmd_append(&data->objects, t.path);
+	nob_cmd_append(&data->objects, obj.path);
 
-	if (!target_should_build(t) && opts.type == BUILD_INCREMENTAL) {
-		nob_log(NOB_INFO, "Skipping object %s", t.path);
+	if (!object_should_build(obj) && opts.type == BUILD_INCREMENTAL) {
+		nob_log(NOB_INFO, "Skipping object %s", obj.path);
 		return true;
 	}
 
-	nob_log(NOB_INFO, "Building object %s", t.path);
+	nob_log(NOB_INFO, "Building object %s", obj.path);
 
 	Nob_Cmd cmd = {0};
-	char* dir = nob_temp_dir_name(t.path);
+	char* dir = nob_temp_dir_name(obj.path);
 	
 	#ifndef _WIN32
 	nob_cmd_append(&cmd, "mkdir", "-p", dir);
@@ -482,7 +499,7 @@ bool walk_func(Nob_Walk_Entry entry) {
 		.stderr_path = 0,
 	};
 
-	nob_cmd_append(&cmd, CC);
+	nob_cc(&cmd);
 	while (*opts.flags != NULL) {
 		nob_cmd_append(&cmd, *opts.flags);
 		opts.flags++;
@@ -494,7 +511,7 @@ bool walk_func(Nob_Walk_Entry entry) {
 
 	nob_cmd_append(&cmd, "-c");
 	nob_cc_inputs(&cmd, entry.path);
-	nob_cc_output(&cmd, t.path);
+	nob_cc_output(&cmd, obj.path);
 	if (!nob_cmd_run_opt(&cmd, cmd_opt)) return false;
 
 	return true;

@@ -1,10 +1,8 @@
-#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "components/transform.h"
-#include "core/cubemap.h"
 #include "ecs.h"
 #include "engine.h"
 #include "engine/engine.h"
