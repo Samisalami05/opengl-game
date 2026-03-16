@@ -135,6 +135,21 @@ int main(int argc, char* argv[]) {
 	nob_build_target(main, opts);
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	/*
 	Nob_Target main = nob_construct_target("main", "src/main.c", NOB_COMP_EXECUTABLE);
 	nob_target_include(main, "src/engine");
