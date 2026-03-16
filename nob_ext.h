@@ -98,10 +98,6 @@ NOBDEF Nob_Procs nob_build_objects_async(Nob_Object_Files objs, Nob_Comp_Args ar
 NOBDEF bool nob_build_object(Nob_Object_File obj, Nob_Comp_Args args);
 NOBDEF bool nob_build_objects(Nob_Object_Files objs, Nob_Comp_Args args);
 
-NOBDEF bool nob_link_objects(Nob_Object_Files objs, Nob_Comp_Args args);
-
-// --- Build System ---
-
 typedef enum {
 	NOB_COMP_OBJECT, // Compiled with its parent target
 	NOB_COMP_EXECUTABLE,
@@ -109,6 +105,11 @@ typedef enum {
 	NOB_COMP_STATIC,
 	NOB_COMP_CMD,
 } Nob_Comp_Type;
+
+NOBDEF bool nob_link_objects(Nob_Object_Files objs, Nob_Comp_Args args, Nob_Comp_Type type);
+
+// --- Build System ---
+
 
 typedef struct Nob_Target Nob_Target;
 
@@ -156,7 +157,7 @@ NOBDEF bool nob_build_target(Nob_Target target, Nob_Comp_Opts opts);
 #ifdef NOB_IMPLEMENTATION
 
 NOBDEF Nob_Target nob_construct_target(const char* name, const char* path, Nob_Comp_Type type) {
-	return (Nob_Target){
+	Nob_Target target = {
 		.name = name,
 		.path = path,
 		.type = type,
@@ -166,6 +167,8 @@ NOBDEF Nob_Target nob_construct_target(const char* name, const char* path, Nob_C
 		.flags = {0},
 		.dependencies = {0},
 	};
+	if (type == NOB_COMP_SHARED) nob_cmd_append(&target.flags, "-fPIC");
+	return target;
 }
 
 NOBDEF void nob__target_include(Nob_Target* target, size_t n, ...) {
@@ -208,21 +211,31 @@ NOBDEF void nob__target_cmd_append(Nob_Target* target, size_t n, ...) {
     va_end(args);
 }
 
+static void nob_target_deps_includes(Nob_Target target, Nob_Cmd* includes) {
+	for (int i = 0; i < target.dependencies.count; i++) {
+		Nob_Target* dep = target.dependencies.items[i];
+		if (dep->type != NOB_COMP_OBJECT) continue;
+		nob_da_append_many(includes, dep->includes.items, dep->includes.count);
+		nob_target_deps_includes(*dep, includes);
+	}
+}
+
+static void nob_target_deps_links(Nob_Target target, Nob_Cmd* links) {
+	for (int i = 0; i < target.dependencies.count; i++) {
+		Nob_Target* dep = target.dependencies.items[i];
+		if (dep->type != NOB_COMP_OBJECT) continue;
+		nob_da_append_many(links, dep->links.items, dep->links.count);
+		nob_target_deps_links(*dep, links);
+	}
+}
+
+
 typedef struct {
 	Nob_Cmd built_targets;
 	Nob_Object_Files objs;
 } Nob_Build_Cache;
 
 static Nob_Build_Cache _cache = {0};
-
-static void nob_target_deps_includes(Nob_Target target, Nob_Cmd* includes) {
-	for (int i = 0; i < target.dependencies.count; i++) {
-		if (target.type != NOB_COMP_OBJECT) continue;
-		Nob_Cmd dep_includes = target.dependencies.items[i]->includes;
-		nob_da_append_many(includes, dep_includes.items, dep_includes.count);
-		nob_target_deps_includes(*target.dependencies.items[i], includes);
-	}
-}
 
 NOBDEF bool nob_build_target(Nob_Target target, Nob_Comp_Opts opts) {
 	for (int i = 0; i < _cache.built_targets.count; i++) {
@@ -235,60 +248,69 @@ NOBDEF bool nob_build_target(Nob_Target target, Nob_Comp_Opts opts) {
 
 	nob_log(NOB_INFO, "Building target %s", target.name);
 
+	if (target.type == NOB_COMP_CMD) {
+		if (target.build_cmd.items == NULL || target.build_cmd.count == 0) {
+			nob_log(NOB_ERROR, "Cant build target %s with command: Does not contain a build command", target.name);
+			return false;
+		}
+		Nob_Cmd cmd = {0};
 
+		// TODO: support for windows
+		Nob_String_Builder builder = {0}; // TODO: dont use bash, use chdir with execvp
+		nob_sb_append_cstr(&builder, "pushd ");
+		nob_sb_append_cstr(&builder, target.path);
+		nob_sb_append_cstr(&builder, " && ");
 
+		for (int i = 0; i < target.build_cmd.count; i++) {
+			nob_sb_append_cstr(&builder, target.build_cmd.items[i]);
+			nob_sb_append_buf(&builder, " ", 1);
+		}
+		nob_sb_append_cstr(&builder, "&& popd");
+		nob_sb_append_null(&builder);
+		//nob_cmd_append(&cmd, "&&", "popd", ">/dev/null");
+		
+		nob_cmd_append(&cmd, "bash", "-c", builder.items);
+		if (!nob_cmd_run(&cmd)) return false;
+		return true;
+	}
+	
+	Nob_Cmd includes = target.includes;
+	nob_target_deps_includes(target, &includes);
+
+	Nob_Comp_Args args = {
+		.opts = opts,
+		.includes = includes,
+		.links = {0},
+		.flags = {0},
+	};
+
+	Nob_File_Paths files = {0};
+	nob_file_search_rec(target.path, &files, ".c");
+	Nob_Object_Files objs = nob_construct_objs(files, args);
+	if (!nob_build_objects(objs, args)) return false;
+
+	nob_da_append_many(&_cache.objs, objs.items, objs.count);
 
 	switch (target.type) {
-		case NOB_COMP_OBJECT: {
-			Nob_Cmd includes = {0};
-			nob_target_deps_includes(target, &includes);
-
-			Nob_Comp_Args args = {
-				.opts = opts,
-				.includes = includes,
-				.links = {0},
-				.flags = {0},
-			};
-
-			Nob_File_Paths files = {0};
-			nob_file_search_rec(target.path, &files, ".c");
-			Nob_Object_Files objs = nob_construct_objs(files, args);
-			break;
-		}
+		case NOB_COMP_OBJECT: break;
 		case NOB_COMP_SHARED: // These three should be the same
 		case NOB_COMP_STATIC:
 		case NOB_COMP_EXECUTABLE: {
 			// Should clear cache sources
-			opts.name = target.name;
+			args.opts.name = target.name;
+			nob_target_deps_links(target, &args.links);
+			if (!nob_link_objects(_cache.objs, args, target.type)) return false;
+			_cache.objs.count = 0; // Clear cache
+
 			break;
 		}
 
-		case NOB_COMP_CMD: {
-			if (target.build_cmd.items == NULL || target.build_cmd.count == 0) {
-				nob_log(NOB_ERROR, "Cant build target %s with command: Does not contain a build command", target.name);
-				return false;
-			}
-			Nob_Cmd cmd = {0};
-
-			// TODO: support for windows
-			Nob_String_Builder builder = {0}; // TODO: dont use bash, use chdir with execvp
-			nob_sb_append_cstr(&builder, "pushd ");
-			nob_sb_append_cstr(&builder, target.path);
-			nob_sb_append_cstr(&builder, " && ");
-	
-			for (int i = 0; i < target.build_cmd.count; i++) {
-				nob_sb_append_cstr(&builder, target.build_cmd.items[i]);
-				nob_sb_append_buf(&builder, " ", 1);
-			}
-			nob_sb_append_cstr(&builder, "&& popd");
-			nob_sb_append_null(&builder);
-			//nob_cmd_append(&cmd, "&&", "popd", ">/dev/null");
-			
-			nob_cmd_append(&cmd, "bash", "-c", builder.items);
-			if (!nob_cmd_run(&cmd)) return false;
-			break;
-		}
+		case NOB_COMP_CMD: break;
+		
 	}
+	
+	nob_cmd_append(&_cache.built_targets, target.name);
+
 	return true;
 }
 
@@ -554,6 +576,11 @@ NOBDEF Nob_Proc nob_build_object_async(Nob_Object_File obj, Nob_Comp_Args args) 
 		nob_cmd_append(&cmd, args.flags.items[i]);
 	}
 
+
+	for (int j = 0; j < args.includes.count; j++) {
+		printf("w include: %s\n", args.includes.items[j]);
+	}
+
 	// Add includes
 	for (size_t i = 0; i < args.includes.count; i++) {
 		nob_cmd_append(&cmd, args.includes.items[i]);
@@ -601,22 +628,37 @@ NOBDEF bool nob_build_objects(Nob_Object_Files objs, Nob_Comp_Args args) {
 	return true;
 }
 
-NOBDEF bool nob_link_objects(Nob_Object_Files objs, Nob_Comp_Args args) {
+NOBDEF bool nob_link_objects(Nob_Object_Files objs, Nob_Comp_Args args, Nob_Comp_Type type) {
 	if (objs.count == 0) {
 		nob_log(NOB_ERROR, "Unable to link objects: No objects provided to linking");
+		return false;
+	}
+
+	if (type == NOB_COMP_OBJECT) { // TODO: solve this
+		nob_log(NOB_ERROR, "Unable to link objects: Compilation type cant be linked\n");
 		return false;
 	}
 
 	Nob_Cmd cmd = {0};
 	nob_cc(&cmd);
 
+	if (type == NOB_COMP_SHARED) nob_cmd_append(&cmd, "-shared");
 
 	for (size_t i = 0; i < objs.count; i++) {
 		nob_cmd_append(&cmd, objs.items[i].path);
 	}
 
-	nob_cc_output(&cmd, args.opts.name); // TODO: store in args
-
+	switch (type) {
+		case NOB_COMP_OBJECT:
+		case NOB_COMP_CMD: break;
+		case NOB_COMP_EXECUTABLE: nob_cc_output(&cmd, args.opts.name); break; // TODO: store in args
+		case NOB_COMP_SHARED: {
+			char* libname = nob_temp_sprintf("%s.so", args.opts.name);
+			nob_cc_output(&cmd, libname);
+			break;
+		}
+		case NOB_COMP_STATIC: nob_cmd_append(&cmd, ""); break; // TODO implement
+	}
 	Nob_Cmd links = args.links;
 	for (size_t i = 0; i < links.count; i++) {
 		nob_cmd_append(&cmd, links.items[i]);

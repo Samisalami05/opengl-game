@@ -119,15 +119,20 @@ int main(int argc, char* argv[]) {
 	};
 
 	Nob_Target main = nob_construct_target("main", "src/main.c", NOB_COMP_EXECUTABLE);
-	nob_target_include(&main, "wow", "ayo");
 	
 
-	Nob_Target engine = nob_construct_target("engine", "src/engine", NOB_COMP_SHARED);
+	Nob_Target engine = nob_construct_target("engine", "src/engine", NOB_COMP_OBJECT);
+	nob_target_include(&engine, "-Isrc/engine", "-Ilibs");
+	nob_target_link(&engine, "-Llibs", "-lm", "-lGL", "-ldl", "-lglfw", "-lassimp");
+	
 	Nob_Target glfw = nob_construct_target("glfw", "libs/glfw-3.4", NOB_COMP_CMD);
-	nob_target_cmd_append(&glfw, "echo", "building", "glfw");
+	nob_target_cmd_append(&glfw, "cmake", "-B", "build", "&&", "cmake", "--build", "build");
+
 	Nob_Target glad = nob_construct_target("glad", "libs/glad", NOB_COMP_OBJECT);
+	nob_target_include(&glad, "-Ilibs/glad/include");
+
 	Nob_Target assimp = nob_construct_target("assimp", "libs/assimp", NOB_COMP_CMD);
-	nob_target_cmd_append(&assimp, "echo", "building", "assimp");
+	nob_target_cmd_append(&assimp, "cmake", "CMakeLists.txt", "&&", "cmake", "--build", ".");
 	
 	nob_target_dependency(&main, &engine);
 	nob_target_dependency(&engine, &glfw, &glad, &assimp);
@@ -181,7 +186,7 @@ int main(int argc, char* argv[]) {
 
 	if (!nob_build_objects(objs, args)) return 1;
 
-	if (!nob_link_objects(objs, args)) return 1;
+	if (!nob_link_objects(objs, args, NOB_COMP_EXECUTABLE)) return 1;
 
 
 

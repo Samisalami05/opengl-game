@@ -27,7 +27,7 @@ typedef uint64_t comp_id;
 typedef struct {
     comp_id id;
     void* data;
-	// TODO: bool for debug drawing
+	// TODO: bool or bitmap for debug drawing
 } component;
 
 /**
