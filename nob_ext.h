@@ -59,7 +59,7 @@ typedef enum {
 
 typedef struct { // TODO maybe add flags here
 	Nob_Build_Type build_type;
-	const char* name;
+	const char* name; // TODO: move to link objects function
 	const char* dest_path;
 	//const char* file_extenstion;
 } Nob_Comp_Opts;
@@ -103,7 +103,7 @@ NOBDEF bool nob_link_objects(Nob_Object_Files objs, Nob_Comp_Args args);
 // --- Build System ---
 
 typedef enum {
-	NOB_COMP_CHILD, // Compiled with its parent target
+	NOB_COMP_OBJECT, // Compiled with its parent target
 	NOB_COMP_EXECUTABLE,
 	NOB_COMP_SHARED,
 	NOB_COMP_STATIC,
@@ -146,8 +146,11 @@ NOBDEF void nob__target_dependency(Nob_Target* target, size_t n, ...);
 NOBDEF void nob__target_link(Nob_Target* target, size_t n, ...);
 #define nob_target_link(target, ...) nob__target_link(target, sizeof((const char*[]){__VA_ARGS__})/sizeof(const char*), __VA_ARGS__)
 
+NOBDEF void nob__target_cmd_append(Nob_Target* target, size_t n, ...);
+#define nob_target_cmd_append(target, ...) nob__target_cmd_append(target, sizeof((const char*[]){__VA_ARGS__})/sizeof(const char*), __VA_ARGS__)
+
 NOBDEF bool nob_target_has_dep(Nob_Target target, const char* dep_name);
-NOBDEF bool nob_build_target(Nob_Target target);
+NOBDEF bool nob_build_target(Nob_Target target, Nob_Comp_Opts opts);
 
 #define NOB_IMPLEMENTATION
 #ifdef NOB_IMPLEMENTATION
@@ -195,29 +198,39 @@ NOBDEF void nob__target_link(Nob_Target* target, size_t n, ...) {
 	va_end(args);
 }
 
-NOBDEF bool nob_target_has_dep(Nob_Target target, const char* dep_name) {
-	for (int i = 0; i < target.dependencies.count; i++) {
-		
-	}
+NOBDEF void nob__target_cmd_append(Nob_Target* target, size_t n, ...) {
+	va_list args;
+    va_start(args, n);
+    for (size_t i = 0; i < n; ++i) {
+        const char *arg = va_arg(args, const char *);
+        nob_da_append(&target->build_cmd, arg);
+    }
+    va_end(args);
 }
 
 typedef struct {
 	Nob_Cmd built_targets;
 	Nob_Object_Files objs;
-
-    Nob_Cmd includes; // Maybe store as Comp_Args
-    Nob_Cmd links;
 } Nob_Build_Cache;
 
 static Nob_Build_Cache _cache = {0};
 
-NOBDEF bool nob_build_target(Nob_Target target) {
+static void nob_target_deps_includes(Nob_Target target, Nob_Cmd* includes) {
+	for (int i = 0; i < target.dependencies.count; i++) {
+		if (target.type != NOB_COMP_OBJECT) continue;
+		Nob_Cmd dep_includes = target.dependencies.items[i]->includes;
+		nob_da_append_many(includes, dep_includes.items, dep_includes.count);
+		nob_target_deps_includes(*target.dependencies.items[i], includes);
+	}
+}
+
+NOBDEF bool nob_build_target(Nob_Target target, Nob_Comp_Opts opts) {
 	for (int i = 0; i < _cache.built_targets.count; i++) {
 		if (strcmp(_cache.built_targets.items[i], target.name) == 0) return true;
 	}
 
 	for (int i = 0; i < target.dependencies.count; i++) {
-		if (!nob_build_target(*target.dependencies.items[i])) return false;
+		if (!nob_build_target(*target.dependencies.items[i], opts)) return false;
 	}
 
 	nob_log(NOB_INFO, "Building target %s", target.name);
@@ -226,17 +239,30 @@ NOBDEF bool nob_build_target(Nob_Target target) {
 
 
 	switch (target.type) {
-		case NOB_COMP_CHILD: {
-				Nob_File_Paths files = {0};
-				nob_file_search_rec(target.path, &files, ".c");
-				//nob_construct_objs(files, args);
-			}
+		case NOB_COMP_OBJECT: {
+			Nob_Cmd includes = {0};
+			nob_target_deps_includes(target, &includes);
 
-		case NOB_COMP_EXECUTABLE: {
-				// Should clear cache sources
-			}
-		case NOB_COMP_SHARED:
+			Nob_Comp_Args args = {
+				.opts = opts,
+				.includes = includes,
+				.links = {0},
+				.flags = {0},
+			};
+
+			Nob_File_Paths files = {0};
+			nob_file_search_rec(target.path, &files, ".c");
+			Nob_Object_Files objs = nob_construct_objs(files, args);
+			break;
+		}
+		case NOB_COMP_SHARED: // These three should be the same
 		case NOB_COMP_STATIC:
+		case NOB_COMP_EXECUTABLE: {
+			// Should clear cache sources
+			opts.name = target.name;
+			break;
+		}
+
 		case NOB_COMP_CMD: {
 			if (target.build_cmd.items == NULL || target.build_cmd.count == 0) {
 				nob_log(NOB_ERROR, "Cant build target %s with command: Does not contain a build command", target.name);
@@ -260,6 +286,7 @@ NOBDEF bool nob_build_target(Nob_Target target) {
 			
 			nob_cmd_append(&cmd, "bash", "-c", builder.items);
 			if (!nob_cmd_run(&cmd)) return false;
+			break;
 		}
 	}
 	return true;

@@ -104,9 +104,10 @@ int main(int argc, char* argv[]) {
 	nob_set_log_handler(nob_cancer_log_handler);
 	NOB_GO_REBUILD_URSELF(argc, argv);
 
+
 	Nob_Comp_Opts opts = {
 		.build_type = NOB_BUILD_INCREMENTAL,
-		.name = "main",
+		.name = NULL,
 		.dest_path = "build",
 	};
 
@@ -123,13 +124,15 @@ int main(int argc, char* argv[]) {
 
 	Nob_Target engine = nob_construct_target("engine", "src/engine", NOB_COMP_SHARED);
 	Nob_Target glfw = nob_construct_target("glfw", "libs/glfw-3.4", NOB_COMP_CMD);
-	Nob_Target glad = nob_construct_target("glad", "libs/glad", NOB_COMP_CHILD);
+	nob_target_cmd_append(&glfw, "echo", "building", "glfw");
+	Nob_Target glad = nob_construct_target("glad", "libs/glad", NOB_COMP_OBJECT);
 	Nob_Target assimp = nob_construct_target("assimp", "libs/assimp", NOB_COMP_CMD);
+	nob_target_cmd_append(&assimp, "echo", "building", "assimp");
 	
 	nob_target_dependency(&main, &engine);
 	nob_target_dependency(&engine, &glfw, &glad, &assimp);
 
-	nob_build_target(main);
+	nob_build_target(main, opts);
 
 
 	/*
