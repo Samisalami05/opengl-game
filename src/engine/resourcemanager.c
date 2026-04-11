@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <sys/stat.h>
 
 static hashmap_str texture_map;
 static hashmap shader_map;
@@ -80,6 +81,6 @@ shader* load_shader(const char* vertex, const char* fragment) {
 	}
 
 	shader* new_shader = malloc(sizeof(shader));
-	shader_init(new_shader, vertex, fragment);
+	if (shader_init(new_shader, vertex, fragment)) return NULL;
 	return *(shader**)hashmap_put(&shader_map, &key, &new_shader);
 }

@@ -236,17 +236,20 @@ char* shader_parse(const char* shader_path) {
 	return shader_parse_include(shader_path, NULL);
 }
 
-void shader_init(shader* s, const char* vertsh, const char* fragsh) {
+uint8_t shader_init(shader* s, const char* vertsh, const char* fragsh) {
 	char* vertex_source = shader_parse(vertsh);
 	char* fragment_source = shader_parse(fragsh);
 
-	if (vertex_source == NULL || fragment_source == NULL) return;
+	if (vertex_source == NULL || fragment_source == NULL) {
+		fprintf(stderr, "shader: Invalid shader path given\n");	
+		return 1;
+	}
 
 	unsigned int vertex = glCreateShader(GL_VERTEX_SHADER);
-	shader_compile(vertsh, vertex, vertex_source);
+	if (shader_compile(vertsh, vertex, vertex_source)) return 1;
 
 	unsigned int fragment = glCreateShader(GL_FRAGMENT_SHADER);
-	shader_compile(fragsh, fragment, fragment_source);
+	if (shader_compile(fragsh, fragment, fragment_source)) return 1;
 
 	free(vertex_source);
 	free(fragment_source);
@@ -259,6 +262,8 @@ void shader_init(shader* s, const char* vertsh, const char* fragsh) {
 
 	glDeleteShader(vertex);
 	glDeleteShader(fragment);
+
+	return 0;
 }
 
 void shader_use(shader* s) {

@@ -6,6 +6,7 @@
 #include "scenemanager.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 static void shader_set_lights(material* mat, arraylist* lights) {
 	shader_set_int(mat->shader, "light_count", lights->count);
@@ -29,7 +30,6 @@ static void shader_set_lights(material* mat, arraylist* lights) {
 		sprintf(location, "%s[%d].%s", base, j, "position");
 		shader_set_vec3(mat->shader, location, light->position);
 	}
-
 }
 
 static void shader_set_mvp(shader* s, camera* cam, vec3 pos, vec3 rot, vec3 scale) {
@@ -63,8 +63,8 @@ static void render_model(model* m, camera* cam, vec3 pos, vec3 rot, vec3 scale) 
 	}
 }
 
-void opaque_pass_init(render_pass* rp, render_targets* targets) {
-	rp->name = "opague pass";
+uint8_t opaque_pass_init(render_pass* rp, render_targets* targets) {
+	strcpy(rp->name, "opague pass");
 	rp->width = 640;
 	rp->height = 480;
 	rp->data = NULL;
@@ -76,41 +76,55 @@ void opaque_pass_init(render_pass* rp, render_targets* targets) {
 	glGenFramebuffers(1, &rp->fbo);
 	
 	glBindFramebuffer(GL_FRAMEBUFFER, rp->fbo);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, targets->opaque_tex.handle, 0);
+	
+	glFramebufferTexture2D(
+		GL_FRAMEBUFFER,
+		GL_COLOR_ATTACHMENT0,
+		GL_TEXTURE_2D,
+		targets->opaque_tex.handle,
+		0
+	);
 
 	glFramebufferTexture2D(
-	   GL_FRAMEBUFFER,
-	    GL_DEPTH_ATTACHMENT,
-	    GL_TEXTURE_2D,
-	    targets->depth_tex.handle,
-	    0
+		GL_FRAMEBUFFER,
+		GL_DEPTH_ATTACHMENT,
+		GL_TEXTURE_2D,
+		targets->depth_tex.handle,
+		0
 	);
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
 		fprintf(stderr, "Opague pass: Framebuffer is not complete\n");
-		return;
+		return 1;
 	}
+	return 0;
 }
 
 void opaque_pass_execute(render_pass* rp, render_context* context, render_targets* targets) {
-	glEnable(GL_DEPTH_TEST);
 	glBindFramebuffer(GL_FRAMEBUFFER, rp->fbo);
-	
+	glViewport(0, 0, rp->width, rp->height);
+
 	GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0 };
 	glDrawBuffers(1, drawBuffers);
-	
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glEnable(GL_DEPTH_TEST);
+
+	glDepthFunc(GL_LEQUAL);
+	glDepthMask(GL_FALSE);
+
+	glClear(GL_COLOR_BUFFER_BIT);
 
 	for (int i = 0; i < context->draw_count; i++) {
-		render_model(&context->drawlist[i], context->camera, (vec3){0}, (vec3){0}, (vec3){1.0f, 1.0f, 1.0f});
+		render_model(&context->drawlist[i], context->camera,
+		             (vec3){0}, (vec3){0}, (vec3){1.0f, 1.0f, 1.0f});
 	}
+
+	glDepthMask(GL_TRUE);
 }
 
 void opaque_pass_resize(render_pass* rp, uint32_t width, uint32_t height) {
 	rp->width = width;
 	rp->height = height;
-	glBindFramebuffer(GL_FRAMEBUFFER, rp->fbo);
-	glViewport(0, 0, width, height);
 }
 
 void opaque_pass_deinit(render_pass* rp) {

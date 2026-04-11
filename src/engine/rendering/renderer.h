@@ -12,7 +12,7 @@ typedef struct {
 	render_context context;
 } renderer;
 
-void renderer_init(renderer* r, uint32_t width, uint32_t height);
+uint8_t renderer_init(renderer* r, uint32_t width, uint32_t height);
 void renderer_deinit(renderer* r);
 void render(renderer* r, model* models, uint32_t count, camera* cam);
 

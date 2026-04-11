@@ -9,6 +9,7 @@ vgcore*
 /build_tmp
 libs/**/build/
 a.out
+*:Zone.Identifier
 
 # nob
 nob

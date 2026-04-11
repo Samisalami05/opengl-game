@@ -3,10 +3,12 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "components/transform.h"
+#include "debug_renderer.h"
 #include "ecs.h"
 #include "engine.h"
 #include "engine/engine.h"
 #include "engine/modelloader.h"
+#include "inputmanager.h"
 #include "util/arraylist.h"
 #include "entity.h"
 #include "lighting/light.h"
@@ -34,6 +36,7 @@ int main(void) {
 	register_component(type);
 
     game* game = engine_init();
+	if (game == NULL) return 1;
 
 	model m;
 	load_model(&m, "assets/diner/scene.gltf");
@@ -98,6 +101,13 @@ int main(void) {
 		if (i < glfwGetTime()) {
 			printf("fps: %f\n", 1 / game->deltatime);
 			i+=2;
+		}
+
+		debug_render_cube((vec3){0}, (vec3){0}, (vec3){1.0f, 1.0f, 1.0f});
+
+		if (isKeyDown(KEY_F)) {
+			debug_render_line((vec3){0}, (vec3){0, 100.0f, 50.0f});
+			debug_render_line((vec3){0}, (vec3){0, -50.0f, 300.0f});
 		}
 
 		// Rendering

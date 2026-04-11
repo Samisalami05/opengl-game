@@ -30,7 +30,7 @@ static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 // Initializers
 static GLFWwindow* init_glfw() {
 	if (!glfwInit()) {
-		fprintf(stderr, "Failed to initialize glfw\n");
+		fprintf(stderr, "engine: Failed to initialize glfw\n");
         return NULL;
 	}
 
@@ -39,7 +39,7 @@ static GLFWwindow* init_glfw() {
     GLFWwindow* window = glfwCreateWindow(640, 480, "game", NULL, NULL);
     if (!window) {
         glfwTerminate();
-		fprintf(stderr, "Failed to create glfw window\n");
+		fprintf(stderr, "engine: Failed to create glfw window\n");
         return NULL;
     }
 
@@ -61,7 +61,7 @@ static GLFWwindow* init_glfw() {
 
 static uint8_t init_opengl() {
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-		fprintf(stderr, "Failed to load glad\n");
+		fprintf(stderr, "engine: Failed to load glad\n");
 		return 0;
 	}
 
@@ -96,7 +96,7 @@ game* engine_init() {
 
 	glfwSetWindowUserPointer(window, g);
 
-	renderer_init(&g->renderer, WINDOW_WIDTH, WINDOW_HEIGHT);
+	if (renderer_init(&g->renderer, WINDOW_WIDTH, WINDOW_HEIGHT)) return NULL;
 
 	return g;
 }

@@ -34,7 +34,7 @@ typedef struct {
 } render_targets;
 
 typedef struct render_pass {
-	const char* name;
+	char name[32];
 	uint32_t width;
 	uint32_t height;
 
@@ -54,7 +54,7 @@ typedef struct {
 	render_targets targets;
 } render_pipeline;
 
-void render_pipeline_init(render_pipeline* pipeline, uint32_t width, uint32_t height);
+uint8_t render_pipeline_init(render_pipeline* pipeline, uint32_t width, uint32_t height);
 void render_pipeline_deinit(render_pipeline* pipeline);
 void execute_render_passes(render_pipeline* pipeline, render_context* context);
 void render_pipeline_resize(render_pipeline* pipeline, uint32_t width, uint32_t height);

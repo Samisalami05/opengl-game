@@ -8,4 +8,12 @@ void debug_render_line(vec3 p1, vec3 p2);
 void debug_render_cube(vec3 pos, vec3 rotation, vec3 scale);
 void debug_render_cube_wireframe(vec3 pos, vec3 rotation, vec3 scale);
 
+/*
+ * TODO: 
+ * debug_render_box()
+ * debug_render_aabb()
+ * debug_render_frustum()
+ * debug_render_sphere()
+ */
+
 #endif

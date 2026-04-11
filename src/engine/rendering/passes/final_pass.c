@@ -4,6 +4,7 @@
 #include "resourcemanager.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #define VERTEX_COUNT 4
 #define INDEX_COUNT 6
@@ -26,8 +27,8 @@ fp_vertex vertices[] = {
 uint32_t fp_indices[] = {0, 1, 2, 2, 1, 3};
 shader* fp_shader = NULL;
 
-void final_pass_init(render_pass* rp) {
-	rp->name = "opague pass";
+uint8_t final_pass_init(render_pass* rp) {
+	strcpy(rp->name, "final_pass");
 	rp->width = 640;
 	rp->height = 480;
 	rp->data = NULL;
@@ -55,6 +56,8 @@ void final_pass_init(render_pass* rp) {
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(fp_vertex), (void*)offsetof(fp_vertex, uv));
 
 	fp_shader = load_shader("shaders/passes/final_pass.vert", "shaders/passes/final_pass.frag");
+	if (fp_shader == NULL) return 1;
+	return 0;
 }
 
 void final_pass_execute(render_pass* rp, render_context* context, render_targets* targets) {

@@ -25,6 +25,7 @@ int main(int argc, char* argv[]) {
 	// Glfw
 	Nob_Target glfw = nob_construct_target("glfw", "libs/glfw-3.4", NOB_COMP_CMD);
 	nob_target_cmd_append(&glfw, "cmake", "-B", "build", "&&", "cmake", "--build", "build");
+	nob_target_include(&engine, "-Ilibs/glfw-3.4/include");
 
 	// Glad
 	Nob_Target glad = nob_construct_target("glad", "libs/glad", NOB_COMP_OBJECT);
@@ -33,6 +34,7 @@ int main(int argc, char* argv[]) {
 	// Assimp
 	Nob_Target assimp = nob_construct_target("assimp", "libs/assimp", NOB_COMP_CMD);
 	nob_target_cmd_append(&assimp, "cmake", "CMakeLists.txt", "&&", "cmake", "--build", ".");
+	nob_target_include(&engine, "-Ilibs/assimp/include");
 	
 	nob_target_dependency(&main, &engine);
 	nob_target_dependency(&engine, &glfw, &glad, &assimp);

@@ -153,7 +153,6 @@ NOBDEF void nob__target_cmd_append(Nob_Target* target, size_t n, ...);
 NOBDEF bool nob_target_has_dep(Nob_Target target, const char* dep_name);
 NOBDEF bool nob_build_target(Nob_Target target, Nob_Comp_Opts opts);
 
-#define NOB_IMPLEMENTATION
 #ifdef NOB_IMPLEMENTATION
 
 NOBDEF Nob_Target nob_construct_target(const char* name, const char* path, Nob_Comp_Type type) {
@@ -276,6 +275,10 @@ NOBDEF bool nob_build_target(Nob_Target target, Nob_Comp_Opts opts) {
 	
 	Nob_Cmd includes = target.includes;
 	nob_target_deps_includes(target, &includes);
+
+	for (int i = 0; i < includes.count; i++) {
+		printf("inc: %s\n", includes.items[i]);
+	}
 
 	Nob_Comp_Args args = {
 		.opts = opts,

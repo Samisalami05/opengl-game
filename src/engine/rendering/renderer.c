@@ -12,6 +12,7 @@
 #include "core/mesh.h"
 #include "core/shader.h"
 #include <glad/glad.h>
+#include <stdint.h>
 #include <stdio.h>
 
 static void material_set_lights(material* mat, arraylist* lights) {
@@ -49,14 +50,18 @@ static void shader_set_mvp(shader* s, vec3 pos, vec3 rot, vec3 scale) {
 	shader_set_mat4(s, "model", model);
 }
 
-void renderer_init(renderer* r, uint32_t width, uint32_t height) {
-	render_pipeline_init(&r->pipeline, width, height);
+uint8_t renderer_init(renderer* r, uint32_t width, uint32_t height) {
+	if (render_pipeline_init(&r->pipeline, width, height)) {
+		fprintf(stderr, "renderer: Failed to initialize render pipeline\n");
+		return 1;
+	}
 	r->context = (render_context) {
 		.camera = NULL,
 		.drawlist = NULL,
 		.draw_count = 0,
 		.frame_index = 0
 	};
+	return 0;
 }
 
 void renderer_deinit(renderer* r) {

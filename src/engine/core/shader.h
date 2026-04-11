@@ -3,6 +3,7 @@
 
 #include <glad/glad.h>
 #include <stddef.h>
+#include <stdint.h>
 #include "math/vec2.h"
 #include "math/vec3.h"
 #include "math/vec4.h"
@@ -14,7 +15,7 @@ typedef struct shader {
 
 char* shader_parse(const char* shader_path); // For testing
 
-void shader_init(shader* s, const char* vertsh, const char* fragsh);
+uint8_t shader_init(shader* s, const char* vertsh, const char* fragsh);
 void shader_use(shader* s);
 void shader_deinit(shader* s);
 
