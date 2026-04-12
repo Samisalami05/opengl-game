@@ -144,7 +144,7 @@ static void write_buffer(uint32_t buffer, GLenum target, size_t size, void* data
 }
 
 static void debug_upload(debug_batch* batch, debug_buffer* buffer) { // TODO: do persistant mapping
-    glBindVertexArray(buffer->vao);
+	glBindVertexArray(buffer->vao);
 
     // --- VBO ---
 	if (buffer->gpu_vertex_capacity < batch->vertex_count) {

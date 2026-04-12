@@ -74,7 +74,7 @@ static void render_model(model* m, camera* cam, vec3 pos, vec3 rot, vec3 scale) 
 		shader_set_mat4(wireframe_shader, "view", view);
 		shader_set_vec4(wireframe_shader, "color", (vec4){1.0f, 0.0f, 1.0f, 1.0f});
 
-		glDrawElements(GL_LINES, m->meshes[i].index_count, GL_UNSIGNED_INT, 0);
+		//glDrawElements(GL_LINES, m->meshes[i].index_count, GL_UNSIGNED_INT, 0);
 	}
 }
 

@@ -103,16 +103,20 @@ int main(void) {
 			i+=2;
 		}
 
+		
 		const int size = 50;
 
 		for (int x = 0; x < size; x++) {
 			for (int y = 0; y < size; y++) {
 				for (int z = 0; z < size; z++) {
 					debug_set_color((vec3){(float)x / size, (float)y / size, (float)z / size});
-					debug_render_cube((vec3){x, y, z}, (vec3){0}, (vec3){1.0f, 1.0f, 1.0f});
+					debug_render_sphere((vec3){(float)x, (float)y, (float)z}, 0.5f, 1);
 				}
 			}
 		}
+
+		//debug_render_sphere((vec3){0.5f, 0.0f, 0.0f}, 0.5f, 1);
+		//debug_render_line((vec3){0}, (vec3){1.0f, 0.0f, 0.0f});
 
 		if (isKeyDown(KEY_F)) {
 			debug_set_color((vec3){0.0f, 0.0f, 1.0f});
