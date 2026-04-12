@@ -10,6 +10,7 @@ void debug_pass_resize(render_pass* rp, uint32_t width, uint32_t height);
 void debug_pass_deinit(render_pass* rp);
 
 uint32_t debug_pass_base();
+uint8_t debug_change_color(vec4 color);
 uint8_t debug_pass_add_vertices(vec3* vertices, uint32_t count);
 uint8_t debug_pass_add_indices(uint32_t* indices, uint32_t count);
 

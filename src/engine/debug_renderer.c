@@ -2,7 +2,9 @@
 #include "rendering/passes/debug_pass.h"
 #include <stdint.h>
 
-// void debug_set_color(vec3 color);
+void debug_set_color(vec3 color) {
+	debug_change_color((vec4){color.x, color.y, color.z, 1.0f});
+}
 
 void debug_render_line(vec3 p1, vec3 p2) {
 	uint32_t base = debug_pass_base();

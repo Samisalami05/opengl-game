@@ -3,6 +3,7 @@
 #include "lighting/light.h"
 #include "rendering/pipeline.h"
 #include "rendering/rendertexture.h"
+#include "resourcemanager.h"
 #include "scenemanager.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -47,6 +48,8 @@ static void shader_set_mvp(shader* s, camera* cam, vec3 pos, vec3 rot, vec3 scal
 	shader_set_mat4(s, "projection", projection);
 }
 
+static shader* wireframe_shader = NULL;
+
 static void render_model(model* m, camera* cam, vec3 pos, vec3 rot, vec3 scale) {
 	for (int i = 0; i < m->mesh_count; i++) {
 		material* mat = &m->materials[m->mesh_mat_indices[i]];
@@ -60,6 +63,18 @@ static void render_model(model* m, camera* cam, vec3 pos, vec3 rot, vec3 scale) 
 		mesh_use(&m->meshes[i]);
 
 		glDrawElements(GL_TRIANGLES, m->meshes[i].index_count, GL_UNSIGNED_INT, 0);
+
+		// Wireframe
+		shader_use(wireframe_shader);
+
+		mat4 proj = camera_proj(cam);
+		mat4 view = camera_view(cam);
+
+		shader_set_mat4(wireframe_shader, "projection", proj);
+		shader_set_mat4(wireframe_shader, "view", view);
+		shader_set_vec4(wireframe_shader, "color", (vec4){1.0f, 0.0f, 1.0f, 1.0f});
+
+		glDrawElements(GL_LINES, m->meshes[i].index_count, GL_UNSIGNED_INT, 0);
 	}
 }
 
@@ -72,6 +87,9 @@ uint8_t opaque_pass_init(render_pass* rp, render_targets* targets) {
 	rp->execute = opaque_pass_execute;
 	rp->resize = opaque_pass_resize;
 	rp->deinit = opaque_pass_deinit;
+
+	wireframe_shader = load_shader("shaders/wireframe.vert", "shaders/wireframe.frag");
+	if (wireframe_shader == NULL) return 1;
 
 	glGenFramebuffers(1, &rp->fbo);
 	

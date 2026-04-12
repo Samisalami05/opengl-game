@@ -1,13 +1,6 @@
 #version 430 core
 
 layout (location = 0) in vec3 aPos;
-layout (location = 1) in uint color_id;
-
-layout(std430, binding = 0) buffer ColorBuffer {
-    vec4 colors[];
-};
-
-out vec4 color;
 
 uniform mat4 view;
 uniform mat4 projection;
@@ -15,5 +8,4 @@ uniform mat4 projection;
 void main()
 {
     gl_Position = projection * view * vec4(aPos, 1.0f);
-	color = colors[color_id];
 }
