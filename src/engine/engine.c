@@ -85,14 +85,13 @@ game* engine_init() {
 	if (!init_opengl()) return NULL;
 	init_managers();
 
-	game* g = malloc(sizeof(game));
+	game* g = calloc(1, sizeof(game));
 	if (g == NULL) {
 		perror("engine: malloc");
 		return NULL;
 	}
 	g->window = window;
 	g->deltatime = 0.001f;
-	g->last_frame = 0.0f;
 
 	glfwSetWindowUserPointer(window, g);
 

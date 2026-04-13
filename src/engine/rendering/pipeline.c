@@ -31,23 +31,17 @@ static void resize_render_targets(render_targets* targets, uint32_t width, uint3
 
 static int init_render_passes(render_pipeline* pipeline) {
 	// Init render passes here
-	if (depth_pass_init(&pipeline->passes[0], &pipeline->targets)) return 1;
-	if (opaque_pass_init(&pipeline->passes[1], &pipeline->targets)) return 2;
-	if (debug_pass_init(&pipeline->passes[2], &pipeline->targets)) return 3;
-	if (final_pass_init(&pipeline->passes[3])) return 4;
+	if (render_pipeline_register(pipeline, depth_pass_init) == -1) return 1;
+	if (render_pipeline_register(pipeline, opaque_pass_init) == -1) return 1;
+	if (render_pipeline_register(pipeline, debug_pass_init) == -1) return 1;
+	if (render_pipeline_register(pipeline, final_pass_init) == -1) return 1;
 	return 0;
 }
 
 uint8_t render_pipeline_init(render_pipeline* pipeline, uint32_t width, uint32_t height) {
-	pipeline->count = 4;
-	pipeline->passes = malloc(sizeof(render_pass) * pipeline->count);
-
 	init_render_targets(pipeline, width, height);
-	int status = init_render_passes(pipeline);
-	if (status > 0) {
-		fprintf(stderr, "render pipeline: Failed to initialize pass '%s'\n", pipeline->passes[status - 1].name);
-		return 1;
-	}
+	if (init_render_passes(pipeline)) return 1;
+	
 	return 0;
 }
 
@@ -58,6 +52,22 @@ void render_pipeline_deinit(render_pipeline* pipeline) {
 	}
 	deinit_render_targets(&pipeline->targets);
 	free(pipeline->passes); // TODO: deinit render targets
+}
+
+int32_t render_pipeline_register(render_pipeline* pipeline, pass_init_func pass_init) {
+	printf("count %d\n", pipeline->count);
+	if (pipeline->count + 1 > pipeline->capacity) {
+		pipeline->capacity = pipeline->capacity == 0 ? 4 : pipeline->capacity * 2;
+		void* tmp = realloc(pipeline->passes, pipeline->capacity * sizeof(render_pass));
+		pipeline->passes = tmp;
+	}
+
+	if (pass_init(&pipeline->passes[pipeline->count], &pipeline->targets)) {
+		fprintf(stderr, "render pipeline: Failed to register render pass with id %d: Failed to initialize\n", pipeline->count);
+		return -1;
+	}
+	pipeline->count++;
+	return pipeline->count - 1;
 }
 
 void execute_render_passes(render_pipeline* pipeline, render_context* context) {

@@ -103,37 +103,8 @@ int main(void) {
 			i+=2;
 		}
 
-		
-		const int size = 50;
-
-		for (int x = 0; x < size; x++) {
-			for (int y = 0; y < size; y++) {
-				for (int z = 0; z < size; z++) {
-					debug_set_color((vec3){(float)x / size, (float)y / size, (float)z / size});
-					debug_render_sphere((vec3){(float)x, (float)y, (float)z}, 0.5f, 1);
-				}
-			}
-		}
-
-		//debug_render_sphere((vec3){0.5f, 0.0f, 0.0f}, 0.5f, 1);
-		//debug_render_line((vec3){0}, (vec3){1.0f, 0.0f, 0.0f});
-
-		if (isKeyDown(KEY_F)) {
-			debug_set_color((vec3){0.0f, 0.0f, 1.0f});
-			debug_render_line((vec3){0}, (vec3){0, 100.0f, 50.0f});
-			debug_render_line((vec3){0}, (vec3){0, -50.0f, 300.0f});
-		}
-
-		// Rendering
 		render(&game->renderer, &m, 1, &sm_get_current_scene()->cam);
-		//render_scene(sm_get_current_scene());
-		//render_mesh(cube, &m.materials[0], &sm_get_current_scene()->cam);
-		//render_model(&m, &sm_get_current_scene()->cam,
-		//	(vec3){0.0f, 0.5f, 0.0f},
-		//	(vec3){0},
-		//	(vec3){3.0f, 3.0f, 3.0f}
-		//);
-		
+	
 		engine_end_frame(game);
     }
 

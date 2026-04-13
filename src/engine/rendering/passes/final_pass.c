@@ -1,5 +1,6 @@
 #include "final_pass.h"
 #include "core/shader.h"
+#include "rendering/pipeline.h"
 #include "rendering/rendertexture.h"
 #include "resourcemanager.h"
 #include <stdint.h>
@@ -27,7 +28,7 @@ fp_vertex vertices[] = {
 uint32_t fp_indices[] = {0, 1, 2, 2, 1, 3};
 shader* fp_shader = NULL;
 
-uint8_t final_pass_init(render_pass* rp) {
+uint8_t final_pass_init(render_pass* rp, render_targets* targets) {
 	strcpy(rp->name, "final_pass");
 	rp->width = 640;
 	rp->height = 480;

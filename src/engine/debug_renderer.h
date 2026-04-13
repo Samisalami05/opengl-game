@@ -6,7 +6,7 @@
 void debug_set_color(vec3 color);
 void debug_render_line(vec3 p1, vec3 p2);
 void debug_render_cube(vec3 pos, vec3 rotation, vec3 scale);
-void debug_render_sphere(vec3 pos, float radius, int res);
+void debug_render_sphere(vec3 pos, float radius);
 
 /*
  * TODO: 
