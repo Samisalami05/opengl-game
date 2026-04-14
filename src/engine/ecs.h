@@ -40,7 +40,7 @@ typedef struct {
     void (*deinit)(void*);
     void (*update)(void*, float);
     void (*render)(void*);
-	void (*render_debug)(void*);
+	void (*render_debug)(void*); // TODO: probably dont need
 } component_type;
 
 typedef struct {
