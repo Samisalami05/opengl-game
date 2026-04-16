@@ -23,6 +23,11 @@
 #include "modelloader.h"
 #include <math.h>
 
+#define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
+#include <cimgui/cimgui.h>
+#define CIMGUI_USE_GLFW
+#include <cimgui/cimgui_impl.h>
+
 int main(void) {
 	component_type type = {
 		.size = sizeof(transform),
@@ -32,6 +37,8 @@ int main(void) {
 		.render = transform_render,
 		.render_debug = transform_render_debug,
 	};
+
+	
 
 	register_component(type);
 

@@ -31,6 +31,9 @@ set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
 include_directories(/usr/include/minizip)
 add_subdirectory(libs/assimp)
 
+# CIMGUI
+add_subdirectory(libs/cimgui libs/cimgui/imgui)
+
 file(GLOB_RECURSE APP_SRC
     src/engine/*.c
 )
@@ -49,7 +52,7 @@ target_include_directories(engine PUBLIC
 )
 
 target_link_libraries(engine PUBLIC glad)
-target_link_libraries(engine PRIVATE glfw assimp)
+target_link_libraries(engine PRIVATE glfw cimgui assimp)
 
 if (WIN32)
     target_link_libraries(engine PRIVATE opengl32)
