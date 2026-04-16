@@ -32,7 +32,7 @@ include_directories(/usr/include/minizip)
 add_subdirectory(libs/assimp)
 
 # CIMGUI
-add_subdirectory(libs/cimgui libs/cimgui/imgui)
+add_subdirectory(libs/cimgui)
 
 file(GLOB_RECURSE APP_SRC
     src/engine/*.c
@@ -49,10 +49,18 @@ target_include_directories(engine PUBLIC
     src
     libs
     libs/glfw-3.4/include
+	libs/cimgui
+	libs/cimgui/imgui
+	libs/cimgui/imgui/backends
 )
 
 target_link_libraries(engine PUBLIC glad)
 target_link_libraries(engine PRIVATE glfw cimgui assimp)
+
+target_sources(engine PRIVATE
+    libs/cimgui/imgui/backends/imgui_impl_glfw.cpp
+    libs/cimgui/imgui/backends/imgui_impl_opengl3.cpp
+)
 
 if (WIN32)
     target_link_libraries(engine PRIVATE opengl32)
