@@ -1,4 +1,6 @@
 #include "pipeline.h"
+#include "GLFW/glfw3.h"
+#include "profiler.h"
 #include "rendering/passes/debug_pass.h"
 #include "rendering/passes/depth_pass.h"
 #include "rendering/passes/final_pass.h"
@@ -7,6 +9,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 static void init_render_targets(render_pipeline* pipeline, uint32_t width, uint32_t height) {
 	render_texture_init(&pipeline->targets.opaque_tex, width, height, RENDER_TEX_COLOR);
@@ -73,7 +76,17 @@ int32_t render_pipeline_register(render_pipeline* pipeline, pass_init_func pass_
 void execute_render_passes(render_pipeline* pipeline, render_context* context) {
 	for (int i = 0; i < pipeline->count; i++) {
 		render_pass* pass = &pipeline->passes[i];
+
+		float cpu_before = glfwGetTime();
 		pass->execute(pass, context, &pipeline->targets);
+		float cpu_time = glfwGetTime() - cpu_before;
+
+		profiler_push_stat((ProfilerStat){
+			.type = PROFILER_CPU_PASS_TIME,
+			.id = i,
+			.name = pass->name,
+			.time = cpu_time,
+		});
 	}
 }
 

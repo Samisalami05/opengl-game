@@ -9,6 +9,7 @@
 #include "engine/engine.h"
 #include "engine/modelloader.h"
 #include "inputmanager.h"
+#include "profiler.h"
 #include "util/arraylist.h"
 #include "entity.h"
 #include "lighting/light.h"
@@ -138,6 +139,7 @@ int main(void) {
 
 		ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
 	
+		profiler_update();
 		engine_end_frame(game);
     }
 
