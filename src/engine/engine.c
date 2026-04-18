@@ -1,4 +1,6 @@
 #include "engine.h"
+
+#include <glad/glad.h>
 #include "GLFW/glfw3.h"
 #include "inputmanager.h"
 #include "rendering/pipeline.h"

@@ -5,6 +5,7 @@
 #include "components/transform.h"
 #include "debug_renderer.h"
 #include "ecs.h"
+#include "editor/editor.h"
 #include "engine.h"
 #include "engine/engine.h"
 #include "engine/modelloader.h"
@@ -26,9 +27,6 @@
 
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include <cimgui.h>
-#define CIMGUI_USE_GLFW
-#define CIMGUI_USE_OPENGL3
-#include <cimgui/cimgui_impl.h>
 
 int main(void) {
 	component_type type = {
@@ -44,18 +42,9 @@ int main(void) {
 
     game* game = engine_init();
 	if (game == NULL) return 1;
+	
+	editor_init(game->window);
 
-	ImGuiContext* context = igCreateContext(NULL);
-
-	// Setup IO (optional but recommended)
-	ImGuiIO* io = igGetIO_ContextPtr(context);
-	(void)io;
-
-	// Style
-	igStyleColorsDark(NULL);
-
-	ImGui_ImplGlfw_InitForOpenGL(game->window, true);
-	ImGui_ImplOpenGL3_Init("#version 330");
 
 	model m;
 	load_model(&m, "assets/diner/scene.gltf");
@@ -106,13 +95,8 @@ int main(void) {
     while (!glfwWindowShouldClose(game->window))
     {
 		engine_begin_frame(game);
+		editor_begin_frame();
 	
-		// Start new frame
-		ImGui_ImplOpenGL3_NewFrame(); // TODO: move to editor
-		ImGui_ImplGlfw_NewFrame();
-		igNewFrame();
-
-
 		camera_key_input(&scene->cam, game->deltatime);
 		camera_mouse_input(&scene->cam, game->deltatime);
 
@@ -129,16 +113,13 @@ int main(void) {
 			i+=2;
 		}
 
+		debug_render_cube((vec3){0}, (vec3){0}, (vec3){1, 1, 1});
+		
+		editor_update();
+
 		render(&game->renderer, &m, 1, &sm_get_current_scene()->cam);
+		editor_render();
 
-		igBegin("Hello", NULL, 0);
-		igText("Hello from cimgui!");
-		igEnd();
-
-		igRender();
-
-		ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
-	
 		profiler_update();
 		engine_end_frame(game);
     }

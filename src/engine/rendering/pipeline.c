@@ -58,7 +58,6 @@ void render_pipeline_deinit(render_pipeline* pipeline) {
 }
 
 int32_t render_pipeline_register(render_pipeline* pipeline, pass_init_func pass_init) {
-	printf("count %d\n", pipeline->count);
 	if (pipeline->count + 1 > pipeline->capacity) {
 		pipeline->capacity = pipeline->capacity == 0 ? 4 : pipeline->capacity * 2;
 		void* tmp = realloc(pipeline->passes, pipeline->capacity * sizeof(render_pass));
@@ -79,7 +78,9 @@ void execute_render_passes(render_pipeline* pipeline, render_context* context) {
 
 		float cpu_before = glfwGetTime();
 		pass->execute(pass, context, &pipeline->targets);
-		float cpu_time = glfwGetTime() - cpu_before;
+		float cpu_time = (glfwGetTime() - cpu_before) * 1000;
+
+		if (cpu_time < 0) cpu_time = 0;
 
 		profiler_push_stat((ProfilerStat){
 			.type = PROFILER_CPU_PASS_TIME,

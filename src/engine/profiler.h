@@ -1,14 +1,21 @@
 #ifndef PROFILER_H
 #define PROFILER_H
 
-#include "engine.h"
 #include <stdbool.h>
 #include <stdint.h>
 
+#define PROFILER_SAMPLE_COUNT 32
+
+typedef struct {
+	float samples[PROFILER_SAMPLE_COUNT];
+	uint32_t curr; // The current sample as a index
+	float value; // The resulting average  (TODO: maybe not be in struct)
+} ProfilerTime;
+
 typedef struct {
 	char* name;
-	float cpu_time;
-	float gpu_time;
+	ProfilerTime cpu_time;
+	ProfilerTime gpu_time;
 } RenderPassStat;
 
 typedef struct {
@@ -18,7 +25,6 @@ typedef struct {
 } RenderPipelineStats;
 
 typedef struct {
-	game* game;
 	RenderPipelineStats pipeline;
 } Profiler;
 
@@ -34,13 +40,12 @@ typedef struct {
 	float time;
 } ProfilerStat;
 
-void profiler_attach(game* game);
+void profiler_attach();
 bool profiler_is_attached();
 void profiler_detach();
 
 Profiler* profiler_get();
 void profiler_push_stat(ProfilerStat stat);
 void profiler_update();
-
 
 #endif

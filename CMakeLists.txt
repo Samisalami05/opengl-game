@@ -34,17 +34,29 @@ add_subdirectory(libs/assimp)
 # CIMGUI
 add_subdirectory(libs/cimgui)
 
-file(GLOB_RECURSE APP_SRC
+file(GLOB_RECURSE ENGINE_SRC
     src/engine/*.c
+)
+
+file(GLOB_RECURSE EDITOR_SRC
+    src/editor/*.c
 )
 
 file(GLOB_RECURSE TEST_SRC
     tests/*.c
 )
 
-add_library(engine STATIC ${APP_SRC})
+add_library(engine STATIC ${ENGINE_SRC})
+add_library(editor STATIC ${EDITOR_SRC})
 
 target_include_directories(engine PUBLIC
+    src/engine
+    src
+    libs
+    libs/glfw-3.4/include
+)
+
+target_include_directories(editor PUBLIC
     src/engine
     src
     libs
@@ -57,19 +69,24 @@ target_include_directories(engine PUBLIC
 target_link_libraries(engine PUBLIC glad)
 target_link_libraries(engine PRIVATE glfw cimgui assimp)
 
-target_sources(engine PRIVATE
+target_link_libraries(editor PUBLIC glad)
+target_link_libraries(editor PRIVATE glfw cimgui assimp)
+
+target_sources(editor PRIVATE
     libs/cimgui/imgui/backends/imgui_impl_glfw.cpp
     libs/cimgui/imgui/backends/imgui_impl_opengl3.cpp
 )
 
 if (WIN32)
     target_link_libraries(engine PRIVATE opengl32)
+	target_link_libraries(editor PRIVATE opengl32)
 else()
     target_link_libraries(engine PRIVATE GL dl m)
+    target_link_libraries(editor PRIVATE GL dl m)
 endif()
 
 add_executable(main src/main.c)
-target_link_libraries(main PRIVATE engine)
+target_link_libraries(main PRIVATE engine editor)
 
 add_executable(runtests ${TEST_SRC})
 target_link_libraries(runtests PRIVATE engine)

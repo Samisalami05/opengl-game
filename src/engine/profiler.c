@@ -3,15 +3,16 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static Profiler profiler = {0};
 
-void profiler_attach(game* game) {
-	profiler.game = game;
+void profiler_attach() {
+	// TODO: implement
 }
 
 bool profiler_is_attached() {
-	return profiler.game != NULL;
+	return true;
 }
 
 void profiler_detach() {
@@ -23,6 +24,17 @@ void profiler_detach() {
 
 Profiler* profiler_get() {
 	return &profiler;
+}
+
+static void profiler_time_push(ProfilerTime* ptime, float time) {
+	ptime->samples[ptime->curr] = time;
+	ptime->curr = (ptime->curr + 1) % PROFILER_SAMPLE_COUNT;
+
+	float sum = 0;
+	for (int i = 0; i < PROFILER_SAMPLE_COUNT; i++) {
+		sum += ptime->samples[i];
+	}
+	ptime->value = sum / PROFILER_SAMPLE_COUNT;
 }
 
 static void set_pass_time(ProfilerStat stat) {
@@ -38,15 +50,19 @@ static void set_pass_time(ProfilerStat stat) {
 			return;
 		}
 		profiler.pipeline.passes = tmp;
+		memset(profiler.pipeline.passes + prev_capacity, 0, (profiler.pipeline.capacity - prev_capacity) * sizeof(RenderPassStat));
 	}
 
-	profiler.pipeline.passes[stat.id].name = stat.name;
+	RenderPassStat* pass = profiler.pipeline.passes + stat.id;
+
+	pass->name = stat.name;
+	if (stat.id >= profiler.pipeline.count) profiler.pipeline.count = stat.id + 1;
 	if (stat.type == PROFILER_CPU_PASS_TIME) {
-		profiler.pipeline.passes[stat.id].cpu_time = stat.time;
+		profiler_time_push(&pass->cpu_time, stat.time);
 		return;
 	}
 
-	profiler.pipeline.passes[stat.id].gpu_time = stat.time;
+	profiler_time_push(&pass->gpu_time, stat.time);
 }
 
 void profiler_push_stat(ProfilerStat stat) {

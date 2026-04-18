@@ -2,7 +2,6 @@
 #define ENGINE_H
 
 #include "rendering/renderer.h"
-#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stdint.h>
 
