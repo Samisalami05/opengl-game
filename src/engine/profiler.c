@@ -27,14 +27,23 @@ Profiler* profiler_get() {
 }
 
 static void profiler_time_push(ProfilerTime* ptime, float time) {
-	ptime->samples[ptime->curr] = time;
+	if (time < 0) time = 0;
+
+	if (time > ptime->max) ptime->max = time;
+	else if (time < ptime->min) ptime->min = time;
+
 	ptime->curr = (ptime->curr + 1) % PROFILER_SAMPLE_COUNT;
+	
+	if (ptime->samples[ptime->curr] >= ptime->max) ptime->max = ptime->value;
+	else if (ptime->samples[ptime->curr] <= ptime->min) ptime->min = ptime->value;
+
+	ptime->samples[ptime->curr] = time;
 
 	float sum = 0;
-	for (int i = 0; i < PROFILER_SAMPLE_COUNT; i++) {
-		sum += ptime->samples[i];
+	for (int i = 0; i < PROFILER_AVG_SIZE; i++) {
+		sum += ptime->samples[(i + ptime->curr - PROFILER_AVG_SIZE) % PROFILER_SAMPLE_COUNT];
 	}
-	ptime->value = sum / PROFILER_SAMPLE_COUNT;
+	ptime->value = sum / PROFILER_AVG_SIZE;
 }
 
 static void set_pass_time(ProfilerStat stat) {
@@ -76,7 +85,9 @@ void profiler_push_stat(ProfilerStat stat) {
 	}
 }
 
-void profiler_update() {
+void profiler_update(float deltatime) {
+	profiler_time_push(&profiler.fps, 1.0 / deltatime);
+	profiler.frame++;
 	//printf("%s: %.2f\n", profiler.pipeline.passes[0].name,  profiler.pipeline.passes[0].cpu_time);
 }
 

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "audio/wav.h"
 #include "components/transform.h"
 #include "debug_renderer.h"
 #include "ecs.h"
@@ -25,6 +26,12 @@
 #include "modelloader.h"
 #include <math.h>
 
+// OpenAL
+#include <AL/al.h>
+#include <AL/alc.h>
+#include <stdlib.h>
+#include <string.h>
+
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include <cimgui.h>
 
@@ -40,10 +47,11 @@ int main(void) {
 
 	register_component(type);
 
-    game* game = engine_init();
-	if (game == NULL) return 1;
-	
-	editor_init(game->window);
+    game game;
+	if (engine_init(&game)) return 1;
+	Engine* engine = engine_get();
+
+	editor_init(game.window);
 
 
 	model m;
@@ -90,43 +98,148 @@ int main(void) {
 	arraylist_append(&scene->lights, &pointlight1);
 	arraylist_append(&scene->lights, &pointlight2);
 
-	int i = 0;
+	ALCdevice* device = alcOpenDevice(NULL);
+	if (device == NULL) {
+		fprintf(stderr, "OpenAl: Failed to initialize\n");
+		return 1;
+	}
 
-    while (!glfwWindowShouldClose(game->window))
+	ALCcontext* context = alcCreateContext(device, NULL);
+	if (context == NULL) {
+		alcCloseDevice(device);
+		fprintf(stderr, "OpenAL: Could not create context\n");
+		return 1;
+	}
+
+	if (!alcMakeContextCurrent(context)) {
+		alcCloseDevice(device);
+		fprintf(stderr, "OpenAl: Failed to make context current\n");
+		return 1;
+	}
+
+	WavFile file;
+	if (wav_open(&file, "assets/wat_u_want_2.wav") != WAV_OK) {
+		fprintf(stderr, "Failed to open wav file\n");
+		return 1;
+	}
+
+	wav_print_info(&file);
+
+	ALuint buffer;
+	alGenBuffers(1, &buffer);
+
+	ALenum format;
+	if (file.format.channel_count == 1 && file.format.bits_per_sample == 8) format = AL_FORMAT_MONO8;
+	else if (file.format.channel_count == 1 && file.format.bits_per_sample == 16) format = AL_FORMAT_MONO16;
+	else if (file.format.channel_count == 2 && file.format.bits_per_sample == 8) format = AL_FORMAT_STEREO8;
+	else if (file.format.channel_count == 2 && file.format.bits_per_sample == 16) format = AL_FORMAT_STEREO16;
+	else {
+		fprintf(stderr, "Unsupported wav file format\n");
+		return 1;
+	}
+
+	if (format == AL_FORMAT_STEREO8 || format == AL_FORMAT_STEREO16) printf("cooked\n");
+
+	uint8_t* data = malloc(file.data_size);
+	if (wav_read(&file, data, file.data_size) != WAV_OK) {
+		fprintf(stderr, "Could not read data from wav file\n");
+		return 1;
+	}
+
+	alBufferData(buffer, format, data, file.data_size, file.format.sample_rate);
+
+	free(data);
+
+	ALuint source;
+    alGenSources(1, &source);
+    alSourcef(source, AL_PITCH, 1);
+    alSourcef(source, AL_GAIN, 1.0f);
+    alSource3f(source, AL_POSITION, 0, 0, 0);
+    alSource3f(source, AL_VELOCITY, 0, 0, 0);
+    alSourcei(source, AL_LOOPING, AL_TRUE);
+    alSourcei(source, AL_BUFFER, buffer);
+
+	alListener3f(AL_POSITION, 0, 0, 0);
+	alListener3f(AL_VELOCITY, 0, 0, 0);
+
+	float orientation[] = {
+		0, 0, -1,  // forward
+		0, 1, 0    // up
+	};
+	alListenerfv(AL_ORIENTATION, orientation);
+
+	alSourcef(source, AL_REFERENCE_DISTANCE, 1.0f);
+	alSourcef(source, AL_MAX_DISTANCE, 100.0f);
+	alSourcef(source, AL_ROLLOFF_FACTOR, 1.0f);
+
+    alSourcePlay(source);
+
+	ALint state = AL_PLAYING;
+	alGetSourcei(source, AL_SOURCE_STATE, &state);
+
+    while (!glfwWindowShouldClose(game.window))
     {
-		engine_begin_frame(game);
+		engine_begin_frame(&game);
 		editor_begin_frame();
-	
-		camera_key_input(&scene->cam, game->deltatime);
-		camera_mouse_input(&scene->cam, game->deltatime);
 
-		player->rotation.y += game->deltatime / 2;
+		if (state == AL_PLAYING) {
+			alListener3f(AL_POSITION,
+				scene->cam.pos.x,
+				scene->cam.pos.y,
+				scene->cam.pos.z);
+
+
+			vec3 forward = camera_forward(scene->cam);
+			vec3 up = camera_up(scene->cam);
+			
+			float orientation[] = {
+				forward.x,
+				forward.y,
+				forward.z,
+				
+				up.x,
+				up.y,
+				up.z
+			};
+
+			alListenerfv(AL_ORIENTATION, orientation);
+			alGetSourcei(source, AL_SOURCE_STATE, &state);
+		}
+		else printf("stopped\n");
+	
+		camera_key_input(&scene->cam, game.deltatime);
+		camera_mouse_input(&scene->cam, game.deltatime);
+
+		player->rotation.y += game.deltatime / 2;
 
 		light* sun = arraylist_get(&scene->lights, 0);
 
 		sun->dir.x = cosf(glfwGetTime() / 4);
 		sun->dir.z = sinf(glfwGetTime() / 4);
-		
-		// FPS counter
-		if (i < glfwGetTime()) {
-			printf("fps: %f\n", 1 / game->deltatime);
-			i+=2;
-		}
 
 		debug_render_cube((vec3){0}, (vec3){0}, (vec3){1, 1, 1});
 		
 		editor_update();
 
-		render(&game->renderer, &m, 1, &sm_get_current_scene()->cam);
+		render(&engine->renderer, &m, 1, &sm_get_current_scene()->cam);
 		editor_render();
 
-		profiler_update();
-		engine_end_frame(game);
+		profiler_update(game.deltatime);
+		engine_end_frame(&game);
     }
+
+	wav_close(&file);
+
+	alDeleteSources(1, &source);
+    alDeleteBuffers(1, &buffer);
+
+	alcMakeContextCurrent(NULL);
+	alcDestroyContext(context);
+	alcCloseDevice(device);
 
 	//mesh_delete(triangle);
 	mesh_delete(cube);
 	model_deinit(&m);
-	engine_deinit(game);
+	engine_deinit(&game);
     return 0;
 }

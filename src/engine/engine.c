@@ -13,16 +13,18 @@
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 480
 
+static Engine engine = {0};
+
 // Callbacks
 static void error_callback(int error, const char* description) {
-    fprintf(stderr, "%d Error: %s\n", error, description);
+	fprintf(stderr, "GLFW: %d Error: %s\n", error, description);
 }
 
 static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	game* g = glfwGetWindowUserPointer(window);
-    glViewport(0, 0, width, height);
-	render_pipeline_resize(&g->renderer.pipeline, width, height);
+	glViewport(0, 0, width, height);
+	render_pipeline_resize(&engine.renderer.pipeline, width, height);
 
 	scene* scene = sm_get_current_scene();
 	scene->cam.width = width;
@@ -38,12 +40,12 @@ static GLFWwindow* init_glfw() {
 
 	glfwWindowHint(GLFW_DEPTH_BITS, 24);
 
-    GLFWwindow* window = glfwCreateWindow(640, 480, "game", NULL, NULL);
-    if (!window) {
-        glfwTerminate();
+	GLFWwindow* window = glfwCreateWindow(640, 480, "game", NULL, NULL);
+	if (!window) {
+		glfwTerminate();
 		fprintf(stderr, "engine: Failed to create glfw window\n");
-        return NULL;
-    }
+		return NULL;
+	}
 
 	// Callbacks
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
@@ -81,38 +83,33 @@ static void init_managers() {
 	inputman_init();
 }
 
-game* engine_init() {
+uint8_t engine_init(game* g) {
 	GLFWwindow* window = init_glfw();
-	if (window == NULL) return NULL;
-	if (!init_opengl()) return NULL;
+	if (window == NULL) return 1;
+	if (!init_opengl()) return 1;
 	init_managers();
 
-	game* g = calloc(1, sizeof(game));
-	if (g == NULL) {
-		perror("engine: malloc");
-		return NULL;
-	}
 	g->window = window;
 	g->deltatime = 0.001f;
 
 	glfwSetWindowUserPointer(window, g);
 
-	if (renderer_init(&g->renderer, WINDOW_WIDTH, WINDOW_HEIGHT)) return NULL;
+	if (renderer_init(&engine.renderer, WINDOW_WIDTH, WINDOW_HEIGHT)) return 1;
 
-	return g;
+	return 0;
 }
 
 void engine_begin_frame(game* g) {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	float current_frame = glfwGetTime();
-	g->deltatime = current_frame - g->last_frame;
-	g->last_frame = current_frame;
+	g->deltatime = current_frame - engine.last_frame;
+	engine.last_frame = current_frame;
 }
 
 void engine_end_frame(game* g) {
 	inputman_update(g->window);
-    glfwSwapBuffers(g->window);
-    glfwPollEvents();
+	glfwSwapBuffers(g->window);
+	glfwPollEvents();
 }
 
 // Deinitializers
@@ -125,9 +122,12 @@ void engine_deinit(game* g) {
 	scenemanager_deinit();
 	resource_manager_deinit();
 	inputman_deinit();
-	renderer_deinit(&g->renderer);
+	renderer_deinit(&engine.renderer);
 
 	deinit_glfw(g);
-	free(g);
+}
+
+Engine* engine_get() {
+	return &engine;
 }
 

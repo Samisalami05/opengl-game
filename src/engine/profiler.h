@@ -4,13 +4,16 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define PROFILER_SAMPLE_COUNT 32
+#define PROFILER_SAMPLE_COUNT 1024
+#define PROFILER_AVG_SIZE 16
 
 typedef struct {
 	float samples[PROFILER_SAMPLE_COUNT];
 	uint32_t curr; // The current sample as a index
 	float value; // The resulting average  (TODO: maybe not be in struct)
-} ProfilerTime;
+	float min;
+	float max;
+} ProfilerTime; // TODO: Maybe rename to ProfilerValue or something
 
 typedef struct {
 	char* name;
@@ -26,6 +29,8 @@ typedef struct {
 
 typedef struct {
 	RenderPipelineStats pipeline;
+	ProfilerTime fps;
+	uint64_t frame;
 } Profiler;
 
 typedef enum {
@@ -46,6 +51,6 @@ void profiler_detach();
 
 Profiler* profiler_get();
 void profiler_push_stat(ProfilerStat stat);
-void profiler_update();
+void profiler_update(float deltatime);
 
 #endif
