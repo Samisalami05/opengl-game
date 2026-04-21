@@ -110,4 +110,7 @@ void* add_component(entity2 e, comp_id id);
  */
 void* get_component(entity2 e, comp_id id);
 
+// TODO: implement
+void get_all_components(comp_id id);
+
 #endif

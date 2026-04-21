@@ -25,12 +25,13 @@
 #include "rendering/camera.h"
 #include "modelloader.h"
 #include <math.h>
+#include <stdlib.h>
+#include <string.h>
 
 // OpenAL
 #include <AL/al.h>
 #include <AL/alc.h>
-#include <stdlib.h>
-#include <string.h>
+
 
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include <cimgui.h>
@@ -97,25 +98,6 @@ int main(void) {
 
 	arraylist_append(&scene->lights, &pointlight1);
 	arraylist_append(&scene->lights, &pointlight2);
-
-	ALCdevice* device = alcOpenDevice(NULL);
-	if (device == NULL) {
-		fprintf(stderr, "OpenAl: Failed to initialize\n");
-		return 1;
-	}
-
-	ALCcontext* context = alcCreateContext(device, NULL);
-	if (context == NULL) {
-		alcCloseDevice(device);
-		fprintf(stderr, "OpenAL: Could not create context\n");
-		return 1;
-	}
-
-	if (!alcMakeContextCurrent(context)) {
-		alcCloseDevice(device);
-		fprintf(stderr, "OpenAl: Failed to make context current\n");
-		return 1;
-	}
 
 	WavFile file;
 	if (wav_open(&file, "assets/wat_u_want_2.wav") != WAV_OK) {
@@ -232,11 +214,7 @@ int main(void) {
 
 	alDeleteSources(1, &source);
     alDeleteBuffers(1, &buffer);
-
-	alcMakeContextCurrent(NULL);
-	alcDestroyContext(context);
-	alcCloseDevice(device);
-
+	
 	//mesh_delete(triangle);
 	mesh_delete(cube);
 	model_deinit(&m);
