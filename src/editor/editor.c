@@ -107,6 +107,18 @@ void editor_update() {
 					pass->cpu_time.max < 1.0f ? 1.0f : pass->cpu_time.max,
 					(ImVec2){0, 80}
 			);
+
+			igText("GPU: %.3f ms", pass->gpu_time.value);
+
+			snprintf(label, sizeof(label), "##%d", i + profiler->pipeline.count);
+			igPlotLines_FnFloatPtr(label, editor_plot, 
+					pass->gpu_time.samples, 
+					PROFILER_SAMPLE_COUNT, 0, NULL,
+					0.0f,
+					pass->gpu_time.max < 1.0f ? 1.0f : pass->gpu_time.max,
+					(ImVec2){0, 80}
+			);
+
 		}
 	}
 	igEnd();

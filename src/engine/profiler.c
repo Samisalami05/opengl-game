@@ -1,4 +1,5 @@
 #include "profiler.h"
+#include "core/shader.h"
 #include "rendering/pipeline.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -89,5 +90,36 @@ void profiler_update(float deltatime) {
 	profiler_time_push(&profiler.fps, 1.0 / deltatime);
 	profiler.frame++;
 	//printf("%s: %.2f\n", profiler.pipeline.passes[0].name,  profiler.pipeline.passes[0].cpu_time);
+}
+
+// Queries
+
+void profiler_query_init(ProfilerQuery* query) {
+	glGenQueries(2, (uint32_t*)query);
+}
+
+void profiler_query_begin(ProfilerQuery* query) {
+	glQueryCounter(query->start, GL_TIMESTAMP);
+}
+
+void profiler_query_end(ProfilerQuery* query) {
+	glQueryCounter(query->end, GL_TIMESTAMP);
+}
+
+bool profiler_query_finished(ProfilerQuery* query) {
+	uint32_t available = 0;
+	glGetQueryObjectuiv(query->end, GL_QUERY_RESULT_AVAILABLE, &available);
+	return available;
+}
+
+// On success, returns the time in millis. Returns -1 if not finished.
+float profiler_query_get(ProfilerQuery* query) {
+	if (!profiler_query_finished(query)) return -1.0f;
+	
+	uint64_t startTime, endTime;
+	glGetQueryObjectui64v(query->start, GL_QUERY_RESULT, &startTime);
+    glGetQueryObjectui64v(query->end, GL_QUERY_RESULT, &endTime);
+
+    return (endTime - startTime) / 1000000.0;
 }
 

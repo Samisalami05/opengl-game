@@ -53,4 +53,16 @@ Profiler* profiler_get();
 void profiler_push_stat(ProfilerStat stat);
 void profiler_update(float deltatime);
 
+// Used to track time on the GPU
+typedef struct {
+	uint32_t start;
+	uint32_t end;
+} ProfilerQuery;
+
+void profiler_query_init(ProfilerQuery* query);
+void profiler_query_begin(ProfilerQuery* query);
+void profiler_query_end(ProfilerQuery* query);
+bool profiler_query_finished(ProfilerQuery* query);
+float profiler_query_get(ProfilerQuery* query);
+
 #endif

@@ -1,5 +1,6 @@
 #include "pipeline.h"
 #include "GLFW/glfw3.h"
+#include "core/shader.h"
 #include "profiler.h"
 #include "rendering/passes/debug_pass.h"
 #include "rendering/passes/depth_pass.h"
@@ -60,7 +61,7 @@ void render_pipeline_deinit(render_pipeline* pipeline) {
 int32_t render_pipeline_register(render_pipeline* pipeline, pass_init_func pass_init) {
 	if (pipeline->count + 1 > pipeline->capacity) {
 		pipeline->capacity = pipeline->capacity == 0 ? 4 : pipeline->capacity * 2;
-		void* tmp = realloc(pipeline->passes, pipeline->capacity * sizeof(render_pass));
+		void* tmp = realloc(pipeline->passes, pipeline->capacity * sizeof(render_pass)); // TODO: maybe set data to zero
 		pipeline->passes = tmp;
 	}
 
@@ -68,6 +69,8 @@ int32_t render_pipeline_register(render_pipeline* pipeline, pass_init_func pass_
 		fprintf(stderr, "render pipeline: Failed to register render pass with id %d: Failed to initialize\n", pipeline->count);
 		return -1;
 	}
+	profiler_query_init(&pipeline->passes[pipeline->count].query);
+	
 	pipeline->count++;
 	return pipeline->count - 1;
 }
@@ -76,8 +79,20 @@ void execute_render_passes(render_pipeline* pipeline, render_context* context) {
 	for (int i = 0; i < pipeline->count; i++) {
 		render_pass* pass = &pipeline->passes[i];
 
+		float gpu_time = profiler_query_get(&pass->query);
+		if (gpu_time != -1.0f) {
+			profiler_push_stat((ProfilerStat){
+				.type = PROFILER_GPU_PASS_TIME,
+				.id = i,
+				.name = pass->name,
+				.time = gpu_time,
+			});
+		}
+
 		float cpu_before = glfwGetTime();
+		profiler_query_begin(&pass->query);
 		pass->execute(pass, context, &pipeline->targets);
+		profiler_query_end(&pass->query);
 		float cpu_time = (glfwGetTime() - cpu_before) * 1000;
 
 		if (cpu_time < 0) cpu_time = 0;

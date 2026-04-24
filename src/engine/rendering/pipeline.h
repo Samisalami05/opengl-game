@@ -3,6 +3,7 @@
 
 #include "modelloader.h"
 #include "camera.h"
+#include "profiler.h"
 #include "rendertexture.h"
 #include "util/arraylist.h"
 #include <stdint.h>
@@ -46,6 +47,7 @@ struct render_pass {
 	char name[32];
 	uint32_t width;
 	uint32_t height;
+	ProfilerQuery query; // Used to track time
 
 	uint32_t fbo;
 	render_texture color_tex; // TODO: should add more
