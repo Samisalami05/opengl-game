@@ -3,12 +3,13 @@
 #include "profiler.h"
 #include "util/util.h"
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #define CIMGUI_USE_GLFW
 #define CIMGUI_USE_OPENGL3
 #include <cimgui/cimgui_impl.h>
+
+#include "editor_util.h"
 
 static Editor editor = {0};
 
@@ -30,10 +31,8 @@ void editor_begin_frame() {
 	igNewFrame();
 }
 
-static int offset = 0;
-
 static float editor_plot(void* buf, int index) {
-	return ((float*)buf)[(index + offset) % PROFILER_SAMPLE_COUNT];
+	return ((float*)buf)[(index + editor.profiler.plot_offset) % PROFILER_SAMPLE_COUNT];
 }
 
 void editor_update() {
@@ -63,68 +62,102 @@ void editor_update() {
 
 	igBegin("Test", NULL, 0);
 
-
 	igEnd();
-
 
 	igBegin("Profiler", NULL, 0);
 	Profiler* profiler = profiler_get();
 
-	igText("FPS: %.1f   Frame: %d", profiler->fps.value, profiler->frame);
+	igText("FPS: %.1f   Frame: %d", profiler->fps.value, profiler->frame_count);
 
-	if (editor.profiler.capacity < profiler->pipeline.capacity) {
-		uint32_t prev_capacity = editor.profiler.capacity;
-		editor.profiler.capacity = profiler->pipeline.capacity;
-		void* tmp = realloc(editor.profiler.graphs, editor.profiler.capacity * sizeof(EditorProfilerGraph));
-		if (tmp == NULL) {
-			perror("editor: realloc");
-			return;
-		}
-		editor.profiler.graphs = tmp;
-		memset(editor.profiler.graphs + prev_capacity, 0, (editor.profiler.capacity - prev_capacity) * sizeof(EditorProfilerGraph));
-	}
-
-	float deltatime = 1.0f / profiler->fps.value; // TODO: this is bad
-
-	for (int i = 0; i < profiler->pipeline.count; i++) {
-		RenderPassStat* pass = &profiler->pipeline.passes[i];
+	igText("CPU: %.3f ms [%.3f - %.3f]", profiler->frame_cpu.value, profiler->frame_cpu.min, profiler->frame_cpu.max);
+	plot_profiler_time(&profiler->frame_cpu, -1);
 	
-		if (igCollapsingHeader_BoolPtr(pass->name, 0, 0)) {
-			igText("CPU: %.3f ms", pass->cpu_time.value);
+	igText("GPU: %.3f ms [%.3f - %.3f]", profiler->frame_gpu.value, profiler->frame_gpu.min, profiler->frame_gpu.max);
+	plot_profiler_time(&profiler->frame_gpu, -2);
 
-			char label[64];
-			snprintf(label, sizeof(label), "##%d", i);
+	if (igCollapsingHeader_BoolPtr("Device Info", 0, 0)) {
+		igText("Vendor:   %s\n", glGetString(GL_VENDOR));
+		igText("Renderer: %s\n", glGetString(GL_RENDERER));
+		igText("Graphics: OpenGL\n");
+		igText("Version:  %s\n", glGetString(GL_VERSION));
+		igText("GLSL:     %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-			// TODO: maybe lerp idk			
-			editor.profiler.graphs[i].min = lerpf(editor.profiler.graphs[i].min, pass->cpu_time.min * 0.9f, deltatime * 10.0f);
-			editor.profiler.graphs[i].max = lerpf(editor.profiler.graphs[i].max, pass->cpu_time.max * 1.1f, deltatime * 10.0f);
+		igSpacing();
 
-			offset = pass->cpu_time.curr;
-			igPlotLines_FnFloatPtr(label, editor_plot, 
-					pass->cpu_time.samples, 
-					PROFILER_SAMPLE_COUNT, 0, NULL,
-					0.0f,
-					pass->cpu_time.max < 1.0f ? 1.0f : pass->cpu_time.max,
-					(ImVec2){0, 80}
-			);
+		if (igCollapsingHeader_BoolPtr("Constraints", 0, 0)) {
+			igIndent(20);
+			int value;
+			glGetIntegerv(GL_MAX_TEXTURE_SIZE, &value);
+			igText("Max texture size: %d\n", value);
 
-			igText("GPU: %.3f ms", pass->gpu_time.value);
+			glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &value);
+			igText("Texture units: %d\n", value);
 
-			snprintf(label, sizeof(label), "##%d", i + profiler->pipeline.count);
-			igPlotLines_FnFloatPtr(label, editor_plot, 
-					pass->gpu_time.samples, 
-					PROFILER_SAMPLE_COUNT, 0, NULL,
-					0.0f,
-					pass->gpu_time.max < 1.0f ? 1.0f : pass->gpu_time.max,
-					(ImVec2){0, 80}
-			);
+			glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &value);
+			igText("Vertex attribs: %d\n", value);
 
+			glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &value);
+			igText("Uniform block size: %d\n", value);
+
+			glGetIntegerv(GL_MAX_DRAW_BUFFERS, &value);
+			igText("Max draw buffers: %d\n", value);
+
+			glGetIntegerv(GL_MAX_SAMPLES, &value);
+			igText("Max samples (MSAA): %d\n", value);
+
+			glGetIntegerv(GL_MAX_ELEMENTS_VERTICES, &value);
+			igText("Max elements vertices: %d\n", value);
+			igIndent(-20);
+		}
+
+		if (igCollapsingHeader_BoolPtr("Extensions", 0, 0)) {
+			igIndent(20);
+			igBeginChild_Str("Extensions", (ImVec2_c){0, 200}, 0, 0);
+
+			int count;
+			glGetIntegerv(GL_NUM_EXTENSIONS, &count);
+				
+			for (int i = 0; i < count; i++) {
+				igText("%s\n", glGetStringi(GL_EXTENSIONS, i));
+			}
+			igEndChild();
+			igIndent(-20);
 		}
 	}
+
+	if (igCollapsingHeader_BoolPtr("Components", 0, 0)) {
+		igText("Not implemented...");
+	}
+
+	if (igCollapsingHeader_BoolPtr("Pipeline", 0, 0)) {
+		igIndent(20);
+		for (int i = 0; i < profiler->pipeline.count; i++) {
+			RenderPassStat* pass = &profiler->pipeline.passes[i];
+
+			if (igCollapsingHeader_BoolPtr(pass->name, 0, 0)) {
+				igText("CPU: %.3f ms [%.3f - %.3f] %2.0f%%", pass->cpu_time.value, pass->cpu_time.min, pass->cpu_time.max, profiler->frame_cpu.value > 0 ? pass->cpu_time.value / profiler->frame_cpu.value * 100 : 0);
+				plot_profiler_time(&pass->cpu_time, i);
+
+				igText("GPU: %.3f ms [%.3f - %.3f] %2.0f%%", pass->gpu_time.value, pass->gpu_time.min, pass->gpu_time.max, profiler->frame_gpu.value > 0 ? pass->gpu_time.value / profiler->frame_gpu.value * 100 : 0);
+				plot_profiler_time(&pass->gpu_time, i + profiler->pipeline.count);
+			}
+		}
+		igIndent(-20);
+	}
+
+	if (igCollapsingHeader_BoolPtr("Memory", 0, 0)) {
+		igText("Not implemented...");
+	}
+	
+	
 	igEnd();
 }
 
 void editor_render() {
 	igRender();
 	ImGui_ImplOpenGL3_RenderDrawData(igGetDrawData());
+}
+
+Editor* editor_get() {
+	return &editor;
 }

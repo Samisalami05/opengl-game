@@ -30,12 +30,16 @@ typedef struct {
 typedef struct {
 	RenderPipelineStats pipeline;
 	ProfilerTime fps;
-	uint64_t frame;
+	ProfilerTime frame_cpu;
+	ProfilerTime frame_gpu;
+	uint64_t frame_count;
 } Profiler;
 
 typedef enum {
 	PROFILER_CPU_PASS_TIME,
 	PROFILER_GPU_PASS_TIME,
+	PROFILER_CPU_FRAME_TIME,
+	PROFILER_GPU_FRAME_TIME,
 } ProfilerStatType;
 
 typedef struct {

@@ -3,7 +3,7 @@
 
 #include "rendering/renderer.h"
 #include <AL/alc.h>
-#include <GLFW/glfw3.h>
+#include <glad_impl.h>
 #include <stdint.h>
 
 typedef enum {

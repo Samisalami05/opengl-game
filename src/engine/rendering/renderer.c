@@ -1,5 +1,6 @@
 #include "renderer.h"
 #include "core/cubemap.h"
+#include "profiler.h"
 #include "rendering/pipeline.h"
 #include "scenemanager.h"
 #include "skybox.h"
@@ -61,6 +62,8 @@ uint8_t renderer_init(renderer* r, uint32_t width, uint32_t height) {
 		.draw_count = 0,
 		.frame_index = 0
 	};
+
+	profiler_query_init(&r->query);
 	return 0;
 }
 
@@ -72,7 +75,16 @@ void render(renderer* r, model* models, uint32_t count, camera* cam) {
 	r->context.drawlist = models;
 	r->context.draw_count = count;
 	r->context.camera = cam;
+
+	float frame_time = profiler_query_get(&r->query);
+	if (frame_time != -1.0f) {
+		profiler_push_stat((ProfilerStat){PROFILER_GPU_FRAME_TIME, 0, NULL, frame_time});
+	}
+	
+	profiler_query_begin(&r->query);
 	execute_render_passes(&r->pipeline, &r->context);
+	profiler_query_end(&r->query);
+
 	r->context.frame_index++;
 }
 

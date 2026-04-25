@@ -81,6 +81,13 @@ void profiler_push_stat(ProfilerStat stat) {
 		case PROFILER_GPU_PASS_TIME:
 			set_pass_time(stat);
 			break;
+		case PROFILER_CPU_FRAME_TIME:
+			profiler_time_push(&profiler.frame_cpu, stat.time);
+			break;
+		case PROFILER_GPU_FRAME_TIME:
+			profiler_time_push(&profiler.frame_gpu, stat.time);
+			break;
+
 		default:
 			fprintf(stderr, "Profiler: Unknown stat type %d\n", stat.type);
 	}
@@ -88,7 +95,7 @@ void profiler_push_stat(ProfilerStat stat) {
 
 void profiler_update(float deltatime) {
 	profiler_time_push(&profiler.fps, 1.0 / deltatime);
-	profiler.frame++;
+	profiler.frame_count++;
 	//printf("%s: %.2f\n", profiler.pipeline.passes[0].name,  profiler.pipeline.passes[0].cpu_time);
 }
 

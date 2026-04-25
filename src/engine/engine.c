@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 #include "GLFW/glfw3.h"
 #include "inputmanager.h"
+#include "profiler.h"
 #include "rendering/pipeline.h"
 #include "rendering/renderer.h"
 #include "resourcemanager.h"
@@ -48,15 +49,21 @@ uint8_t engine_init(game* g) {
 	return 0;
 }
 
+static float frame_start = 0;
+
 void engine_begin_frame(game* g) {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	float current_frame = glfwGetTime();
 	g->deltatime = current_frame - engine.last_frame;
 	engine.last_frame = current_frame;
+	frame_start = current_frame;
 }
 
 void engine_end_frame(game* g) {
 	inputman_update(g->window);
+
+	profiler_push_stat((ProfilerStat){PROFILER_CPU_FRAME_TIME, 0, NULL, (glfwGetTime() - frame_start) * 1000});
+	
 	glfwSwapBuffers(g->window);
 	glfwPollEvents();
 }

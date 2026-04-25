@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include <glad_impl.h>
 #include "audio/wav.h"
 #include "components/transform.h"
 #include "debug_renderer.h"
@@ -159,6 +158,7 @@ int main(void) {
 	ALint state = AL_PLAYING;
 	alGetSourcei(source, AL_SOURCE_STATE, &state);
 
+	//goto CLOSE;
     while (!glfwWindowShouldClose(game.window))
     {
 		engine_begin_frame(&game);
@@ -209,6 +209,8 @@ int main(void) {
 		profiler_update(game.deltatime);
 		engine_end_frame(&game);
     }
+
+CLOSE:
 
 	wav_close(&file);
 

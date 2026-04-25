@@ -2,6 +2,7 @@
 #define RENDERER_H
 
 #include "modelloader.h"
+#include "profiler.h"
 #include "rendering/pipeline.h"
 #include "scene.h"
 #include "camera.h"
@@ -10,6 +11,7 @@
 typedef struct {
 	render_pipeline pipeline;
 	render_context context;
+	ProfilerQuery query;
 } renderer;
 
 uint8_t renderer_init(renderer* r, uint32_t width, uint32_t height);
