@@ -158,7 +158,6 @@ int main(void) {
 	ALint state = AL_PLAYING;
 	alGetSourcei(source, AL_SOURCE_STATE, &state);
 
-	//goto CLOSE;
     while (!glfwWindowShouldClose(game.window))
     {
 		engine_begin_frame(&game);
@@ -209,8 +208,6 @@ int main(void) {
 		profiler_update(game.deltatime);
 		engine_end_frame(&game);
     }
-
-CLOSE:
 
 	wav_close(&file);
 

@@ -10,6 +10,8 @@ vgcore*
 libs/**/build/
 a.out
 *:Zone.Identifier
+imgui.ini
+.clangd
 
 # nob
 nob
