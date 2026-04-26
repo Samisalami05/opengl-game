@@ -13,10 +13,17 @@ typedef struct {
 } EditorProfiler;
 
 typedef struct {
+	bool show_info;
+	bool show_warn;
+	bool show_error;
+} EditorLogger;
+
+typedef struct {
 	ImGuiContext* context;
 	ImGuiIO* io;
 
 	EditorProfiler profiler;
+	EditorLogger logger;
 } Editor;
 
 void editor_init(GLFWwindow* window);

@@ -1,5 +1,6 @@
 #include "editor.h"
 #include "cimgui.h"
+#include "logger.h"
 #include "profiler.h"
 #include "util/util.h"
 #include <stdint.h>
@@ -19,6 +20,10 @@ void editor_init(GLFWwindow* window) {
 	editor.io = igGetIO_ContextPtr(editor.context);
 	editor.io->ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
+	editor.logger.show_info = 1;
+	editor.logger.show_warn = 1;
+	editor.logger.show_error = 1;
+
 	igStyleColorsDark(NULL);
 
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -29,10 +34,6 @@ void editor_begin_frame() {
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	igNewFrame();
-}
-
-static float editor_plot(void* buf, int index) {
-	return ((float*)buf)[(index + editor.profiler.plot_offset) % PROFILER_SAMPLE_COUNT];
 }
 
 void editor_update() {
@@ -60,9 +61,71 @@ void editor_update() {
 
 	igEnd(); */
 
-	igBegin("Test", NULL, 0);
+	// --- LOGGER ---
 
+	igBegin("Logger", NULL, 0);
+	
+	LogPane* pane = logger_get_pane();
+	if (igBeginTable("logger_bar", 2, ImGuiTableFlags_SizingStretchSame, (ImVec2){0,0}, 0)) {
+		igTableNextColumn();
+
+		if (igButton("Clear", (ImVec2){0, 0}))
+			logger_pane_clear(pane);
+		igSameLine(0, 10);
+		igCheckbox("show info", &editor.logger.show_info);
+		igSameLine(0, 10);
+		igCheckbox("show warn", &editor.logger.show_warn);
+		igSameLine(0, 10);
+		igCheckbox("show error", &editor.logger.show_error);
+		
+		igTableNextColumn();
+
+		char buf[64];
+		snprintf(buf, sizeof(buf), "info: %d, warn: %d, error: %d",
+				 pane->data.info_count,
+				 pane->data.warn_count,
+				 pane->data.error_count);
+
+		float text_width = igCalcTextSize(buf, NULL, 0, -1.0f).x;
+		float col_width  = igGetColumnWidth(1);
+
+		// Move cursor so text ends at right edge of column
+		igSetCursorPosX(igGetCursorPosX() + col_width - text_width);
+
+		igText("%s", buf);
+
+		igEndTable();
+	}
+
+	igBeginChild_ID(1, (ImVec2_c){0}, 0, 0);
+	for (int i = 0; i < pane->count; i++) {
+		LogLine line = pane->lines[(i + pane->start) % pane->count];
+	
+		ImVec4_c col = {0.0f, 0.0f, 0.0f, 1.0f};
+		switch (line.type) {
+			case LOG_INFO:
+				if (!editor.logger.show_info) continue;
+				col = (ImVec4_c){1.0f, 1.0f, 1.0f, 1.0f};
+				break;
+			case LOG_WARNING:
+				if (!editor.logger.show_warn) continue;
+				col.x = 1.0f; 
+				col.y = 0.8f; 
+				break;
+			case LOG_ERROR:
+				if (!editor.logger.show_error) continue;
+				col.x = 1.0f; 
+				break;
+		}
+
+		igPushStyleColor_Vec4(ImGuiCol_Text, col);
+		igText("%s", line.text);
+		igPopStyleColor(1);
+	}
+	igEndChild();
 	igEnd();
+
+	// --- PROFILER ---
 
 	igBegin("Profiler", NULL, 0);
 	Profiler* profiler = profiler_get();

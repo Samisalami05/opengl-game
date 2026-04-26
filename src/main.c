@@ -10,6 +10,8 @@
 #include "engine/engine.h"
 #include "engine/modelloader.h"
 #include "inputmanager.h"
+#include "keys.h"
+#include "logger.h"
 #include "profiler.h"
 #include "util/arraylist.h"
 #include "entity.h"
@@ -100,7 +102,7 @@ int main(void) {
 
 	WavFile file;
 	if (wav_open(&file, "assets/wat_u_want_2.wav") != WAV_OK) {
-		fprintf(stderr, "Failed to open wav file\n");
+		LOG(LOG_ERROR, "Failed to open wav file");
 		return 1;
 	}
 
@@ -123,7 +125,7 @@ int main(void) {
 
 	uint8_t* data = malloc(file.data_size);
 	if (wav_read(&file, data, file.data_size) != WAV_OK) {
-		fprintf(stderr, "Could not read data from wav file\n");
+		LOG(LOG_ERROR, "Could not read data from wav file");
 		return 1;
 	}
 
@@ -190,6 +192,16 @@ int main(void) {
 	
 		camera_key_input(&scene->cam, game.deltatime);
 		camera_mouse_input(&scene->cam, game.deltatime);
+
+		if (isKeyDown(KEY_F)) {
+			LOG(LOG_INFO, "This is an info %d", engine->renderer.context.frame_index);
+		}
+		if (isKeyDown(KEY_G)) {
+			LOG(LOG_WARNING, "This is an warning %d", engine->renderer.context.frame_index);
+		}
+		if (isKeyDown(KEY_H)) {
+			LOG(LOG_ERROR, "This is an error %d", engine->renderer.context.frame_index);
+		}
 
 		player->rotation.y += game.deltatime / 2;
 
