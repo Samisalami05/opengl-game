@@ -1,5 +1,6 @@
 #include "pipeline.h"
 #include "GLFW/glfw3.h"
+#include "allocator.h"
 #include "core/shader.h"
 #include "profiler.h"
 #include "rendering/passes/debug_pass.h"
@@ -55,13 +56,13 @@ void render_pipeline_deinit(render_pipeline* pipeline) {
 		pass->deinit(pass);
 	}
 	deinit_render_targets(&pipeline->targets);
-	free(pipeline->passes); // TODO: deinit render targets
+	FREE(pipeline->passes); // TODO: deinit render targets
 }
 
 int32_t render_pipeline_register(render_pipeline* pipeline, pass_init_func pass_init) {
 	if (pipeline->count + 1 > pipeline->capacity) {
 		pipeline->capacity = pipeline->capacity == 0 ? 4 : pipeline->capacity * 2;
-		void* tmp = realloc(pipeline->passes, pipeline->capacity * sizeof(render_pass)); // TODO: maybe set data to zero
+		void* tmp = REALLOC(pipeline->passes, pipeline->capacity * sizeof(render_pass)); // TODO: maybe set data to zero
 		pipeline->passes = tmp;
 	}
 

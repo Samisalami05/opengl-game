@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <glad_impl.h>
+#include "allocator.h"
 #include "audio/wav.h"
 #include "components/transform.h"
 #include "debug_renderer.h"
@@ -123,7 +124,7 @@ int main(void) {
 
 	if (format == AL_FORMAT_STEREO8 || format == AL_FORMAT_STEREO16) printf("cooked\n");
 
-	uint8_t* data = malloc(file.data_size);
+	uint8_t* data = MALLOC(file.data_size);
 	if (wav_read(&file, data, file.data_size) != WAV_OK) {
 		LOG(LOG_ERROR, "Could not read data from wav file");
 		return 1;
@@ -131,7 +132,7 @@ int main(void) {
 
 	alBufferData(buffer, format, data, file.data_size, file.format.sample_rate);
 
-	free(data);
+	FREE(data);
 
 	ALuint source;
     alGenSources(1, &source);

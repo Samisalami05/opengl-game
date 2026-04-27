@@ -1,4 +1,5 @@
 #include "slotmap.h"
+#include "allocator.h"
 #include "util/ringbuffer.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -8,14 +9,14 @@
 static uint8_t expand_if_necessary(slotmap* sm) {
 	if (sm->allocated <= sm->count) {
 		sm->allocated = sm->allocated <= 0 ? 4 : sm->allocated * 2;
-		void* tmp = realloc(sm->data, sm->elem_size * sm->allocated);
+		void* tmp = REALLOC(sm->data, sm->elem_size * sm->allocated);
 		if (tmp == NULL) {
 			perror("slotmap: realloc");
 			return 1;
 		}
 		sm->data = tmp;
 
-		tmp = realloc(sm->occupied_bits, (sm->allocated + 63) / 64 * sizeof(uint64_t));
+		tmp = REALLOC(sm->occupied_bits, (sm->allocated + 63) / 64 * sizeof(uint64_t));
 		if (tmp == NULL) {
 			perror("slotmap: realloc");
 			return 1;
@@ -51,8 +52,8 @@ void slotmap_init(slotmap* sm, size_t elem_size) {
 
 void slotmap_deinit(slotmap* sm) {
 	ringbuffer_deinit(&sm->free);
-	free(sm->data);
-	free(sm->occupied_bits);
+	FREE(sm->data);
+	FREE(sm->occupied_bits);
 }
 
 // Returns slot of added value

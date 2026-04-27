@@ -1,4 +1,5 @@
 #include "hashmap.h"
+#include "allocator.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -7,12 +8,12 @@
 #define START_BUCKET_COUNT 16
 
 static void bucket_set_v(bucket* b, size_t v_size, void* v) {
-	if (b->value == NULL) b->value = malloc(v_size);
+	if (b->value == NULL) b->value = MALLOC(v_size);
 	memcpy(b->value, v, v_size);
 }
 
 static void bucket_set_k(bucket* b, size_t k_size, void* k) {
-	if (b->key == NULL) b->key = malloc(k_size);
+	if (b->key == NULL) b->key = MALLOC(k_size);
 	memcpy(b->key, k, k_size);
 }
 
@@ -21,11 +22,11 @@ static uint8_t bucket_occupied(bucket* b) {
 }
 
 static void swap(void* a, void* b, size_t size) {
-	void* tmp = malloc(size);
+	void* tmp = MALLOC(size);
 	memcpy(tmp, a, size);
 	memcpy(a, b, size);
 	memcpy(b, tmp, size);
-	free(tmp);
+	FREE(tmp);
 }
 
 static uint8_t expand(hashmap* m) {
@@ -33,7 +34,7 @@ static uint8_t expand(hashmap* m) {
 
 	size_t prev_count = m->b_count;
 	m->b_count = m->b_count <= 0 ? 4 : m->b_count * 2;
-	m->buckets = calloc(m->b_count, sizeof(bucket));
+	m->buckets = CALLOC(m->b_count, sizeof(bucket));
 	if (m->buckets == NULL) {
 		perror("hashmap: calloc");
 		m->b_count /= 2;
@@ -46,16 +47,16 @@ static uint8_t expand(hashmap* m) {
 		void* v = old[i].value;
 		void* k = old[i].key;
 		hashmap_put(m, k, v);
-		free(v);
-		free(k);
+		FREE(v);
+		FREE(k);
 	}
 
-	free(old);
+	FREE(old);
 	return 0;
 }
 
 void hashmap_init_detailed(hashmap* m, size_t v_size, size_t k_size, size_t buckets, hashfunc hash) {
-	m->buckets = calloc(buckets, sizeof(bucket));
+	m->buckets = CALLOC(buckets, sizeof(bucket));
 	m->b_count = buckets;
 	m->count = 0;
 	m->v_size = v_size;
@@ -71,26 +72,26 @@ void hashmap_deinit(hashmap* m) {
 	for (int i = 0; i < m->b_count; i++) {
 		bucket b = m->buckets[i];
 		if (b.value != NULL)
-			free(b.value);
+			FREE(b.value);
 		if (b.key != NULL)
-			free(b.key);
+			FREE(b.key);
 	}
-	free(m->buckets);
+	FREE(m->buckets);
 	m->buckets = NULL;
 }
 
 void* hashmap_put(hashmap* m, const void* k, const void* v) {
-	void* value = calloc(1, m->v_size);
+	void* value = CALLOC(1, m->v_size);
 	memcpy(value, v, m->v_size);
-	void* key = calloc(1, m->k_size);
+	void* key = CALLOC(1, m->k_size);
 	memcpy(key, k, m->k_size);
 	
 	void* ret = NULL;
 
 	if (m->count == m->b_count) {
 		if (expand(m)) {
-			free(value);
-			free(key);
+			FREE(value);
+			FREE(key);
 			return NULL;
 		}
 	}
@@ -100,8 +101,8 @@ void* hashmap_put(hashmap* m, const void* k, const void* v) {
 	while (m->buckets[p].key != NULL && m->buckets[p].value != NULL) {
 		if (vpsl >= m->b_count) {
 			if (expand(m)) {
-				free(value);
-				free(key);
+				FREE(value);
+				FREE(key);
 				return NULL;
 			}
 			p = m->hash(key) % m->b_count;
@@ -140,8 +141,8 @@ void* hashmap_put(hashmap* m, const void* k, const void* v) {
 		ret = m->buckets[p].value;
 	}
 
-	free(value);
-	free(key);
+	FREE(value);
+	FREE(key);
 
 	return ret;
 }

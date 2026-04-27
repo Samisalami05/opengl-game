@@ -1,4 +1,5 @@
 #include "profiler.h"
+#include "allocator.h"
 #include "core/shader.h"
 #include "rendering/pipeline.h"
 #include <stdint.h>
@@ -17,7 +18,7 @@ bool profiler_is_attached() {
 }
 
 void profiler_detach() {
-	free(profiler.pipeline.passes);
+	FREE(profiler.pipeline.passes);
 	profiler.pipeline.passes = NULL;
 	profiler.pipeline.capacity = 0;
 	profiler.pipeline.count = 0;
@@ -54,7 +55,7 @@ static void set_pass_time(ProfilerStat stat) {
 	}
 	
 	if (prev_capacity != profiler.pipeline.capacity) {
-		void* tmp = realloc(profiler.pipeline.passes, profiler.pipeline.capacity * sizeof(RenderPassStat));
+		void* tmp = REALLOC(profiler.pipeline.passes, profiler.pipeline.capacity * sizeof(RenderPassStat));
 		if (tmp == NULL) {
 			perror("Profiler: Realloc");
 			return;

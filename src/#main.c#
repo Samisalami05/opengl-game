@@ -130,7 +130,7 @@ int main(void) {
 
 	alBufferData(buffer, format, data, file.data_size, file.format.sample_rate);
 
-	free(data);
+	FREE(data);
 
 	ALuint source;
     alGenSources(1, &source);

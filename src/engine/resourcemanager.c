@@ -1,4 +1,5 @@
 #include "resourcemanager.h"
+#include "allocator.h"
 #include "util/hash.h"
 #include "util/hashmap.h"
 #include "core/shader.h"
@@ -33,7 +34,7 @@ static void free_texture_map() {
 		if (buckets[i].value != NULL) {
 			texture** tex = buckets[i].value;
 			texture_deinit(*tex);
-			free(*tex);
+			FREE(*tex);
 		}
 	}
 	hashmap_str_deinit(&texture_map);
@@ -45,7 +46,7 @@ static void free_shader_map() {
 		if (buckets[i].value != NULL) {
 			shader** shadr = buckets[i].value;
 			shader_deinit(*shadr);
-			free(*shadr);
+			FREE(*shadr);
 		}
 	}
 	hashmap_deinit(&shader_map);
@@ -67,7 +68,7 @@ texture* load_texture(const char* path) {
 	if (stored != NULL)
 		return *stored;
 	
-	texture* new_tex = malloc(sizeof(texture));
+	texture* new_tex = MALLOC(sizeof(texture));
 	texture_init(new_tex, path);
 	return *(texture**)hashmap_str_put(&texture_map, path, &new_tex);
 }
@@ -80,7 +81,7 @@ shader* load_shader(const char* vertex, const char* fragment) {
 		return *stored;
 	}
 
-	shader* new_shader = malloc(sizeof(shader));
+	shader* new_shader = MALLOC(sizeof(shader));
 	if (shader_init(new_shader, vertex, fragment)) return NULL;
 	return *(shader**)hashmap_put(&shader_map, &key, &new_shader);
 }

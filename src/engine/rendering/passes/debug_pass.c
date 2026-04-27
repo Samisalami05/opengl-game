@@ -1,4 +1,5 @@
 #include "debug_pass.h"
+#include "allocator.h"
 #include "core/shader.h"
 #include "math/vec3.h"
 #include "rendering/camera.h"
@@ -55,7 +56,7 @@ uint32_t debug_pass_base() {
 uint8_t debug_change_color(vec4 color) {
 	if (batch.color_count + 1 > batch.color_capacity) {
 		batch.color_capacity = batch.color_capacity == 0 ? 4 : batch.color_capacity * 2;
-		void* tmp = realloc(batch.colors, batch.color_capacity * sizeof(vec4));
+		void* tmp = REALLOC(batch.colors, batch.color_capacity * sizeof(vec4));
 		if (tmp == NULL) {
 			perror("debug pass: realloc");
 			return 1;
@@ -76,7 +77,7 @@ uint8_t debug_pass_add_vertices(vec3* vertices, uint32_t count) {
 	}
 
 	if (allocate) {
-		void* tmp = realloc(batch.vertices, batch.vertex_capacity * sizeof(debug_vertex));
+		void* tmp = REALLOC(batch.vertices, batch.vertex_capacity * sizeof(debug_vertex));
 		if (tmp == NULL) {
 			perror("debug pass: realloc");
 			return 1;
@@ -107,7 +108,7 @@ uint8_t debug_pass_add_indices(uint32_t* indices, uint32_t count) {
 	}
 
 	if (allocate) {
-		void* tmp = realloc(batch.indices, batch.index_capacity * sizeof(uint32_t));
+		void* tmp = REALLOC(batch.indices, batch.index_capacity * sizeof(uint32_t));
 		if (tmp == NULL) {
 			perror("debug pass: realloc");
 			return 1;
@@ -252,5 +253,8 @@ void debug_pass_resize(render_pass* rp, uint32_t width, uint32_t height) {
 }
 
 void debug_pass_deinit(render_pass* rp) {
+	FREE(batch.colors);
+	FREE(batch.indices);
+	FREE(batch.vertices);
 	glDeleteFramebuffers(1, &rp->fbo);
 }

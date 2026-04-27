@@ -1,4 +1,5 @@
 #include "shader.h"
+#include "allocator.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -171,12 +172,12 @@ static uint8_t shader_compile(const char* path, unsigned int shader, char* sourc
 
 static char* expand_str(char* str, size_t new_size) {
 	if (str == NULL) {
-		str = malloc(new_size + 1);
+		str = MALLOC(new_size + 1);
 		if (str == NULL) perror("shader: malloc");
 		str[0] = '\0';
 	}
 	else {
-		char* tmp = realloc(str, new_size + 1);
+		char* tmp = REALLOC(str, new_size + 1);
 		if (tmp == NULL) perror("shader: realloc");
 		str = tmp;
 	}
@@ -208,14 +209,14 @@ static char* shader_parse_include(const char* shader_path, size_t* size_out) {
 			size_t inc_size;
 			char* include_content = shader_parse_include(include_path, &inc_size);
 			if (include_content == NULL) {
-				if (content != NULL) free(content);
+				if (content != NULL) FREE(content);
 				return NULL;
 			}
 
 			size += inc_size;
-			content = realloc(content, size + 1); // +1 for \0
+			content = REALLOC(content, size + 1); // +1 for \0
 			strcat(content, include_content);
-			free(include_content);
+			FREE(include_content);
 		}
 		else {
 			size += line_size;
@@ -251,8 +252,8 @@ uint8_t shader_init(shader* s, const char* vertsh, const char* fragsh) {
 	unsigned int fragment = glCreateShader(GL_FRAGMENT_SHADER);
 	if (shader_compile(fragsh, fragment, fragment_source)) return 1;
 
-	free(vertex_source);
-	free(fragment_source);
+	FREE(vertex_source);
+	FREE(fragment_source);
 
 	s->id = glCreateProgram();
 

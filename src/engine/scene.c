@@ -1,4 +1,5 @@
 #include "scene.h"
+#include "allocator.h"
 #include "ecs.h"
 #include "lighting/light.h"
 #include "skybox.h"
@@ -18,7 +19,7 @@ void scene_init(scene* s, unsigned int id, char* name) {
 	ecs_init(&s->ecs);
 	
 	mesh* cube_mesh = mesh_load_obj_new("assets/cube.obj");
-	material* mat = malloc(sizeof(material));
+	material* mat = MALLOC(sizeof(material));
 	material_init(mat, MAT_COLOR_UNLIT);
 
 	entity_init(&s->light_entity, cube_mesh, mat);

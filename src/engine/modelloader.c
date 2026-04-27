@@ -1,4 +1,5 @@
 #include "modelloader.h"
+#include "allocator.h"
 #include "core/mesh.h"
 #include "core/texture.h"
 #include "material.h"
@@ -21,8 +22,8 @@ static void load_mesh(struct aiMesh* aimesh, mesh* m, uint32_t uv_index) {
 	int vertex_count = aimesh->mNumVertices;
 	int index_count = aimesh->mNumFaces * 3;
 
-	vertex* vertices = malloc(sizeof(vertex) * vertex_count);
-	uint32_t* indices = malloc(sizeof(uint32_t) * index_count);
+	vertex* vertices = MALLOC(sizeof(vertex) * vertex_count);
+	uint32_t* indices = MALLOC(sizeof(uint32_t) * index_count);
 
 	for (int i = 0; i < aimesh->mNumVertices; i++) {
 		struct aiVector3D vert = aimesh->mVertices[i];
@@ -48,8 +49,8 @@ static void load_mesh(struct aiMesh* aimesh, mesh* m, uint32_t uv_index) {
 
 	mesh_init(m, vertices, vertex_count, indices, index_count);
 
-	free(vertices);
-	free(indices);
+	FREE(vertices);
+	FREE(indices);
 }
 
 static void get_directory(const char* filepath, char* out) {
@@ -103,11 +104,11 @@ void load_model(model* m, const char* file) {
     printf("Materials: %u\n", scene->mNumMaterials);
 
 	m->mesh_count = scene->mNumMeshes;
-	m->meshes = malloc(sizeof(mesh) * scene->mNumMeshes);
-	m->mesh_mat_indices = malloc(sizeof(uint32_t) * scene->mNumMeshes);
+	m->meshes = MALLOC(sizeof(mesh) * scene->mNumMeshes);
+	m->mesh_mat_indices = MALLOC(sizeof(uint32_t) * scene->mNumMeshes);
 	
 	m->material_count = scene->mNumMaterials;
-	m->materials = malloc(sizeof(material) * scene->mNumMaterials);
+	m->materials = MALLOC(sizeof(material) * scene->mNumMaterials);
 	uint32_t uv_indices[scene->mNumMaterials];
 
 	for (int i = 0; i < scene->mNumMaterials; i++) {
@@ -134,6 +135,6 @@ void model_deinit(model* m) {
 		material_deinit(&m->materials[i]);
 	}
 
-	free(m->meshes);
-	free(m->materials);
+	FREE(m->meshes);
+	FREE(m->materials);
 }

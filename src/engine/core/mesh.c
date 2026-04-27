@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <glad/glad.h>
+#include "allocator.h"
 #include "util/arraylist.h"
 #include "util/hashmap.h"
 #include "math/ivec3.h"
@@ -42,7 +43,7 @@ static void init_buffers(mesh* m, vertex* vertices, uint32_t* indices) {
 // --- Mesh ---
 
 mesh* mesh_create(vertex* vertices, uint32_t vertex_count, uint32_t* indices, uint32_t index_count) {
-	mesh* m = malloc(sizeof(mesh));
+	mesh* m = MALLOC(sizeof(mesh));
 
 	m->vertex_count = vertex_count;
 	m->index_count = index_count;
@@ -202,7 +203,7 @@ mesh* mesh_load_obj(char* filepath) {
 
 void mesh_delete(mesh *m) {
 	// TODO: delete buffers
-	free(m);
+	FREE(m);
 }
 
 void mesh_deinit(mesh* m) {

@@ -24,5 +24,5 @@ void* mrealloc(void* ptr, size_t size) {
 
 void mfree(void* ptr) {
 	alloc->total_allocations--;
-	free(ptr);
+	FREE(ptr);
 }

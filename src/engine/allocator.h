@@ -3,6 +3,22 @@
 
 #include <stdio.h>
 
+#ifndef MALLOC
+#define MALLOC malloc
+#endif
+
+#ifndef CALLOC
+#define CALLOC calloc
+#endif
+
+#ifndef REALLOC
+#define REALLOC realloc
+#endif
+
+#ifndef FREE
+#define FREE free
+#endif
+
 typedef struct {
 	size_t total_memory;
 	size_t frame_memory;

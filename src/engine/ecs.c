@@ -1,4 +1,5 @@
 #include "ecs.h"
+#include "allocator.h"
 #include "entity.h"
 #include "scenemanager.h"
 #include "util/arraylist.h"
@@ -23,7 +24,7 @@ void ecs_init(ecs* ecs) {
 	slotmap_init(&ecs->components, sizeof(hashmap));
 }
 
-void ecs_deinit(ecs* ecs) {
+void ecs_deinit(ecs* ecs) { // TODO: free all components
 	slotmap_deinit(&ecs->components);
 }
 
@@ -57,7 +58,7 @@ void destroy_entity(entity2 e) {
 		if (type.deinit)
 			type.deinit(comps->data);
 
-		free(comps[i].data);
+		FREE(comps[i].data);
 	}
 	
 	hashmap_deinit(compmap);
@@ -79,7 +80,7 @@ void* add_component(entity2 e, comp_id id) {
 	component_type* c_type = arraylist_get(&_types, id);
 
 	component c = {
-		.data = malloc(c_type->size),
+		.data = MALLOC(c_type->size),
 		.id = id,
 	};
 
