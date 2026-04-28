@@ -4,6 +4,8 @@
 #include "core/shader.h"
 #include "core/texture.h"
 
+#define SHADER_NAME_MAX 32
+
 void resource_manager_init();
 void resource_manager_deinit();
 

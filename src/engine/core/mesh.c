@@ -107,7 +107,7 @@ mesh* mesh_load_obj(char* filepath) {
 		return NULL;
 	}
 
-	hashmap vertex_map;
+	hashmap vertex_map = {0};
 	hashmap_init(&vertex_map, sizeof(uint32_t), sizeof(ivec3), face_hash);
 
 	arraylist positions, normals, texcoords;
@@ -119,7 +119,7 @@ mesh* mesh_load_obj(char* filepath) {
 	arraylist_init(&indices, sizeof(uint32_t));
 	arraylist_init(&vertices, sizeof(vertex));
 
-	char c;
+	char c = 0;
 	while ((c = fgetc(f)) != EOF) {
 		if (c == 'v') { // Is vertex type
 			char c2 = fgetc(f);

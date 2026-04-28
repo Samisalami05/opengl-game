@@ -29,7 +29,7 @@ static void load_mesh(struct aiMesh* aimesh, mesh* m, uint32_t uv_index) {
 		struct aiVector3D vert = aimesh->mVertices[i];
 		struct aiVector3D normal = aimesh->mNormals[i];
 		
-		vec2 uv = {0.0f, 0.0f};
+		vec2 uv = {0};
 
 		if (aimesh->mTextureCoords[uv_index]) {
 			struct aiVector3D texcoord = aimesh->mTextureCoords[uv_index][i];
@@ -60,7 +60,7 @@ static void get_directory(const char* filepath, char* out) {
 }
 
 static uint32_t load_material(struct aiMaterial* aimat, material* mat, const char* modelpath) {
-    struct aiString path;
+    struct aiString path = {0};
 	uint32_t uv_index = 0;
     if (aiGetMaterialTexture(aimat, AI_MATKEY_BASE_COLOR_TEXTURE, &path, NULL, &uv_index, NULL, NULL, NULL, NULL) == AI_SUCCESS) {
 		char full_path[1024];
@@ -73,7 +73,7 @@ static uint32_t load_material(struct aiMaterial* aimat, material* mat, const cha
 
     material_init(mat, MAT_COLOR_LIT); // Default material
 	
-    struct aiColor4D ambient;
+    struct aiColor4D ambient = {0};
     if (aiGetMaterialColor(aimat, AI_MATKEY_COLOR_AMBIENT, &ambient) == AI_SUCCESS) {
         mat->color = (vec3){ ambient.r, ambient.g, ambient.b };
     }
@@ -96,7 +96,7 @@ void load_model(model* m, const char* file) {
         return;
     }
 
-	char dir[512];
+	char dir[512] = {0};
 	get_directory(file, dir);
 
 	printf("Model: %s\n", file);

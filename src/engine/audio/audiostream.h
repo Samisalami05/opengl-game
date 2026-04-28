@@ -26,6 +26,6 @@ void audiostream_rewind(Audiostream *stream);
 void audiostream_stop(Audiostream* stream);
 
 bool audiostream_is_ready(Audiostream* stream);
-void Audiostream_update(Audiostream* stream, void* buf, size_t samples);
+void audiostream_update(Audiostream* stream, void* buf, size_t samples);
 
 #endif

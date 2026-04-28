@@ -39,25 +39,26 @@
 #include <cimgui.h>
 
 int main(void) {
-	component_type type = {
-		.size = sizeof(transform),
-		.init = transform_init,
-		.deinit = transform_deinit,
-		.update = transform_update,
-		.render = transform_render,
-		.render_debug = transform_render_debug,
-	};
+	resource_manager_init();
 
-	register_component(type);
+	material mat = {0}, mat2 = {0};
+	material_init(&mat, MAT_TEXTURE_LIT);
+	material_init(&mat2, MAT_COLOR_LIT);
+	mat.tiling = (vec2){{ 100.0f, 100.0f }};
+	mat2.shininess = 100.0f;
 
-    game game;
+	resource_manager_deinit();
+	return 0;
+
+
+    game game = {0};
 	if (engine_init(&game)) return 1;
 	Engine* engine = engine_get();
 
 	editor_init(game.window);
 
 
-	model m;
+	model m = {0};
 	load_model(&m, "assets/diner/scene.gltf");
 	
 	mesh* cube = mesh_load_obj_new("assets/person.obj");
@@ -81,14 +82,6 @@ int main(void) {
 	
 	scene* scene = sm_get_current_scene();
 
-	entity2 ent = create_entity(); // TODO: figure out why this code does stuff to the lighting
-	add_component(ent, 0);
-	transform* comp = get_component(ent, 0);
-
-	vec3_print(comp->position);
-
-	destroy_entity(ent);
-	
 	light pointlight1, pointlight2;
 	light_init_point(&pointlight1, (vec3){{ 2.0f, 6.0f, 1.0f }});
 	light_init_point(&pointlight2, (vec3){{ -2.0f, 16.0f, -2.0f }});

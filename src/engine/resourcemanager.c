@@ -11,12 +11,12 @@
 #include <stdio.h>
 #include <sys/stat.h>
 
-static hashmap_str texture_map;
-static hashmap shader_map;
+static hashmap_str texture_map = {0};
+static hashmap shader_map = {0};
 
 typedef struct shader_key {
-	const char* vertex;
-	const char* fragment;
+	char vertex[SHADER_NAME_MAX];
+	char fragment[SHADER_NAME_MAX];
 } shader_key;
 
 uint64_t shader_hash(const void* v) {
@@ -69,19 +69,23 @@ texture* load_texture(const char* path) {
 		return *stored;
 	
 	texture* new_tex = MALLOC(sizeof(texture));
-	texture_init(new_tex, path);
+	//texture_init(new_tex, path);
 	return *(texture**)hashmap_str_put(&texture_map, path, &new_tex);
 }
 
 shader* load_shader(const char* vertex, const char* fragment) {
 	printf("loading shader: %s, %s\n", vertex, fragment);
-	shader_key key = { vertex, fragment };
+	shader_key key = {0};
+	strncpy(key.vertex, vertex, SHADER_NAME_MAX);
+	strncpy(key.fragment, fragment, SHADER_NAME_MAX);
 	shader** stored = hashmap_get(&shader_map, &key);
 	if (stored != NULL) {
 		return *stored;
 	}
 
+	printf("Not stored\n");
+
 	shader* new_shader = MALLOC(sizeof(shader));
-	if (shader_init(new_shader, vertex, fragment)) return NULL;
+	//if (shader_init(new_shader, vertex, fragment)) return NULL;
 	return *(shader**)hashmap_put(&shader_map, &key, &new_shader);
 }
