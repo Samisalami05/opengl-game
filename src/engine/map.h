@@ -23,6 +23,6 @@ typedef struct {
 } Hashmap;
 
 void map_init(Hashmap* map, size_t k_size, size_t v_size, HashFunc func);
-bool map_put(Hashmap* map, void* key, void* value);
+bool map_insert(Hashmap* map, void* key, void* value);
 
 #endif
