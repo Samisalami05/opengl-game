@@ -49,6 +49,10 @@ static void default_logger(LogInfo info, const char* fmt, va_list args, char* ou
     if (offset < 0 || offset >= LOGGER_LINE_MAX) return;
 
     vsnprintf(out + offset, LOGGER_LINE_MAX - offset, fmt, args);
+	
+	// TODO: maybe not log to terminal
+	fprintf(stderr, "%s:%d - ", info.file + path_off, info.line);
+	fprintf(stderr, fmt, args);
 }
 
 void logger_push_line(LogLine line) {

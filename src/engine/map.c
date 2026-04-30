@@ -66,6 +66,15 @@ void map_init(Hashmap* map, size_t k_size, size_t v_size, HashFunc func) {
 	map->hash = func;
 }
 
+void map_deinit(Hashmap* map) {
+	if (map->buckets != NULL) {
+		FREE(map->buckets);
+		map->buckets = NULL;
+	}
+	map->count = 0;
+	map->capacity = 0;
+}
+
 static void bucket_swap(Hashmap* map, uint32_t a, uint32_t b) {
 	// TODO: i think its "capacity - 1"
 	void* tmp = bucket_key(map, TMP_BUCKET);
@@ -97,7 +106,6 @@ static bool map_expand(Hashmap* map) {
 
 		uint32_t* probe = (uint32_t*)(old + bucket_probe_offset(map, i));
 		if (!(*probe & OCCUPIED_MASK)) continue;
-		printf("Inserting\n");
 		
 		void* key = old + bucket_key_offset(map, i);
 		void* value = old + bucket_value_offset(map, i);
@@ -115,8 +123,14 @@ static bool map_expand(Hashmap* map) {
     return true;
 }
 
-
 bool map_insert(Hashmap* map, void* key, void* value) {
+	if (key == NULL || value == NULL) {
+		LOG(LOG_ERROR, "Cant insert with a NULL %s\n", key == NULL ? "key" : "value");
+		return false;
+	}
+	// TODO: return inserted value
+	// TODO: remove probe from buckets (easy to compute)
+
 	if (map->count + 1 > map->capacity)
 		if (!map_expand(map)) return false;
 
@@ -126,34 +140,32 @@ bool map_insert(Hashmap* map, void* key, void* value) {
 	
 	printf("Adding key %d with hash %ld\n", *(int*)key, p);
 
-	uint32_t vpsl = 0;  // probe sequence length
+	uint32_t probe = 0;  // probe sequence length
 	while (bucket_is_occupied(map, p)) {
-		printf("bucket at %ld is not null\n", p);
-		if (vpsl >= map->capacity) {
+		if (probe >= map->capacity) {
 			if (map_expand(map)) {
 				return false;
 			}
 			p = map->hash(key) % map->capacity;
-			vpsl = 0;
+			probe = 0;
 			continue;
 		}
 
 		if (memcmp(bucket_key(map, p), bucket_key(map, CURR_BUCKET), map->k_size) == 0) {
-			printf("keys are equal\n");
 			break;
 		}
 
-		if (vpsl > (*bucket_probe(map, p) & ~OCCUPIED_MASK)) {
-			*bucket_probe(map, p) = (vpsl | OCCUPIED_MASK);
+		if (probe > (*bucket_probe(map, p) & ~OCCUPIED_MASK)) {
+			*bucket_probe(map, p) = (probe | OCCUPIED_MASK);
 			bucket_swap(map, p, CURR_BUCKET);
 		}
 
 		p = (p + 1) % map->capacity;
-		vpsl++;
+		probe++;
 	}
 
 	bucket_cpy(map, p, CURR_BUCKET);
-	*bucket_probe(map, p) = (vpsl | OCCUPIED_MASK);
+	*bucket_probe(map, p) = (probe | OCCUPIED_MASK);
 	map->count++;
 
 	for (int i = 0; i < map->capacity; i++) {
@@ -162,4 +174,84 @@ bool map_insert(Hashmap* map, void* key, void* value) {
 	}
 	printf("\n");
 	return true;
+}
+
+// The returned pointer is invalid after insert
+void* map_get(Hashmap* map, void* key) {
+	uint64_t steps = 0;
+	uint64_t p = map->hash(key) % map->capacity;
+	while (1) {
+		if (steps >= map->capacity) {
+			return NULL;
+		}
+
+		if (bucket_is_occupied(map, p)) {
+			if (memcmp(bucket_key(map, p), key, map->k_size) == 0) {
+				break;
+			}
+		}
+
+		p = (p + 1) % map->capacity;
+		steps++;
+	}
+	return bucket_value(map, p);
+}
+
+/*
+ * Pseudo code
+ *
+	size_t idx = hash(key) % capacity;
+    size_t dist = 0;
+
+    // Step 1: find the key
+    while (true) {
+        if (table[idx] is empty)
+            return false;
+
+        size_t existing_dist = probe_distance(table[idx], idx);
+
+        if (dist > existing_dist)
+            return false;
+
+        if (table[idx].key == key)
+            break;
+
+        idx = (idx + 1) % capacity;
+        dist++;
+    }
+
+    // Step 2: remove and shift
+    size_t hole = idx;
+    size_t next = (idx + 1) % capacity;
+
+    while (table[next] is occupied &&
+           probe_distance(table[next], next) > 0) {
+
+        table[hole] = table[next];
+
+        hole = next;
+        next = (next + 1) % capacity;
+    }
+
+    table[hole] = empty;
+    return true;
+*/
+
+bool map_remove(Hashmap* map, void* key) {
+	
+}
+
+// Returns allocated copy that needs to be freed
+void* map_get_cpy(Hashmap* map, void* key) {
+	void* value = calloc(1, map->v_size);
+	memcpy(value, map_get(map, key), map->v_size);
+	return value;
+}
+
+void map_clear(Hashmap *map) {
+	// Set all buckets to non occupied
+	for (size_t i = 0; i < map->capacity; i++) {
+		*bucket_probe(map, i) = 0;
+	}
+	map->count = 0;
 }
