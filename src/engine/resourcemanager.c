@@ -21,10 +21,11 @@ typedef struct shader_key {
 
 size_t shader_hash(const void* v) {
 	const shader_key* sh = v;
-	char combined[256];
+	printf("vert: %s\nfrag: %s\n", sh->vertex, sh->fragment);
+	char combined[256] = {0};
 	strcpy(combined, sh->vertex);
 	strcat(combined, sh->fragment);
-	uint64_t hash = str_hash(combined);
+	size_t hash = str_hash(combined);
 	return hash;
 }
 
@@ -86,7 +87,8 @@ shader* load_shader(const char* vertex, const char* fragment) {
 
 	printf("Not stored\n");
 
-	shader* new_shader = MALLOC(sizeof(shader));
+	shader* new_shader = CALLOC(1, sizeof(shader));
 	//if (shader_init(new_shader, vertex, fragment)) return NULL;
-	return *(shader**)hashmap_put(&shader_map, &key, &new_shader);
+	hashmap_put(&shader_map, &key, &new_shader);
+	return new_shader;
 }
