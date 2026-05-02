@@ -5,155 +5,199 @@
 #include "../testing.h"
 #include <stdlib.h>
 
-#define INIT_HASHMAP(v_size, k_size, hash) hashmap m; hashmap_init(&m, v_size, k_size, hash);
-
-uint64_t test_hash(const void* v) {
-	if (v == NULL) return 0;
-	const int* i = v;
-	return *i;
+// Simple int hash
+size_t int_hash(const void* key) {
+    return (*(const int*)key) * 2654435761u;
 }
 
-uint64_t probe_hash(const void* v) {
-	return 0;
+// Helper
+#define expect(condition, msg) \
+	do { \
+    if (!(condition)) { \
+        fprintf(stderr, "FAIL %s:%d - %s\n", __func__, __LINE__, msg); \
+		hashmap_deinit(&map); \
+        return false; \
+	} \
+    } while (0); \
+
+bool test_init_deinit() {
+    Hashmap map;
+    hashmap_init(&map, sizeof(int), sizeof(int), int_hash);
+    hashmap_deinit(&map);
+	return true;
 }
 
-uint8_t test_hashmap_init() {
-	INIT_HASHMAP(sizeof(int), sizeof(int), test_hash);
+bool test_insert_get() {
+    Hashmap map;
+    hashmap_init(&map, sizeof(int), sizeof(int), int_hash);
 
-	TEST_ASSERT(m.buckets != NULL);
-	TEST_ASSERT(m.hash != NULL);
-	TEST_ASSERT(m.b_count != 0);
-	TEST_ASSERT(m.count == 0);
-	TEST_ASSERT(m.v_size == sizeof(int));
-	TEST_ASSERT(m.k_size == sizeof(int));
+    int key = 42;
+    int value = 100;
 
-	hashmap_deinit(&m);
-	return 1;
+    expect(hashmap_put(&map, &key, &value), "insert failed");
+
+    int* result = hashmap_get(&map, &key);
+    expect(result != NULL, "get returned NULL");
+    expect(*result == 100, "value mismatch");
+
+    hashmap_deinit(&map);
+	return true;
 }
 
-uint8_t test_hashmap_deinit() {
-	INIT_HASHMAP(sizeof(int), sizeof(int), test_hash);
+bool test_get_missing() {
+    Hashmap map;
+    hashmap_init(&map, sizeof(int), sizeof(int), int_hash);
 
-	hashmap_deinit(&m);
-	TEST_ASSERT(m.buckets == NULL);
-	return 1;
+    int key = 1;
+    expect(hashmap_get(&map, &key) == NULL, "expected NULL for missing key");
+
+    hashmap_deinit(&map);
+	return true;
 }
 
-uint8_t test_hashmap_put() {
-	INIT_HASHMAP(sizeof(int), sizeof(uint64_t), test_hash);
+bool test_overwrite() {
+    Hashmap map;
+    hashmap_init(&map, sizeof(int), sizeof(int), int_hash);
 
-	int v = 5;
-	uint64_t k = 0;
+    int key = 5;
+    int v1 = 10;
+    int v2 = 20;
 
-	hashmap_put(&m, &k, &v);
+    hashmap_put(&map, &key, &v1);
+    hashmap_put(&map, &key, &v2);
 
-	int* rv = m.buckets[0].value;	
-	TEST_ASSERT(rv != NULL);
-	TEST_ASSERT(*rv == 5);
+    int* result = hashmap_get(&map, &key);
+    expect(result && *result == 20, "overwrite failed");
 
-	hashmap_deinit(&m);
-	return 1;
+    hashmap_deinit(&map);
+	return true;
 }
 
-uint8_t test_hashmap_put_ext() {
-	INIT_HASHMAP(sizeof(int), sizeof(uint64_t), test_hash);
+bool test_remove() {
+    Hashmap map;
+    hashmap_init(&map, sizeof(int), sizeof(int), int_hash);
 
-	int v = 8;
-	uint64_t k = UINT64_MAX;
+    int key = 7;
+    int value = 77;
 
-	hashmap_put(&m, &k, &v);
+    hashmap_put(&map, &key, &value);
 
-	int* rv = m.buckets[k % m.b_count].value;	
-	TEST_ASSERT(rv != NULL);
-	TEST_ASSERT(*rv == v);
+    expect(hashmap_remove(&map, &key), "remove failed");
+    expect(hashmap_get(&map, &key) == NULL, "key still present after remove");
 
-	hashmap_deinit(&m);
-	return 1;
+    hashmap_deinit(&map);
+	return true;
 }
 
-uint8_t test_hashmap_put_probe() {
-	INIT_HASHMAP(sizeof(int), sizeof(int), probe_hash);
+bool test_remove_missing() {
+    Hashmap map;
+    hashmap_init(&map, sizeof(int), sizeof(int), int_hash);
 
-	for (int i = 0; i < 31; i++) {
-		int v = i;
-		hashmap_put(&m, &v, &v);
-	}
+    int key = 123;
+    expect(!hashmap_remove(&map, &key), "expected remove to fail");
 
-	int values[m.count];
-	int keys[m.count];
-	
-	hashmap_values(&m, values);
-	hashmap_keys(&m, keys);
-
-	for (int i = 0; i < m.count; i++) {
-		int v = values[i];
-		int k = keys[i];
-		TEST_ASSERT(v == i);
-		TEST_ASSERT(k == i);
-	}
-
-	hashmap_deinit(&m);
-	return 1;
+    hashmap_deinit(&map);
+	return true;
 }
 
-uint8_t test_hashmap_put_resize() {
-	hashmap m;
-	hashmap_init(&m, sizeof(int), sizeof(int), test_hash);
+bool test_clear() {
+    Hashmap map;
+    hashmap_init(&map, sizeof(int), sizeof(int), int_hash);
 
-	for (int i = 0; i < 17; i++) {
-		int v = i;
-		int k = i;
-		hashmap_put(&m, &v, &k);
-	}
+    for (int i = 0; i < 100; i++) {
+        int k = i, v = i * 10;
+        hashmap_put(&map, &k, &v);
+    }
 
-	int values[m.count];
-	int keys[m.count];
-	
-	hashmap_values(&m, values);
-	hashmap_keys(&m, keys);
+    hashmap_clear(&map);
 
-	for (int i = 0; i < m.count; i++) {
-		int v = values[i];
-		int k = keys[i];
-		TEST_ASSERT(v == i);
-		TEST_ASSERT(k == i);
-	}
+    for (int i = 0; i < 100; i++) {
+        int k = i;
+        expect(hashmap_get(&map, &k) == NULL, "clear failed");
+    }
 
-	hashmap_deinit(&m);
-	return 1;
+    hashmap_deinit(&map);
+	return true;
 }
 
-uint8_t test_hashmap_get() {
-	INIT_HASHMAP(sizeof(int), sizeof(int), test_hash);
+size_t bad_hash(const void* key) {
+    (void)key;
+    return 1; // everything collides
+}
 
-	int count = 30;
-	int keys[count];
-	int values[count];
-	for (int i = 0; i < count; i++) {
-		keys[i] = rand();
-		values[i] = rand();
-		hashmap_put(&m, &keys[i], &values[i]);
-	}
+bool test_collisions() {
+    Hashmap map;
+    hashmap_init(&map, sizeof(int), sizeof(int), bad_hash);
 
-	for (int i = 0; i < count; i++) {
-		int* v = hashmap_get(&m, &keys[i]);
-		TEST_ASSERT(*v == values[i]);
-	}
+    for (int i = 0; i < 50; i++) {
+        int k = i, v = i + 100;
+        hashmap_put(&map, &k, &v);
+    }
 
-	hashmap_deinit(&m);
-	return 1;
+    for (int i = 0; i < 50; i++) {
+        int k = i;
+        int* v = hashmap_get(&map, &k);
+        expect(v && *v == i + 100, "collision retrieval failed");
+    }
+
+    hashmap_deinit(&map);
+	return true;
+}
+
+bool test_stress() {
+    Hashmap map;
+    hashmap_init(&map, sizeof(int), sizeof(int), int_hash);
+
+    const int N = 10000;
+
+    for (int i = 0; i < N; i++) {
+        int k = i, v = i * 2;
+        expect(hashmap_put(&map, &k, &v), "insert failed");
+    }
+
+    for (int i = 0; i < N; i++) {
+        int k = i;
+        int* v = hashmap_get(&map, &k);
+        expect(v && *v == i * 2, "stress get failed");
+    }
+
+    hashmap_deinit(&map);
+	return true;
+}
+
+bool test_stack_key_safety() {
+    Hashmap map;
+    hashmap_init(&map, sizeof(int), sizeof(int), int_hash);
+
+    int value = 55;
+
+    {
+        int key = 99;
+        hashmap_put(&map, &key, &value);
+    }
+
+    int lookup = 99;
+    int* v = hashmap_get(&map, &lookup);
+
+    expect(v && *v == 55, "key not copied internally");
+
+    hashmap_deinit(&map);
+	return true;
 }
 
 uint8_t test_hashmap() {
 	INIT_TEST();
 
-	EXECUTE_SUBTEST(test_hashmap_init);
-	EXECUTE_SUBTEST(test_hashmap_deinit);
-	EXECUTE_SUBTEST(test_hashmap_put);
-	EXECUTE_SUBTEST(test_hashmap_put_ext);
-	EXECUTE_SUBTEST(test_hashmap_put_probe);
-	EXECUTE_SUBTEST(test_hashmap_put_resize);
-	EXECUTE_SUBTEST(test_hashmap_get);
+	EXECUTE_SUBTEST(test_init_deinit);
+    EXECUTE_SUBTEST(test_insert_get);
+    EXECUTE_SUBTEST(test_get_missing);
+    EXECUTE_SUBTEST(test_overwrite);
+    EXECUTE_SUBTEST(test_remove);
+    EXECUTE_SUBTEST(test_remove_missing);
+    EXECUTE_SUBTEST(test_clear);
+    EXECUTE_SUBTEST(test_collisions);
+    EXECUTE_SUBTEST(test_stress);
+    EXECUTE_SUBTEST(test_stack_key_safety);
 
 	EXIT_TEST();
 }

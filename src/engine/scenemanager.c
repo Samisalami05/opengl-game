@@ -13,12 +13,12 @@
 #include <stdlib.h>
 
 static arraylist sm_scenes;
-static hashmap sm_scene_names;
+static Hashmap sm_scene_names;
 static unsigned int sm_curr_scene_id;
 
 void scenemanager_init() {
 	arraylist_init(&sm_scenes, sizeof(scene));
-	hashmap_init(&sm_scene_names, sizeof(unsigned int), sizeof(char*), str_hash);
+	hashmap_init(&sm_scene_names, sizeof(char) * SCENE_NAME_MAX, sizeof(unsigned int), str_hash);
 	sm_curr_scene_id = 0;
 
 	sm_create_scene("Default Scene");

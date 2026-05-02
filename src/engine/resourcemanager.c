@@ -12,14 +12,14 @@
 #include <sys/stat.h>
 
 static hashmap_str texture_map = {0};
-static hashmap shader_map = {0};
+static Hashmap shader_map = {0};
 
 typedef struct shader_key {
 	char vertex[SHADER_NAME_MAX];
 	char fragment[SHADER_NAME_MAX];
 } shader_key;
 
-uint64_t shader_hash(const void* v) {
+size_t shader_hash(const void* v) {
 	const shader_key* sh = v;
 	char combined[256];
 	strcpy(combined, sh->vertex);
@@ -41,6 +41,7 @@ static void free_texture_map() {
 }
 
 static void free_shader_map() {
+	/*
 	bucket* buckets = shader_map.buckets;
 	for (int i = 0; i < shader_map.b_count; i++) {
 		if (buckets[i].value != NULL) {
@@ -48,13 +49,13 @@ static void free_shader_map() {
 			shader_deinit(*shadr);
 			FREE(*shadr);
 		}
-	}
+	} */
 	hashmap_deinit(&shader_map);
 }
 
 void resource_manager_init() {
 	hashmap_str_init(&texture_map, sizeof(texture*), str_hash);
-	hashmap_init(&shader_map, sizeof(shader*), sizeof(shader_key), shader_hash);
+	hashmap_init(&shader_map, sizeof(shader_key), sizeof(shader*), shader_hash);
 }
 
 void resource_manager_deinit() {

@@ -21,7 +21,7 @@ void type_component(comp_id id, component_type* out) {
 }
 
 void ecs_init(ecs* ecs) {
-	slotmap_init(&ecs->components, sizeof(hashmap));
+	slotmap_init(&ecs->components, sizeof(Hashmap));
 }
 
 void ecs_deinit(ecs* ecs) { // TODO: free all components
@@ -37,8 +37,8 @@ entity2 create_entity() {
 	scene* s = sm_get_current_scene();
 	if (s == NULL) return INVALID_ENTITY;
 
-	hashmap comps; // Stores components by id
-	hashmap_init(&comps, sizeof(component), sizeof(entity2), component_hash);
+	Hashmap comps; // Stores components by id
+	hashmap_init(&comps, sizeof(entity2), sizeof(component), component_hash);
 
 	uint64_t id = slotmap_add(&s->ecs.components, &comps);
 	return id;
@@ -49,7 +49,7 @@ void destroy_entity(entity2 e) {
 	if (s == NULL) return;
 
 	// TODO: optimization is to clear the hashmap
-	hashmap* compmap = &((hashmap*)s->ecs.components.data)[e];
+	Hashmap* compmap = &((Hashmap*)s->ecs.components.data)[e];
 	
 	component comps[compmap->count];
 	hashmap_values(compmap, comps);
@@ -76,7 +76,7 @@ void* add_component(entity2 e, comp_id id) {
 	scene* s = sm_get_current_scene();
 	if (s == NULL) return NULL;
 
-	hashmap* comps = &((hashmap*)s->ecs.components.data)[e];
+	Hashmap* comps = &((Hashmap*)s->ecs.components.data)[e];
 	component_type* c_type = arraylist_get(&_types, id);
 
 	component c = {
@@ -99,7 +99,7 @@ void* get_component(entity2 e, comp_id id) {
 	scene* s = sm_get_current_scene();
 	if (s == NULL) return NULL;
 
-	hashmap* comps = &((hashmap*)s->ecs.components.data)[e];
+	Hashmap* comps = &((Hashmap*)s->ecs.components.data)[e];
 	
 	component* c = hashmap_get(comps, &id);
 	if (c == NULL) return NULL;

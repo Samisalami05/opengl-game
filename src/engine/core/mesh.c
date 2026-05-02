@@ -107,8 +107,8 @@ mesh* mesh_load_obj(char* filepath) {
 		return NULL;
 	}
 
-	hashmap vertex_map = {0};
-	hashmap_init(&vertex_map, sizeof(uint32_t), sizeof(ivec3), face_hash);
+	Hashmap vertex_map = {0};
+	hashmap_init(&vertex_map, sizeof(ivec3), sizeof(uint32_t), face_hash);
 
 	arraylist positions, normals, texcoords;
 	arraylist_init(&positions, sizeof(vec3));
@@ -179,8 +179,6 @@ mesh* mesh_load_obj(char* filepath) {
 		}
 	}
 
-	hashmap_print(&vertex_map, index_print, face_print);
-	
 	printf("Index count: %d\nVertex count: %d\n", indices.count, vertices.count);
 
 	arraylist_deinit(&positions);

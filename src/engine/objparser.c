@@ -41,7 +41,7 @@ void add_vertex(
     arraylist* normals,
     arraylist* vertices,
     arraylist* indices,
-    hashmap* vert_map
+    Hashmap* vert_map
 ) {
     unsigned int* found = hashmap_get(vert_map, &idx);
 
@@ -68,7 +68,7 @@ void parse_face(
     arraylist* normals,
     arraylist* vertices,
     arraylist* indices,
-    hashmap* vert_map
+    Hashmap* vert_map
 ) {
     ivec3 face[4];
     int count = 0;
@@ -95,8 +95,8 @@ mesh* mesh_load_obj_new(char* filepath) {
 		return NULL;
 	}
 	
-	hashmap vertex_map;
-	hashmap_init(&vertex_map, sizeof(unsigned int), sizeof(ivec3), face_hash);
+	Hashmap vertex_map;
+	hashmap_init(&vertex_map, sizeof(ivec3), sizeof(unsigned int), face_hash);
 
 	arraylist positions, normals, texcoords;
 	arraylist_init(&positions, sizeof(vec3));

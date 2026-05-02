@@ -1,37 +1,41 @@
+/*
+ * A hashmap using robin hood hashing. The keys and values are
+ * copied and stored in the datastructure itself so no memory
+ * manegment is needed by the user.
+ */
+
 #ifndef HASHMAP_H
 #define HASHMAP_H
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
-typedef uint64_t (*hashfunc)(const void*);
+typedef size_t (*HashFunc)(const void*);
 
-typedef struct bucket {
-	void* value;
-	void* key;
-	uint32_t probe; // probe sequence length
-} bucket;
-
-typedef struct hashmap {
-	bucket* buckets;
-	size_t b_count;
+typedef struct {
+	void* buckets;
+	size_t capacity;
 	size_t count;
-	size_t v_size;
-	size_t k_size;
-	hashfunc hash;
-} hashmap;
+	uint16_t k_size;  // Key size   (in bytes)
+	uint16_t v_size;  // Value size (in bytes)
+	HashFunc hash;
+} Hashmap;
 
-void hashmap_init(hashmap* m, size_t v_size, size_t k_size, hashfunc hash);
-void hashmap_init_detailed(hashmap* m, size_t v_size, size_t k_size, size_t buckets, hashfunc hash);
-void hashmap_deinit(hashmap* m);
+void hashmap_init(Hashmap* map, size_t k_size, size_t v_size, HashFunc func);
+void hashmap_deinit(Hashmap* map);
 
-void* hashmap_put(hashmap* m, const void* k, const void* v);
-void* hashmap_get(hashmap* m, const void* k);
-void hashmap_values(hashmap* m, void* out);
-void hashmap_keys(hashmap* m, void* out);
+bool hashmap_put(Hashmap* map, void* key, void* value);
+void* hashmap_get(Hashmap* map, void* key);
+bool hashmap_remove(Hashmap* map, void* key);
+void hashmap_clear(Hashmap* map);
 
-void hashmap_clear(hashmap* m);
+void hashmap_keys(Hashmap* map, void* out);
+void hashmap_values(Hashmap* map, void* out);
 
-void hashmap_print(hashmap* m, void(*v_print)(void*), void(*k_print)(void*));
+// TODO: implement these
+bool hashmap_contains_key(Hashmap* map, void* key);
+bool hashmap_contains_value(Hashmap* map, void* value);
+void* hashmap_get_cpy(Hashmap* map, void* key);
 
 #endif

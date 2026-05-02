@@ -3,6 +3,8 @@
 
 #include "scene.h"
 
+#define SCENE_NAME_MAX 32
+
 void scenemanager_init();
 void scenemanager_deinit();
 scene* sm_create_scene(char* name);

@@ -13,7 +13,7 @@
 #include "inputmanager.h"
 #include "keys.h"
 #include "logger.h"
-#include "map.h"
+#include "util/hashmap.h"
 #include "math/vec2.h"
 #include "profiler.h"
 #include "util/arraylist.h"
@@ -40,41 +40,7 @@
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include <cimgui.h>
 
-static uint64_t hash(void* key) {
-	return *(uint64_t*)key;
-}
-
 int main(void) {
-	Hashmap map = {0};
-	map_init(&map, sizeof(int), sizeof(vec2), hash);
-
-	LOG(LOG_ERROR, "TEST");
-	
-	int key = 1;
-	vec2 value = { 1.0f, 3.0f };
-
-	for (int i = 0; i < 30; i += 3) {
-		key = i;
-		value.x = i * 2;
-		map_insert(&map, &key, &value);
-	}
-
-	value.x = 1.0f;
-	for (int i = 0; i < 30; i += 3) {
-		key = i;
-		value.x = i * 2;
-
-		vec2* get = map_get(&map, &key);
-		if (get == NULL) { printf("VERY BAD!!!!!!!!!!!\n"); return 1; }
-		vec2 val = *get;
-		if (val.x != value.x || val.y != value.y) printf("Not correct\n expected %.1f %.1f, got %.1f %.1f\n", value.x, value.y, val.x, val.y);
-	}
-
-
-	if (map.buckets != NULL) free(map.buckets);
-
-	return 0;
-
 	resource_manager_init();
 
 	material mat = {0}, mat2 = {0};
