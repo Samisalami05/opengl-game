@@ -21,14 +21,23 @@ typedef enum {
 //    16        16        32
 typedef uint64_t AssetHandle;
 
+typedef AssetHandle TextureHandle;
+typedef AssetHandle ShaderHandle;
+
 #define ASSET_HANDLE_TYPE_MASK 0xFF000000
 #define ASSET_HANDLE_GEN_MASK  0x00FF0000
 #define ASSET_HANDLE_ID_MASK   0x0000FFFF
+
+#define ASSET_HANDLE_INVALID 0xFFFFFFFF
 
 typedef struct {
 	slotmap assets[ASSET_LAST];
 	Hashmap handles;
 } AssetManager;
+
+
+#define TEX(handle) asset_get(handle)
+#define SHADER(handle) asset_get(handle)
 
 // Attaches and initializes the given Asset manager.
 void asset_manager_init(AssetManager* am);
@@ -40,8 +49,12 @@ uint32_t asset_handle_id(AssetHandle handle);
 
 size_t asset_type_size(AssetType type);
 
-AssetHandle load_texture(const char* path);
+TextureHandle aload_texture(const char* path);
+ShaderHandle aload_shader(const char* vert, const char* frag);
 
-void* asset_get(AssetHandle handle);
+void unload_asset(AssetHandle handle);
+void unload_asset_path(const char* path);
+
+const void* asset_get(AssetHandle handle);
 
 #endif

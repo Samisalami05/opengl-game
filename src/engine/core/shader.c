@@ -267,7 +267,7 @@ uint8_t shader_init(shader* s, const char* vertsh, const char* fragsh) {
 	return 0;
 }
 
-void shader_use(shader* s) {
+void shader_use(const shader* s) {
 	glUseProgram(s->id);
 }
 
@@ -275,29 +275,29 @@ void shader_deinit(shader* s) {
 	glDeleteProgram(s->id);
 }
 
-void shader_set_int(shader* s, const char* n, int v) {
+void shader_set_int(const shader* s, const char* n, int v) {
 	glUniform1i(glGetUniformLocation(s->id, n), v);
 }
-void shader_set_uint(shader* s, const char* n, unsigned int v) {
+void shader_set_uint(const shader* s, const char* n, unsigned int v) {
 	glUniform1ui(glGetUniformLocation(s->id, n), v);
 }
 
-void shader_set_float(shader* s, const char* n, float v) {
+void shader_set_float(const shader* s, const char* n, float v) {
 	glUniform1f(glGetUniformLocation(s->id, n), v);
 }
 
-void shader_set_vec2(shader* s, const char* n, vec2 v) {
+void shader_set_vec2(const shader* s, const char* n, vec2 v) {
 	glUniform2f(glGetUniformLocation(s->id, n), v.x, v.y);
 }
 
-void shader_set_vec3(shader* s, const char* n, vec3 v) {
+void shader_set_vec3(const shader* s, const char* n, vec3 v) {
 	glUniform3f(glGetUniformLocation(s->id, n), v.x, v.y, v.z);
 }
 
-void shader_set_vec4(shader* s, const char* n, vec4 v) {
+void shader_set_vec4(const shader* s, const char* n, vec4 v) {
 	glUniform4f(glGetUniformLocation(s->id, n), v.x, v.y, v.z, v.w);
 }
 
-void shader_set_mat4(shader* s, const char* n, mat4 v) {
+void shader_set_mat4(const shader* s, const char* n, mat4 v) {
 	glUniformMatrix4fv(glGetUniformLocation(s->id, n), 1, GL_FALSE, (const float*)v.data);
 }

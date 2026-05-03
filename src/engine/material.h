@@ -1,6 +1,7 @@
 #ifndef MATERIAL_H
 #define MATERIAL_H
 
+#include "asset_manager.h"
 #include "core/shader.h"
 #include "core/texture.h"
 #include "math/ivec2.h"
@@ -16,9 +17,9 @@ typedef enum material_type {
 
 typedef struct material {
 	material_type type;
-	shader* shader;
+	ShaderHandle shader;
 
-	texture* albedo_tex;
+	TextureHandle albedo_tex;
 	//texture* normal_tex;
 	//texture* roughness_tex;
 	//texture* metallic_tex;

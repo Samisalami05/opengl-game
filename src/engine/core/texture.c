@@ -1,23 +1,24 @@
 #include "texture.h"
+#include "logger.h"
 #include <stdbool.h>
 #include <stdio.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image/stb_image.h>
 
+// Returns GL_NONE if format is invalid
 static GLenum texture_format(int channel_count) {
 	switch (channel_count) {
 		case 1: return GL_R;
 		case 2: return GL_RG;
 		case 3: return GL_RGB;
 		case 4: return GL_RGBA;
-		default:
-			fprintf(stderr, "No texture format available for channel count %d\n", channel_count);
+		default:;
 	}
 
-	return GL_RGB; // Default
+	return GL_NONE; // Default
 }
 
-void texture_init(texture* t, const char* path) {
+bool texture_init(texture* t, const char* path) {
 	glGenTextures(1, &t->id);
 	glBindTexture(GL_TEXTURE_2D, t->id);
 
@@ -32,16 +33,22 @@ void texture_init(texture* t, const char* path) {
 	unsigned char* data = stbi_load(path, &t->width, &t->height, &channel_count, 0);
 
 	if (!data) {
-		fprintf(stderr, "texture: Failed to open image %s\n", path);
-		return;
+		LOG(LOG_ERROR, "texture: Failed to open image %s\n", path);
+		return false;
 	}
 
 	GLenum format = texture_format(channel_count);
+	if (format == GL_NONE) {
+		LOG(LOG_ERROR, "Could not initialize texture %s: Unsupported image format\n", path);
+		return false;
+	}
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, t->width, t->height, 0, format, GL_UNSIGNED_BYTE, data);
 	glGenerateMipmap(GL_TEXTURE_2D); // TODO: This should probably not be here
 
 	stbi_image_free(data);
+
+	return true;
 }
 
 void texture_deinit(texture* t) {
@@ -53,7 +60,7 @@ void texture_generate_mipmap(texture* t) {
 	glGenerateMipmap(GL_TEXTURE_2D);
 }
 
-void texture_use(texture* t, unsigned int unit_index) {
+void texture_use(const texture* t, unsigned int unit_index) {
 	glActiveTexture(GL_TEXTURE0 + unit_index);
 	glBindTexture(GL_TEXTURE_2D, t->id);
 }

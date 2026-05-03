@@ -19,6 +19,7 @@ void slotmap_deinit(slotmap* sm);
 
 uint64_t slotmap_add(slotmap* sm, void* value);
 void slotmap_remove(slotmap* sm, uint64_t slot);
+void* slotmap_get(slotmap* sm, uint64_t slot);
 uint8_t slotmap_is_occupied(slotmap* sm, uint64_t slot);
 
 #endif

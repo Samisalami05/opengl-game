@@ -2,8 +2,10 @@
 #include <stdio.h>
 #include <glad_impl.h>
 #include "allocator.h"
+#include "asset_manager.h"
 #include "audio/wav.h"
 #include "components/transform.h"
+#include "core/texture.h"
 #include "debug_renderer.h"
 #include "ecs.h"
 #include "editor/editor.h"
@@ -41,7 +43,13 @@
 #include <cimgui.h>
 
 int main(void) {
-	resource_manager_init();
+	
+	AssetManager am = {0};
+	asset_manager_init(&am);
+
+	AssetHandle handle = aload_texture("assets/metal.png");
+	if (handle == ASSET_HANDLE_INVALID) return 1;
+	const texture* tex = asset_get(handle);
 
 	material mat = {0}, mat2 = {0};
 	material_init(&mat, MAT_TEXTURE_LIT);
@@ -49,9 +57,10 @@ int main(void) {
 	mat.tiling = (vec2){{ 100.0f, 100.0f }};
 	mat2.shininess = 100.0f;
 
-	resource_manager_deinit();
-	return 0;
 
+	asset_manager_deinit(&am);
+
+	return 0;
 
     game game = {0};
 	if (engine_init(&game)) return 1;

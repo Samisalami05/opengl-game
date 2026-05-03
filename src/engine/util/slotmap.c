@@ -1,5 +1,6 @@
 #include "slotmap.h"
 #include "allocator.h"
+#include "logger.h"
 #include "util/ringbuffer.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -75,7 +76,7 @@ uint64_t slotmap_add(slotmap* sm, void* value) {
 
 void slotmap_remove(slotmap* sm, uint64_t slot) {
 	if (!slot_is_occupied(sm, slot)) {
-		fprintf(stderr, "slotmap: Cant remove element from slot: Slot is already empty\n");
+		LOG(LOG_ERROR, "slotmap: Cant remove element from slot: Slot is already empty\n");
 		return;
 	}
 
@@ -83,6 +84,12 @@ void slotmap_remove(slotmap* sm, uint64_t slot) {
 	if (slot < sm->count - 1) {
 		ringbuffer_append(&sm->free, &slot);
 	}
+}
+
+void* slotmap_get(slotmap* sm, uint64_t slot) {
+	if (!slot_is_occupied(sm, slot)) return NULL;
+	
+	return sm->data + slot * sm->elem_size;
 }
 
 uint8_t slotmap_is_occupied(slotmap* sm, uint64_t slot) {
