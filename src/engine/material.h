@@ -17,9 +17,9 @@ typedef enum material_type {
 
 typedef struct material {
 	material_type type;
-	ShaderHandle shader;
+	shader* shader;
 
-	TextureHandle albedo_tex;
+	texture* albedo_tex;
 	//texture* normal_tex;
 	//texture* roughness_tex;
 	//texture* metallic_tex;

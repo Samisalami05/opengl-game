@@ -15,6 +15,7 @@
 #include "inputmanager.h"
 #include "keys.h"
 #include "logger.h"
+#include "util/hash.h"
 #include "util/hashmap.h"
 #include "math/vec2.h"
 #include "profiler.h"
@@ -33,6 +34,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include "color.h"
 
 // OpenAL
 #include <AL/al.h>
@@ -43,7 +45,6 @@
 #include <cimgui.h>
 
 int main(void) {
-	
 	AssetManager am = {0};
 	asset_manager_init(&am);
 
@@ -51,16 +52,9 @@ int main(void) {
 	if (handle == ASSET_HANDLE_INVALID) return 1;
 	const texture* tex = asset_get(handle);
 
-	material mat = {0}, mat2 = {0};
-	material_init(&mat, MAT_TEXTURE_LIT);
-	material_init(&mat2, MAT_COLOR_LIT);
-	mat.tiling = (vec2){{ 100.0f, 100.0f }};
-	mat2.shininess = 100.0f;
-
-
+	
 	asset_manager_deinit(&am);
 
-	return 0;
 
     game game = {0};
 	if (engine_init(&game)) return 1;
@@ -215,6 +209,15 @@ int main(void) {
 		sun->dir.x = cosf(glfwGetTime() / 4);
 		sun->dir.z = sinf(glfwGetTime() / 4);
 
+		for (int i = 0; i < scene->lights.count; i++) {
+			light* light = arraylist_get(&scene->lights, i);
+			debug_set_color(light->color);
+			debug_render_sphere(light->position, 0.3f);
+			debug_render_line(light->position, vec3_add_v3(light->position, light->dir));
+		}
+
+
+		debug_set_color(COL_WHITE);
 		debug_render_cube((vec3){0}, (vec3){0}, (vec3){1, 1, 1});
 		
 		editor_update();

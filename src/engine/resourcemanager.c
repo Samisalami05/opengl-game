@@ -65,17 +65,26 @@ void resource_manager_deinit() {
 }
 
 texture* load_texture(const char* path) {
+	texture* new_tex = MALLOC(sizeof(texture));
+	texture_init(new_tex, path);
+	return new_tex;
+
+
 	printf("loading texture: %s\n", path);
 	texture** stored = hashmap_str_get(&texture_map, path);
 	if (stored != NULL)
 		return *stored;
 	
-	texture* new_tex = MALLOC(sizeof(texture));
-	//texture_init(new_tex, path);
-	return *(texture**)hashmap_str_put(&texture_map, path, &new_tex);
+		return *(texture**)hashmap_str_put(&texture_map, path, &new_tex);
 }
 
 shader* load_shader(const char* vertex, const char* fragment) {
+	shader* new_shader = CALLOC(1, sizeof(shader));
+	if (shader_init(new_shader, vertex, fragment)) return NULL;
+	return new_shader;
+
+
+
 	printf("loading shader: %s, %s\n", vertex, fragment);
 	shader_key key = {0};
 	strncpy(key.vertex, vertex, SHADER_NAME_MAX);
@@ -87,7 +96,6 @@ shader* load_shader(const char* vertex, const char* fragment) {
 
 	printf("Not stored\n");
 
-	shader* new_shader = CALLOC(1, sizeof(shader));
 	//if (shader_init(new_shader, vertex, fragment)) return NULL;
 	hashmap_put(&shader_map, &key, &new_shader);
 	return new_shader;

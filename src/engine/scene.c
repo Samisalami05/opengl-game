@@ -17,20 +17,13 @@ void scene_init(scene* s, unsigned int id, char* name) {
 	arraylist_init(&s->lights, sizeof(light));
 	
 	ecs_init(&s->ecs);
-	
-	mesh* cube_mesh = mesh_load_obj_new("assets/cube.obj");
-	material* mat = MALLOC(sizeof(material));
-	material_init(mat, MAT_COLOR_UNLIT);
-
-	entity_init(&s->light_entity, cube_mesh, mat);
-	s->light_entity.scale = (vec3){0.5f, 0.5f, 0.5f};
 
 	// Create default sun
 	light sun = {
 		.type = LIGHT_GLOBAL,
 		.color = {1.0f, 1.0f, 0.8f},
 		.dir = {0.5f, -0.5f, 0.2f},
-		.intensity = 0.2f,
+		.intensity = 0.05f,
 	};
 	arraylist_append(&s->lights, &sun);
 
@@ -44,7 +37,6 @@ void scene_init(scene* s, unsigned int id, char* name) {
 		"assets/skybox/back.jpg",
 	};
 	skybox_init(&s->skybox, skybox_faces);
-
 }
 
 void scene_add_entity(scene* s, entity* e) { // Maybe remove these

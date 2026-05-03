@@ -14,7 +14,7 @@
 typedef size_t (*HashFunc)(const void*);
 
 typedef struct {
-	void* buckets;
+	uint8_t* buckets;
 	size_t capacity;
 	size_t count;
 	uint16_t k_size;  // Key size   (in bytes)
@@ -25,17 +25,21 @@ typedef struct {
 void hashmap_init(Hashmap* map, size_t k_size, size_t v_size, HashFunc func);
 void hashmap_deinit(Hashmap* map);
 
-bool hashmap_put(Hashmap* map, void* key, void* value);
-void* hashmap_get(Hashmap* map, void* key);
-bool hashmap_remove(Hashmap* map, void* key);
-void hashmap_clear(Hashmap* map);
+bool hashmap_put(Hashmap* map, const void* key, const void* value);
+void* hashmap_get(Hashmap* map, const void* key);
+bool hashmap_remove(Hashmap* map, const void* key);
 
+// Key string functions
+bool hashmap_put_str(Hashmap* map, const char* key, const void* value);
+void* hashmap_get_str(Hashmap* map, const char* key);
+bool hashmap_remove_str(Hashmap* map, const char* key);
+
+void hashmap_clear(Hashmap* map);
 void hashmap_keys(Hashmap* map, void* out);
 void hashmap_values(Hashmap* map, void* out);
 
 // TODO: implement these
 bool hashmap_contains_key(Hashmap* map, void* key);
 bool hashmap_contains_value(Hashmap* map, void* value);
-void* hashmap_get_cpy(Hashmap* map, void* key);
 
 #endif

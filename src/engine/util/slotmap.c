@@ -9,6 +9,7 @@
 
 static uint8_t expand_if_necessary(slotmap* sm) {
 	if (sm->allocated <= sm->count) {
+		size_t old = sm->allocated;
 		sm->allocated = sm->allocated <= 0 ? 4 : sm->allocated * 2;
 		void* tmp = REALLOC(sm->data, sm->elem_size * sm->allocated);
 		if (tmp == NULL) {
@@ -23,6 +24,7 @@ static uint8_t expand_if_necessary(slotmap* sm) {
 			return 1;
 		}
 		sm->occupied_bits = tmp;
+		memset(sm->occupied_bits, 0, (sm->allocated - old + 63) / 64 * sizeof(uint64_t));
 	}
 	return 0;
 }

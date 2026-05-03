@@ -52,7 +52,8 @@ static void default_logger(LogInfo info, const char* fmt, va_list args, char* ou
 	
 	// TODO: maybe not log to terminal
 	fprintf(stderr, "%s:%d - ", info.file + path_off, info.line);
-	fprintf(stderr, fmt, args);
+	vfprintf(stderr, fmt, args);
+	fprintf(stderr, "\n");
 }
 
 void logger_push_line(LogLine line) {

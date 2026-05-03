@@ -152,13 +152,4 @@ void render_scene(scene* s) {
 		material_set_lights(e->mat, &s->lights);
 		render_entity(e, &s->cam);
 	}
-
-	for (int i = 0; i < s->lights.count; i++) {
-		light* light = arraylist_get(&s->lights, i);
-		if (light->type == LIGHT_POINT) {
-			s->light_entity.position = light->position;
-			s->light_entity.mat->color = light->color;
-			render_entity(&s->light_entity, &s->cam);
-		}
-	}
 }

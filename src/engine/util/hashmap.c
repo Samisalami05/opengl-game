@@ -1,8 +1,6 @@
 #include "hashmap.h"
 #include "allocator.h"
-#include "assimp/types.h"
 #include "logger.h"
-#include "math/vec2.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -42,10 +40,15 @@ static void* bucket_key(Hashmap* map, size_t id);
 static void* bucket_value(Hashmap* map, size_t id);
 static probe_t* bucket_probe(Hashmap* map, size_t id);
 static void bucket_cpy(Hashmap* map, size_t dest, size_t src);
-static void bucket_set(Hashmap* map, size_t id, void* key, void* value, probe_t probe, bool occupied);
+static void bucket_set(Hashmap* map, size_t id, const void* key, const void* value, probe_t probe, bool occupied, bool key_str);
 static bool bucket_is_occupied(Hashmap* map, size_t id);
 static void bucket_swap(Hashmap* map, size_t a, size_t b);
+static bool bucket_cmp(Hashmap* map, size_t a, size_t b, bool key_str);
 static bool hashmap_expand(Hashmap* map);
+
+static bool hashmap_put_internal(Hashmap* map, const void* key, const void* value, bool key_str);
+static void* hashmap_get_internal(Hashmap* map, const void* key, bool key_str);
+static bool hashmap_remove_internal(Hashmap* map, const void* key, bool key_str);
 
 void hashmap_init(Hashmap* map, size_t k_size, size_t v_size, HashFunc func) {
 	map->k_size = k_size;
@@ -65,121 +68,30 @@ void hashmap_deinit(Hashmap* map) {
 	map->capacity = 0;
 }
 
-bool hashmap_put(Hashmap* map, void* key, void* value) {
-	if (key == NULL || value == NULL) {
-		LOG(LOG_ERROR, "Cant insert with a NULL %s\n", key == NULL ? "key" : "value");
-		return false;
-	}
-
-	// TODO: return inserted value
-	// TODO: remove probe from buckets (easy to compute)
-
-	if (map->count + 1 > map->capacity)
-		if (!hashmap_expand(map)) return false;
-
-	bucket_set(map, CURR_BUCKET, key, value, 0, true);
-
-	size_t p = map->hash(key) % map->capacity;
-	
-	probe_t probe = 0;  // probe sequence length
-	while (bucket_is_occupied(map, p)) {
-		if (probe >= map->capacity) {
-			if (hashmap_expand(map)) {
-				return false;
-			}
-			p = map->hash(key) % map->capacity;
-			probe = 0;
-			continue;
-		}
-
-		if (memcmp(bucket_key(map, p), bucket_key(map, CURR_BUCKET), map->k_size) == 0) {
-			break;
-		}
-
-		if (probe > (*bucket_probe(map, p) & ~OCCUPIED_MASK)) {
-			*bucket_probe(map, p) = (probe | OCCUPIED_MASK);
-			bucket_swap(map, p, CURR_BUCKET);
-		}
-
-		p = (p + 1) % map->capacity;
-		probe++;
-	}
-
-	bucket_cpy(map, p, CURR_BUCKET);
-	*bucket_probe(map, p) = (probe | OCCUPIED_MASK);
-	map->count++;
-
-	return true;
+bool hashmap_put(Hashmap* map, const void* key, const void* value) {
+	return hashmap_put_internal(map, key, value, false);
 }
 
 // The returned pointer is invalid after insert
-void* hashmap_get(Hashmap* map, void* key) {
-	if (key == NULL || map->capacity == 0) return NULL;
-
-	size_t steps = 0;
-	size_t p = map->hash(key) % map->capacity;
-	for (;;) {
-		if (steps >= map->capacity) {
-			return NULL;
-		}
-
-		if (bucket_is_occupied(map, p)) {
-			if (memcmp(bucket_key(map, p), key, map->k_size) == 0) {
-				break;
-			}
-		}
-
-		p = (p + 1) % map->capacity;
-		steps++;
-	}
-	return bucket_value(map, p);
+void* hashmap_get(Hashmap* map, const void* key) {
+	return hashmap_get_internal(map, key, false);
 }
 
-bool hashmap_remove(Hashmap* map, void* key) {
-	if (key == NULL || map->capacity == 0) return false;
-
-	size_t p = map->hash(key) % map->capacity;
-	size_t probe = 0;
-
-	for (;;) {
-		if (!bucket_is_occupied(map, p)) return false;
-
-		probe_t curr_probe = (*(probe_t*)bucket_probe(map, p) & ~OCCUPIED_MASK);
-
-		if (probe > curr_probe) return false;
-		
-		if (memcmp(bucket_key(map, p), key, map->k_size) == 0) {
-			break;
-		}
-
-		p = (p + 1) % map->capacity;
-		probe++;
-	}
-
-	size_t hole = p;
-	size_t next = (p + 1) % map->capacity;
-
-	while (bucket_is_occupied(map, next) && (*(probe_t*)bucket_probe(map, next) & ~OCCUPIED_MASK) > 0) {
-		bucket_cpy(map, hole, next);
-		probe_t* b_probe = bucket_probe(map, hole);
-		*b_probe = ((*b_probe & ~OCCUPIED_MASK) - 1);
-
-		hole = next;
-		next = (next + 1) % map->capacity;
-	}
-
-	bucket_set(map, hole, NULL, NULL, 0, false);
-	map->count--;
-
-	return true;
+bool hashmap_remove(Hashmap* map, const void* key) {
+	return hashmap_remove_internal(map, key, false);
 }
 
-// Returns allocated copy that needs to be freed
-void* hashmap_get_cpy(Hashmap* map, void* key) {
-	if (key == NULL) return NULL;
-	void* value = calloc(1, map->v_size);
-	memcpy(value, hashmap_get(map, key), map->v_size);
-	return value;
+// Use this if your key is a string
+bool hashmap_put_str(Hashmap* map, const char* key, const void* value) {
+	return hashmap_put_internal(map, key, value, true);
+}
+
+void* hashmap_get_str(Hashmap* map, const char* key) {
+	return hashmap_get_internal(map, key, true);
+}
+
+bool hashmap_remove_str(Hashmap* map, const char* key) {
+	return hashmap_remove_internal(map, key, true);
 }
 
 void hashmap_clear(Hashmap *map) {
@@ -204,8 +116,11 @@ void hashmap_values(Hashmap* map, void* out) {
 	}
 }
 
-static void bucket_set(Hashmap* map, size_t id, void* key, void* value, probe_t probe, bool occupied) {
-	if (key != NULL) memcpy(bucket_key(map, id), key, map->k_size);
+static void bucket_set(Hashmap* map, size_t id, const void* key, const void* value, probe_t probe, bool occupied, bool key_str) {
+	if (key != NULL) {
+		if (!key_str) memcpy(bucket_key(map, id), key, map->k_size);
+		else strncpy(bucket_key(map, id), key, map->k_size);
+	}
 	if (value != NULL) memcpy(bucket_value(map, id), value, map->v_size);
 
 	probe_t new_probe = probe;
@@ -225,13 +140,20 @@ static void bucket_swap(Hashmap* map, size_t a, size_t b) {
 	memcpy(bucket_key(map, b), tmp, bucket_size(map));
 }
 
+static bool bucket_cmp(Hashmap* map, size_t a, size_t b, bool key_str) {
+	if (key_str && strncmp(bucket_key(map, a), bucket_key(map, b), map->k_size) == 0) return true;
+	else if (!key_str && memcmp(bucket_key(map, a), bucket_key(map, b), map->k_size) == 0) return true;
+
+	return false;
+}
+
 static bool hashmap_expand(Hashmap* map) {
     size_t old_capacity = map->capacity;
     size_t new_capacity = old_capacity == 0 ? 4 : old_capacity * 2;
 
-    void* old_buckets = map->buckets;
+    uint8_t* old = map->buckets;
 
-    void* new_buckets = CALLOC(new_capacity + 2, bucket_size(map)); // +2 for CURR and TMP bucket
+    uint8_t* new_buckets = CALLOC(new_capacity + 2, bucket_size(map)); // +2 for CURR and TMP bucket
     if (!new_buckets) {
         LOG(LOG_ERROR, "calloc failed: %s", strerror(errno));
         return false;
@@ -243,8 +165,6 @@ static bool hashmap_expand(Hashmap* map) {
 
     // Reinsert old entries
     for (size_t i = 0; i < old_capacity; i++) {
-        uint8_t* old = (uint8_t*)old_buckets;
-
 		probe_t* probe = (probe_t*)(old + bucket_probe_offset(map, i));
 		if (!(*probe & OCCUPIED_MASK)) continue;
 		
@@ -253,14 +173,122 @@ static bool hashmap_expand(Hashmap* map) {
 
 		if (!hashmap_put(map, key, value)) {
 			FREE(new_buckets);
-			map->buckets = old_buckets;
+			map->buckets = old;
 			map->capacity = old_capacity;
 			return false;
 		}
     }
 
-    FREE(old_buckets);
+    FREE(old);
     return true;
+}
+
+static bool hashmap_put_internal(Hashmap* map, const void* key, const void* value, bool key_str) {
+	if (key == NULL || value == NULL) {
+		LOG(LOG_ERROR, "Cant insert with a NULL %s\n", key == NULL ? "key" : "value");
+		return false;
+	}
+
+	// TODO: return inserted value
+	// TODO: remove probe from buckets (easy to compute)
+
+	if (map->count + 1 > map->capacity)
+		if (!hashmap_expand(map)) return false;
+
+	bucket_set(map, CURR_BUCKET, key, value, 0, true, key_str);
+
+	size_t p = map->hash(key) % map->capacity;
+	
+	probe_t probe = 0;  // probe sequence length
+	while (bucket_is_occupied(map, p)) {
+		if (probe >= map->capacity) {
+			if (hashmap_expand(map)) {
+				return false;
+			}
+			p = map->hash(key) % map->capacity;
+			probe = 0;
+			continue;
+		}
+
+		if (bucket_cmp(map, p, CURR_BUCKET, key_str)) {
+			break;
+		}
+
+		if (probe > (*bucket_probe(map, p) & ~OCCUPIED_MASK)) {
+			*bucket_probe(map, p) = (probe | OCCUPIED_MASK);
+			bucket_swap(map, p, CURR_BUCKET);
+		}
+
+		p = (p + 1) % map->capacity;
+		probe++;
+	}
+
+	bucket_cpy(map, p, CURR_BUCKET);
+	*bucket_probe(map, p) = (probe | OCCUPIED_MASK);
+	map->count++;
+
+	return true;
+}
+
+static void* hashmap_get_internal(Hashmap* map, const void* key, bool key_str) {
+	if (key == NULL || map->capacity == 0) return NULL;
+
+	size_t steps = 0;
+	size_t p = map->hash(key) % map->capacity;
+	for (;;) {
+		if (steps >= map->capacity) {
+			return NULL;
+		}
+
+		if (bucket_is_occupied(map, p)) {
+			if (key_str) { if (strncmp(bucket_key(map, p), key, map->k_size) == 0) break;}
+			else if (memcmp(bucket_key(map, p), key, map->k_size) == 0) break;
+		}
+
+		p = (p + 1) % map->capacity;
+		steps++;
+	}
+	return bucket_value(map, p);
+}
+
+static bool hashmap_remove_internal(Hashmap* map, const void* key, bool key_str) {
+	if (key == NULL || map->capacity == 0) return false;
+
+	size_t p = map->hash(key) % map->capacity;
+	size_t probe = 0;
+
+	for (;;) {
+		if (!bucket_is_occupied(map, p)) return false;
+
+		probe_t curr_probe = (*(probe_t*)bucket_probe(map, p) & ~OCCUPIED_MASK);
+
+		if (probe > curr_probe) return false;
+		
+		if (bucket_is_occupied(map, p)) {
+			if (key_str) { if (strncmp(bucket_key(map, p), key, map->k_size) == 0) break;}
+			else if (memcmp(bucket_key(map, p), key, map->k_size) == 0) break;
+		}
+
+		p = (p + 1) % map->capacity;
+		probe++;
+	}
+
+	size_t hole = p;
+	size_t next = (p + 1) % map->capacity;
+
+	while (bucket_is_occupied(map, next) && (*(probe_t*)bucket_probe(map, next) & ~OCCUPIED_MASK) > 0) {
+		bucket_cpy(map, hole, next);
+		probe_t* b_probe = bucket_probe(map, hole);
+		*b_probe = ((*b_probe & ~OCCUPIED_MASK) - 1);
+
+		hole = next;
+		next = (next + 1) % map->capacity;
+	}
+
+	bucket_set(map, hole, NULL, NULL, 0, false, false);
+	map->count--;
+
+	return true;
 }
 
 static uint32_t bucket_size(Hashmap* map) {

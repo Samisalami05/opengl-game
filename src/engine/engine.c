@@ -2,6 +2,7 @@
 
 #include <glad/glad.h>
 #include "GLFW/glfw3.h"
+#include "asset_manager.h"
 #include "inputmanager.h"
 #include "profiler.h"
 #include "rendering/pipeline.h"
@@ -69,10 +70,11 @@ void engine_end_frame(game* g) {
 }
 
 void engine_deinit(game* g) {
-	scenemanager_deinit();
+	scenemanager_deinit(&engine.sceneman);
 	resource_manager_deinit();
 	inputman_deinit();
 	renderer_deinit(&engine.renderer);
+	//asset_manager_deinit(&engine.assetman);
 
 	deinit_openal();
 	deinit_glfw(g);
@@ -168,7 +170,8 @@ static uint8_t init_openal() {
 
 static void init_managers() {
 	resource_manager_init();
-	scenemanager_init();
+	//asset_manager_init(&engine.assetman);
+	scenemanager_init(&engine.sceneman);
 	inputman_init();
 }
 

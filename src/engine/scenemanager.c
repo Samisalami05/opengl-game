@@ -1,4 +1,5 @@
 #include "scenemanager.h"
+#include "logger.h"
 #include "util/arraylist.h"
 #include "rendering/camera.h"
 #include "entity.h"
@@ -8,73 +9,96 @@
 #include "material.h"
 #include "core/mesh.h"
 #include "scene.h"
+#include "util/slotmap.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-static arraylist sm_scenes;
-static Hashmap sm_scene_names;
-static unsigned int sm_curr_scene_id;
+static SceneManager* sceneman = NULL;
 
-void scenemanager_init() {
-	arraylist_init(&sm_scenes, sizeof(scene));
-	hashmap_init(&sm_scene_names, sizeof(char) * SCENE_NAME_MAX, sizeof(unsigned int), str_hash);
-	sm_curr_scene_id = 0;
+void scenemanager_init(SceneManager* sm) {
+	slotmap_init(&sm->scenes, sizeof(scene));
+	hashmap_init(&sm->scene_names, SCENE_NAME_MAX, sizeof(uint32_t), str_hash);
+	sm->curr_scene_id = 0;
+	sceneman = sm;
 
 	sm_create_scene("Default Scene");
 }
 
-void scenemanager_deinit() {
-	arraylist_deinit(&sm_scenes);
-	hashmap_deinit(&sm_scene_names);
+void scenemanager_deinit(SceneManager* sm) {
+	slotmap_deinit(&sm->scenes);
+	hashmap_deinit(&sm->scene_names);
+
+	sceneman = NULL;
 }
 
 scene* sm_create_scene(char* name) {
-	if (hashmap_get(&sm_scene_names, name) != NULL) {
-		fprintf(stderr, "scenemanager: Scene %s cannot be created: Scene with name already exists\n", name);
+	if (sceneman == NULL) {
+		LOG(LOG_ERROR, "Cant create scene: Scenemanager not initialized\n");
+		return NULL;
+	}
+
+	if (hashmap_get_str(&sceneman->scene_names, name) != NULL) {
+		LOG(LOG_ERROR, "Scene %s cannot be created: Scene with name already exists\n", name);
 		return NULL;
 	}
 
 	scene s;
-	scene_init(&s, sm_scenes.count, name);
+	scene_init(&s, sceneman->scenes.count, name);
 
-	arraylist_append(&sm_scenes, &s);
-	hashmap_put(&sm_scene_names, name, &s.id);
-	return arraylist_get_last(&sm_scenes);
+	uint32_t id = slotmap_add(&sceneman->scenes, &s);
+	hashmap_put_str(&sceneman->scene_names, name, &id); // TODO: fix id stuff here, there exists two different ids
+	return slotmap_get(&sceneman->scenes, id);
 }
 
-void sm_load_scene(int scene_id) {
-	if (scene_id < 0 || scene_id >= sm_scenes.count) {
-		fprintf(stderr, "scenemanager: Cant load an invalid scene id\n");
-		return;
+bool sm_load_scene(uint32_t scene_id) {
+	if (sceneman == NULL) {
+		LOG(LOG_ERROR, "Cant create scene: Scenemanager not initialized\n");
+		return false;
 	}
 
-	sm_curr_scene_id = scene_id;
+	if (scene_id >= sceneman->scenes.count) {
+		LOG(LOG_ERROR, "Scene with id %d cant be loaded: Invalid scene id\n", scene_id);
+		return false;
+	}
+
+	sceneman->curr_scene_id = scene_id;
+	return true;
 }
 
-void sm_load_scene_name(char* name) {
-	unsigned int* s_id = hashmap_get(&sm_scene_names, name);
+bool sm_load_scene_name(char* name) {
+	if (sceneman == NULL) {
+		LOG(LOG_ERROR, "Cant create scene: Scenemanager not initialized\n");
+		return false;
+	}
 
+	uint32_t* s_id = hashmap_get_str(&sceneman->scene_names, name);
 	if (s_id == NULL) {
-		fprintf(stderr, "scenemanager: Scene %s cant be loaded: It does not exist\n", name);
-		return;
+		LOG(LOG_ERROR, "Scene %s cant be loaded: It does not exist\n", name);
+		return false;
 	}
 	
-	sm_curr_scene_id = *s_id;
+	sceneman->curr_scene_id = *s_id;
+	return true;
 }
 
 scene* sm_get_current_scene() {
-	if (sm_scenes.count == 0) {
-		fprintf(stderr, "There are no scenes\n");
+	if (sceneman == NULL) {
+		LOG(LOG_ERROR, "Cant create scene: Scenemanager not initialized\n");
 		return NULL;
 	}
 
-	return arraylist_get(&sm_scenes, sm_curr_scene_id);
+	if (sceneman->scenes.count == 0) {
+		LOG(LOG_ERROR, "Cant get current scene: There are no scenes\n");
+		return NULL;
+	}
+
+	return slotmap_get(&sceneman->scenes, sceneman->curr_scene_id);
 }
 
 scene* sm_get_scene(char* name) {
-	unsigned int* s_id = hashmap_get(&sm_scene_names, name);
-
+	uint32_t* s_id = hashmap_get_str(&sceneman->scene_names, name);
 	if (s_id == NULL) return NULL;
-	return arraylist_get(&sm_scenes, *s_id);
+
+	return slotmap_get(&sceneman->scenes, *s_id);
 }

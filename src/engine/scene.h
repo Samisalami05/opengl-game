@@ -14,7 +14,6 @@ typedef struct scene {
 	char name[128];
 	arraylist entities;
 	arraylist lights;
-	entity light_entity;
 	camera cam;
 	skybox skybox;
 

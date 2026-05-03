@@ -76,7 +76,7 @@ static AssetHandle asset_handle(uint16_t type, uint16_t gen, uint32_t id) {
 
 // Returns ASSET_HANDLE_INVALID on failure
 AssetHandle aload_texture(const char* path) {
-	AssetHandle* existing = hashmap_get(&assetman->handles, path);
+	AssetHandle* existing = hashmap_get_str(&assetman->handles, path);
 	if (existing != NULL) return *existing;
 
 	texture tex = {0};
@@ -84,7 +84,7 @@ AssetHandle aload_texture(const char* path) {
 	uint64_t slot = slotmap_add(&assetman->assets[ASSET_TEXTURE], &tex);
 	AssetHandle handle = asset_handle(ASSET_TEXTURE, 0, slot);
 
-	if (!hashmap_put(&assetman->handles, path, &handle))
+	if (!hashmap_put_str(&assetman->handles, path, &handle))
 		return ASSET_HANDLE_INVALID;
 	return handle;
 }
@@ -94,7 +94,7 @@ AssetHandle aload_shader(const char* vert, const char* frag) {
 	strncpy(key, vert, ASSET_PATH_MAX / 2);
 	strncat(key, frag, ASSET_PATH_MAX / 2);
 
-	AssetHandle* existing = hashmap_get(&assetman->handles, key);
+	AssetHandle* existing = hashmap_get_str(&assetman->handles, key);
 	if (existing != NULL) return *existing;
 
 	shader shader = {0};
@@ -102,7 +102,7 @@ AssetHandle aload_shader(const char* vert, const char* frag) {
 	uint64_t slot = slotmap_add(&assetman->assets[ASSET_SHADER], &shader);
 	AssetHandle handle = asset_handle(ASSET_SHADER, 0, slot);
 
-	if (!hashmap_put(&assetman->handles, key, &handle))
+	if (!hashmap_put_str(&assetman->handles, key, &handle))
 		return ASSET_HANDLE_INVALID;
 	return handle;
 }

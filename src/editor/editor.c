@@ -1,7 +1,11 @@
 #include "editor.h"
 #include "cimgui.h"
+#include "engine.h"
 #include "logger.h"
 #include "profiler.h"
+#include "scene.h"
+#include "scenemanager.h"
+#include "util/slotmap.h"
 #include "util/util.h"
 #include <stdint.h>
 #include <stdlib.h>
@@ -37,6 +41,7 @@ void editor_begin_frame() {
 }
 
 void editor_update() {
+	Engine* engine = engine_get();
 	/*
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
 
@@ -60,6 +65,32 @@ void editor_update() {
 	igDockSpace(dockspace_id, (ImVec2){0.0f, 0.0f}, 0, NULL);
 
 	igEnd(); */
+
+	igBegin("Scenes", NULL, 0);
+	
+	SceneManager sceneman = engine->sceneman;
+
+	igText("count: %d", sceneman.scenes.count);
+	igText("current: %d", sceneman.curr_scene_id);
+
+	igSpacing();
+
+	igBeginChild_Str("Scene list", (ImVec2_c){0}, 0, 0);
+	for (int i = 0; i < sceneman.scenes.allocated; i++) {
+		if (!slotmap_is_occupied(&sceneman.scenes, i)) continue;
+		scene* scene = slotmap_get(&sceneman.scenes, i);
+		if (igCollapsingHeader_BoolPtr(scene->name, NULL, 0)) {
+			igText("ID: %d", scene->id);
+			igText("Entities: %d", scene->entities.count);
+			igText("Lights: %d", scene->lights.count);
+			igText("cam: %.1f %.1f %.1f", scene->cam.pos.x, scene->cam.pos.y, scene->cam.pos.z);
+		}
+	}
+
+	igEndChild();
+
+
+	igEnd();
 
 	// --- LOGGER ---
 

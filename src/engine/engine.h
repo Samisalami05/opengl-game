@@ -1,7 +1,9 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
+#include "asset_manager.h"
 #include "rendering/renderer.h"
+#include "scenemanager.h"
 #include <AL/alc.h>
 #include <glad_impl.h>
 #include <stdint.h>
@@ -19,6 +21,10 @@ typedef struct {
 	// OpenAl
 	ALCdevice* al_device;
 	ALCcontext* al_context;
+
+	// Managers
+	SceneManager sceneman;
+	AssetManager assetman;
 } Engine;
 
 typedef struct game {
