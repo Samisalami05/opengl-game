@@ -20,6 +20,13 @@
 
 static Editor editor = {0};
 
+enum {
+	MEMCOL_FILE,
+	MEMCOL_LINE,
+	MEMCOL_FUNC,
+	MEMCOL_SIZE,
+};
+
 void editor_init(GLFWwindow* window) {
 	editor.context = igCreateContext(NULL);
 
@@ -40,6 +47,47 @@ void editor_begin_frame() {
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	igNewFrame();
+}
+
+int compare_allocs(const ImGuiTableColumnSortSpecs* sort_spec, 
+                   const void* lhs, 
+                   const void* rhs)
+{
+    const AllocationEntry* a = (const AllocationEntry*)lhs;
+    const AllocationEntry* b = (const AllocationEntry*)rhs;
+
+    int delta = 0;
+
+    switch (sort_spec->ColumnUserID) {
+        case MEMCOL_FILE:
+            delta = strcmp(a->file, b->file);
+            break;
+
+        case MEMCOL_LINE:
+            delta = a->line - b->line;
+            break;
+
+        case MEMCOL_FUNC:
+            delta = strcmp(a->func, b->func);
+            break;
+
+        case MEMCOL_SIZE:
+            if (a->size < b->size) delta = -1;
+            else if (a->size > b->size) delta = 1;
+            else delta = 0;
+            break;
+    }
+
+    if (sort_spec->SortDirection == ImGuiSortDirection_Descending)
+        delta = -delta;
+
+    return delta;
+}
+
+static const ImGuiTableColumnSortSpecs* current_sort_spec;
+
+int compare_allocs_wrapper(const void* lhs, const void* rhs) {
+    return compare_allocs(current_sort_spec, lhs, rhs);
 }
 
 void editor_update() {
@@ -242,15 +290,61 @@ void editor_update() {
 	}
 
 	if (igCollapsingHeader_BoolPtr("Memory", 0, 0)) {
-		igText("allocations: %ld", engine->allocator.memory_map.count);
-		AllocationEntry allocs[engine->allocator.memory_map.count];
-		hashmap_values(&engine->allocator.memory_map, allocs);
+		Allocator* alloc = &engine->allocator;
+		Hashmap* memory_map = &alloc->memory_map;
 
-		for (int i = 0; i < engine->allocator.memory_map.count; i++) {
-			igText("%s:%d: %s - %ld", allocs[i].file, allocs[i].line, allocs[i].func, allocs[i].size);
+		igText("allocations: %ld", memory_map->count);
+		AllocationEntry allocs[memory_map->count];
+		hashmap_values(memory_map, allocs); // TODO: only update when allocator dirty
+
+		size_t total = 0;
+		for (int i = 0; i < memory_map->count; i++) {
+			total += allocs[i].size;
+		}
+
+		igText("allocated: %ld\n", total);
+
+		static ImGuiTextFilter filter = {0};
+		ImGuiTextFilter_Draw(&filter, "Search", 200.0f);
+
+		if (igBeginTable("alloc_table", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Sortable, (ImVec2){0}, 0.0f)) {
+			igTableSetupColumn("File", ImGuiTableColumnFlags_DefaultSort, 0.0f, MEMCOL_FILE);
+			igTableSetupColumn("Line", ImGuiTableColumnFlags_PreferSortAscending, 0.0f, MEMCOL_LINE);
+			igTableSetupColumn("Function", 0, 0.0f, MEMCOL_FUNC);
+			igTableSetupColumn("Size", ImGuiTableColumnFlags_PreferSortDescending, 0.0f, MEMCOL_SIZE);
+			igTableHeadersRow();
+
+			ImGuiTableSortSpecs* specs = igTableGetSortSpecs();
+			if (specs && specs->SpecsCount > 0) {
+				current_sort_spec = &specs->Specs[0];
+
+				qsort(allocs, memory_map->count, sizeof(AllocationEntry), compare_allocs_wrapper);
+
+				specs->SpecsDirty = false;
+			}
+
+			for (int i = 0; i < memory_map->count; i++) {
+				
+				if (!ImGuiTextFilter_PassFilter(&filter, allocs[i].file, NULL)) continue;
+
+				igTableNextRow(0, 0);
+
+				igTableSetColumnIndex(0);
+				igText("%s", allocs[i].file);
+
+				igTableSetColumnIndex(1);
+				igText("%d", allocs[i].line);
+
+				igTableSetColumnIndex(2);
+				igText("%s", allocs[i].func);
+
+				igTableSetColumnIndex(3);
+				igText("%zu", allocs[i].size);
+			}
+
+			igEndTable();
 		}
 	}
-	
 	
 	igEnd();
 }

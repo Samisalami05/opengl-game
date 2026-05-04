@@ -45,7 +45,7 @@
 #include <cimgui.h>
 
 int main(void) {
-	Engine* eng = engine_get();
+	/* Engine* eng = engine_get();
 	allocator_attach(&eng->allocator);
 
 	void* p = MALLOC(100);
@@ -64,7 +64,7 @@ int main(void) {
 
 	hashmap_deinit(&eng->allocator.memory_map);
 
-	return 0;
+	return 0; */
 
 	AssetManager am = {0};
 	asset_manager_init(&am);
@@ -119,7 +119,7 @@ int main(void) {
 
 	arraylist_append(&scene->lights, &pointlight1);
 	arraylist_append(&scene->lights, &pointlight2);
-/*
+
 	WavFile file;
 	if (wav_open(&file, "assets/wat_u_want_2.wav") != WAV_OK) {
 		LOG(LOG_ERROR, "Failed to open wav file");
@@ -179,16 +179,15 @@ int main(void) {
     alSourcePlay(source);
 
 	ALint state = AL_PLAYING;
-	alGetSourcei(source, AL_SOURCE_STATE, &state); */
+	alGetSourcei(source, AL_SOURCE_STATE, &state);
 
-	goto CLOSE;
+	//goto CLOSE;
 
     while (!glfwWindowShouldClose(game.window))
     {
 		engine_begin_frame(&game);
 		editor_begin_frame();
 
-		/*
 		if (state == AL_PLAYING) {
 			alListener3f(AL_POSITION,
 				scene->cam.pos.x,
@@ -212,7 +211,7 @@ int main(void) {
 			alListenerfv(AL_ORIENTATION, orientation);
 			alGetSourcei(source, AL_SOURCE_STATE, &state);
 		}
-		else printf("stopped\n"); */
+		else printf("stopped\n");
 	
 		camera_key_input(&scene->cam, game.deltatime);
 		camera_mouse_input(&scene->cam, game.deltatime);
@@ -256,13 +255,10 @@ int main(void) {
 
 CLOSE:
 
-	
-
-	/*
 	wav_close(&file);
 
 	alDeleteSources(1, &source);
-    alDeleteBuffers(1, &buffer); */
+    alDeleteBuffers(1, &buffer);
 	
 	//mesh_delete(triangle);
 	mesh_delete(cube);

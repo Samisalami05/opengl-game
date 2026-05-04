@@ -1,6 +1,7 @@
 #include "hashmap.h"
 #include "allocator.h"
 #include "logger.h"
+#include <AL/al.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -103,17 +104,21 @@ void hashmap_clear(Hashmap *map) {
 }
 
 void hashmap_keys(Hashmap* map, void* out) {
+	size_t index = 0;
 	for (size_t i = 0; i < map->capacity; i++) {
 		if (!bucket_is_occupied(map, i)) continue;
-		memcpy(out + i * map->k_size, bucket_key(map, i), map->k_size);
+		memcpy((uint8_t*)out + index * map->k_size, bucket_key(map, i), map->k_size);
+		index++;
 	}
 }
 
 void hashmap_values(Hashmap* map, void* out) {
+	memset(out, 0, map->count * map->v_size);
+	size_t index = 0;
 	for (size_t i = 0; i < map->capacity; i++) {
-		printf("i: %ld\n", i);
 		if (!bucket_is_occupied(map, i)) continue;
-		memcpy((uint8_t*)out + i * map->v_size, bucket_value(map, i), map->v_size);
+		memcpy((uint8_t*)out + index * map->v_size, bucket_value(map, i), map->v_size);
+		index++;
 	}
 }
 
@@ -126,6 +131,7 @@ static void bucket_set(Hashmap* map, size_t id, const void* key, const void* val
 
 	probe_t new_probe = probe;
 	if (occupied) new_probe |= OCCUPIED_MASK;
+	else new_probe &= ~OCCUPIED_MASK;
 	memcpy(bucket_probe(map, id), &new_probe, sizeof(probe_t));
 }
 
@@ -154,17 +160,15 @@ static bool hashmap_expand(Hashmap* map) {
 
     uint8_t* old = map->buckets;
 
-    map->capacity = new_capacity;
-    map->count = 0;
-
     uint8_t* new_buckets = calloc(new_capacity + 2, bucket_size(map)); // +2 for CURR and TMP bucket
     if (!new_buckets) {
         LOG(LOG_ERROR, "calloc failed: %s", strerror(errno));
         return false;
     }
 
-
     map->buckets = new_buckets;
+	map->capacity = new_capacity;
+    map->count = 0;
 
     // Reinsert old entries
     for (size_t i = 0; i < old_capacity; i++) {
@@ -186,6 +190,10 @@ static bool hashmap_expand(Hashmap* map) {
     return true;
 }
 
+static void bucket_set_probe(Hashmap* map, size_t id, probe_t p) {
+    memcpy(map->buckets + bucket_probe_offset(map, id), &p, sizeof(probe_t));
+}
+
 static bool hashmap_put_internal(Hashmap* map, const void* key, const void* value, bool key_str) {
 	if (key == NULL || value == NULL) {
 		LOG(LOG_ERROR, "Cant insert with a NULL %s\n", key == NULL ? "key" : "value");
@@ -193,20 +201,17 @@ static bool hashmap_put_internal(Hashmap* map, const void* key, const void* valu
 	}
 
 	// TODO: return inserted value
-	// TODO: remove probe from buckets (easy to compute)
 
 	if (map->count + 1 > map->capacity) {
-		printf("Expanding: %ld\n", map->capacity);
 		if (!hashmap_expand(map)) return false;
-		printf("Done expanding: %ld\n", map->capacity);
 	}
 
 	bucket_set(map, CURR_BUCKET, key, value, 0, true, key_str);
 
 	size_t p = map->hash(key) % map->capacity;
+	bool insert = true;
 	
 	probe_t probe = 0;  // probe sequence length
-	printf("p: %ld, hash: %ld\n", p, map->hash(key));
 	while (bucket_is_occupied(map, p)) {
 		if (probe >= map->capacity) {
 			if (hashmap_expand(map)) {
@@ -218,6 +223,8 @@ static bool hashmap_put_internal(Hashmap* map, const void* key, const void* valu
 		}
 
 		if (bucket_cmp(map, p, CURR_BUCKET, key_str)) {
+			if (map->v_size == sizeof(AllocationEntry)) LOG(LOG_INFO, "Overwriting value in hashmap\n");
+			insert = false; // insert is false, no knew value is added, only overwritten
 			break;
 		}
 
@@ -231,8 +238,9 @@ static bool hashmap_put_internal(Hashmap* map, const void* key, const void* valu
 	}
 
 	bucket_cpy(map, p, CURR_BUCKET);
-	*bucket_probe(map, p) = (probe | OCCUPIED_MASK);
-	map->count++;
+	bucket_set_probe(map, p, probe | OCCUPIED_MASK);
+
+	if (insert) map->count++;
 
 	return true;
 }

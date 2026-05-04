@@ -2,6 +2,7 @@
 #define ALLOCATOR_H
 
 #include "util/hashmap.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -27,6 +28,7 @@ typedef struct {
 	int total_allocations;
 	int frame_allocations;
 	Hashmap memory_map;
+	bool dirty;
 } Allocator;
 
 typedef struct {
