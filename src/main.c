@@ -45,6 +45,27 @@
 #include <cimgui.h>
 
 int main(void) {
+	Engine* eng = engine_get();
+	allocator_attach(&eng->allocator);
+
+	void* p = MALLOC(100);
+	FREE(p);
+
+	void* p2 = MALLOC(100);
+	FREE(p2);
+
+	AllocationEntry entries[eng->allocator.memory_map.count];
+	hashmap_values(&eng->allocator.memory_map, entries);
+
+	printf("Count: %ld\n", eng->allocator.memory_map.count);
+	for (int i = 0; i < eng->allocator.memory_map.count; i++) {
+		printf("alloc: %s\n", entries[i].file);
+	}
+
+	hashmap_deinit(&eng->allocator.memory_map);
+
+	return 0;
+
 	AssetManager am = {0};
 	asset_manager_init(&am);
 
@@ -55,13 +76,13 @@ int main(void) {
 	
 	asset_manager_deinit(&am);
 
+	//return 0 ;
 
     game game = {0};
 	if (engine_init(&game)) return 1;
 	Engine* engine = engine_get();
 
 	editor_init(game.window);
-
 
 	model m = {0};
 	load_model(&m, "assets/diner/scene.gltf");
@@ -98,7 +119,7 @@ int main(void) {
 
 	arraylist_append(&scene->lights, &pointlight1);
 	arraylist_append(&scene->lights, &pointlight2);
-
+/*
 	WavFile file;
 	if (wav_open(&file, "assets/wat_u_want_2.wav") != WAV_OK) {
 		LOG(LOG_ERROR, "Failed to open wav file");
@@ -123,6 +144,7 @@ int main(void) {
 	if (format == AL_FORMAT_STEREO8 || format == AL_FORMAT_STEREO16) printf("cooked\n");
 
 	uint8_t* data = MALLOC(file.data_size);
+	printf("ALLOCATED\n");
 	if (wav_read(&file, data, file.data_size) != WAV_OK) {
 		LOG(LOG_ERROR, "Could not read data from wav file");
 		return 1;
@@ -157,13 +179,16 @@ int main(void) {
     alSourcePlay(source);
 
 	ALint state = AL_PLAYING;
-	alGetSourcei(source, AL_SOURCE_STATE, &state);
+	alGetSourcei(source, AL_SOURCE_STATE, &state); */
+
+	goto CLOSE;
 
     while (!glfwWindowShouldClose(game.window))
     {
 		engine_begin_frame(&game);
 		editor_begin_frame();
 
+		/*
 		if (state == AL_PLAYING) {
 			alListener3f(AL_POSITION,
 				scene->cam.pos.x,
@@ -187,7 +212,7 @@ int main(void) {
 			alListenerfv(AL_ORIENTATION, orientation);
 			alGetSourcei(source, AL_SOURCE_STATE, &state);
 		}
-		else printf("stopped\n");
+		else printf("stopped\n"); */
 	
 		camera_key_input(&scene->cam, game.deltatime);
 		camera_mouse_input(&scene->cam, game.deltatime);
@@ -229,10 +254,15 @@ int main(void) {
 		engine_end_frame(&game);
     }
 
+CLOSE:
+
+	
+
+	/*
 	wav_close(&file);
 
 	alDeleteSources(1, &source);
-    alDeleteBuffers(1, &buffer);
+    alDeleteBuffers(1, &buffer); */
 	
 	//mesh_delete(triangle);
 	mesh_delete(cube);

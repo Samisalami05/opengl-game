@@ -2,6 +2,7 @@
 
 #include <glad/glad.h>
 #include "GLFW/glfw3.h"
+#include "allocator.h"
 #include "asset_manager.h"
 #include "inputmanager.h"
 #include "profiler.h"
@@ -34,6 +35,8 @@ static void deinit_glfw(game* g);
 static void deinit_openal();
 
 uint8_t engine_init(game* g) {
+	allocator_attach(&engine.allocator);
+
 	GLFWwindow* window = init_glfw();
 	if (window == NULL) return 1;
 	if (!init_opengl()) return 1;
@@ -102,6 +105,7 @@ static void glfw_framebuffer_size_callback(GLFWwindow* window, int width, int he
 
 // Initializers
 static GLFWwindow* init_glfw() {
+	glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
 	if (!glfwInit()) {
 		fprintf(stderr, "engine: Failed to initialize glfw\n");
         return NULL;

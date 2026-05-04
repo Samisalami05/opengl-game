@@ -111,8 +111,9 @@ void hashmap_keys(Hashmap* map, void* out) {
 
 void hashmap_values(Hashmap* map, void* out) {
 	for (size_t i = 0; i < map->capacity; i++) {
+		printf("i: %ld\n", i);
 		if (!bucket_is_occupied(map, i)) continue;
-		memcpy(out + i * map->v_size, bucket_value(map, i), map->v_size);
+		memcpy((uint8_t*)out + i * map->v_size, bucket_value(map, i), map->v_size);
 	}
 }
 
@@ -153,15 +154,17 @@ static bool hashmap_expand(Hashmap* map) {
 
     uint8_t* old = map->buckets;
 
-    uint8_t* new_buckets = CALLOC(new_capacity + 2, bucket_size(map)); // +2 for CURR and TMP bucket
+    map->capacity = new_capacity;
+    map->count = 0;
+
+    uint8_t* new_buckets = calloc(new_capacity + 2, bucket_size(map)); // +2 for CURR and TMP bucket
     if (!new_buckets) {
         LOG(LOG_ERROR, "calloc failed: %s", strerror(errno));
         return false;
     }
 
+
     map->buckets = new_buckets;
-    map->capacity = new_capacity;
-    map->count = 0;
 
     // Reinsert old entries
     for (size_t i = 0; i < old_capacity; i++) {
@@ -172,14 +175,14 @@ static bool hashmap_expand(Hashmap* map) {
 		void* value = old + bucket_value_offset(map, i);
 
 		if (!hashmap_put(map, key, value)) {
-			FREE(new_buckets);
+			free(new_buckets);
 			map->buckets = old;
 			map->capacity = old_capacity;
 			return false;
 		}
     }
 
-    FREE(old);
+    free(old);
     return true;
 }
 
@@ -192,14 +195,18 @@ static bool hashmap_put_internal(Hashmap* map, const void* key, const void* valu
 	// TODO: return inserted value
 	// TODO: remove probe from buckets (easy to compute)
 
-	if (map->count + 1 > map->capacity)
+	if (map->count + 1 > map->capacity) {
+		printf("Expanding: %ld\n", map->capacity);
 		if (!hashmap_expand(map)) return false;
+		printf("Done expanding: %ld\n", map->capacity);
+	}
 
 	bucket_set(map, CURR_BUCKET, key, value, 0, true, key_str);
 
 	size_t p = map->hash(key) % map->capacity;
 	
 	probe_t probe = 0;  // probe sequence length
+	printf("p: %ld, hash: %ld\n", p, map->hash(key));
 	while (bucket_is_occupied(map, p)) {
 		if (probe >= map->capacity) {
 			if (hashmap_expand(map)) {

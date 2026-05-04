@@ -1,10 +1,12 @@
 #include "editor.h"
+#include "allocator.h"
 #include "cimgui.h"
 #include "engine.h"
 #include "logger.h"
 #include "profiler.h"
 #include "scene.h"
 #include "scenemanager.h"
+#include "util/hashmap.h"
 #include "util/slotmap.h"
 #include "util/util.h"
 #include <stdint.h>
@@ -240,7 +242,13 @@ void editor_update() {
 	}
 
 	if (igCollapsingHeader_BoolPtr("Memory", 0, 0)) {
-		igText("Not implemented...");
+		igText("allocations: %ld", engine->allocator.memory_map.count);
+		AllocationEntry allocs[engine->allocator.memory_map.count];
+		hashmap_values(&engine->allocator.memory_map, allocs);
+
+		for (int i = 0; i < engine->allocator.memory_map.count; i++) {
+			igText("%s:%d: %s - %ld", allocs[i].file, allocs[i].line, allocs[i].func, allocs[i].size);
+		}
 	}
 	
 	

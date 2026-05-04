@@ -1,6 +1,7 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
+#include "allocator.h"
 #include "asset_manager.h"
 #include "rendering/renderer.h"
 #include "scenemanager.h"
@@ -17,6 +18,7 @@ typedef struct {
 	uint8_t setting_flags;
 	renderer renderer;
 	float last_frame; // For deltatime calculation
+	Allocator allocator;
 	
 	// OpenAl
 	ALCdevice* al_device;
