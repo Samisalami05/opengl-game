@@ -15,6 +15,7 @@
 #include "inputmanager.h"
 #include "keys.h"
 #include "logger.h"
+#include "stack_trace.h"
 #include "util/hash.h"
 #include "util/hashmap.h"
 #include "math/vec2.h"
@@ -44,23 +45,57 @@
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include <cimgui.h>
 
+#include <execinfo.h>
+
+static void print_stacktrace() {
+	void *buffer[50];
+    int nptrs = backtrace(buffer, 50);
+	
+	printf("Stack trace (%d frames):\n", nptrs);
+
+    char **strings = backtrace_symbols(buffer, nptrs);
+    if (strings == NULL) {
+        perror("backtrace_symbols");
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i < nptrs; i++) {
+        printf("%s\n", strings[i]);
+    }
+
+    free(strings);
+}
+
 int main(void) {
-	/* Engine* eng = engine_get();
+	/* StackTrace trace = {0};
+	stacktrace_capture(&trace);
+	stacktrace_print(&trace);
+
+	Engine* eng = engine_get();
 	allocator_attach(&eng->allocator);
 
 	void* p = MALLOC(100);
 	FREE(p);
 
-	void* p2 = MALLOC(100);
-	FREE(p2);
+	void* p2 = CALLOC(1, 200);
+	
+	p2 = REALLOC(p2, 1000);
 
-	AllocationEntry entries[eng->allocator.memory_map.count];
-	hashmap_values(&eng->allocator.memory_map, entries);
+	p2 = REALLOC(p2, 2000);
 
-	printf("Count: %ld\n", eng->allocator.memory_map.count);
-	for (int i = 0; i < eng->allocator.memory_map.count; i++) {
-		printf("alloc: %s\n", entries[i].file);
+	//FREE(p2);
+
+	AllocationEntry entrie[eng->allocator.memory_map.count];
+	hashmap_values(&eng->allocator.memory_map, entrie);
+
+	if (eng->allocator.memory_map.count > 0) {
+		printf("MEMORY LEAK DETECTED\n");
+		printf("Count: %ld\n", eng->allocator.memory_map.count);
+		for (int i = 0; i < eng->allocator.memory_map.count; i++) {
+			printf("%s:%ld - %s, %ld\n", entrie[i].file, entrie[i].line, entrie[i].func, entrie[i].size);
+		}
 	}
+
 
 	hashmap_deinit(&eng->allocator.memory_map);
 
@@ -264,5 +299,18 @@ CLOSE:
 	mesh_delete(cube);
 	model_deinit(&m);
 	engine_deinit(&game);
+
+	AllocationEntry entries[engine->allocator.memory_map.count];
+	hashmap_values(&engine->allocator.memory_map, entries);
+
+
+	if (engine->allocator.memory_map.count > 0) {
+		printf("MEMORY LEAK DETECTED\n");
+		printf("Count: %ld\n", engine->allocator.memory_map.count);
+		for (int i = 0; i < engine->allocator.memory_map.count; i++) {
+			printf("%s:%ld - %s, %ld\n", entries[i].file, entries[i].line, entries[i].func, entries[i].size);
+		}
+	}
+
     return 0;
 }

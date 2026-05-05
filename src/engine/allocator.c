@@ -48,41 +48,59 @@ void* mmalloc(size_t size, AllocationDetails details) {
 	return ptr;
 }
 
-void* mcalloc(size_t count, size_t size) {
+void* mcalloc(size_t count, size_t size, AllocationDetails details) {
 	void* ptr = calloc(count, size);
-	return ptr;
 	
 	if (alloc == NULL) return ptr;
 	alloc->dirty = true;
 
 	alloc->total_allocations++;
-	hashmap_put(&alloc->memory_map, (intptr_t*)ptr, &size);
+
+	AllocationEntry entry = {0};
+	entry.size = size;
+	entry.line = details.line;
+	strncpy(entry.file, details.file + file_offset(details.file, 2), 128);
+	strncpy(entry.func, details.func, 64);
+
+	intptr_t key = (intptr_t)ptr;
+	hashmap_put(&alloc->memory_map, &key, &entry);
 
 	return ptr;
 }
 
-void* mrealloc(void* ptr, size_t size) {
+void* mrealloc(void* ptr, size_t size, AllocationDetails details) {
 	void* p = realloc(ptr, size);
-	return p;
+	
 	if (alloc == NULL) return p;
 	alloc->dirty = true;
 
 	alloc->total_allocations++;
 
+	AllocationEntry entry = {0};
+	entry.size = size;
+	entry.line = details.line;
+	strncpy(entry.file, details.file + file_offset(details.file, 2), 128);
+	strncpy(entry.func, details.func, 64);
+
+	intptr_t key = (intptr_t)ptr;
+	if (hashmap_get(&alloc->memory_map, &key) != NULL) {
+		hashmap_remove(&alloc->memory_map, &key);
+	}
+
 	intptr_t new = (intptr_t)p;
-	hashmap_put(&alloc->memory_map, &new, &size);
+	hashmap_put(&alloc->memory_map, &new, &entry);
 	
 	return p;
 }
 
-void mfree(void* ptr) {
+void mfree(void* ptr, AllocationDetails details) {
+	if (alloc != NULL) {
+		alloc->dirty = true;
+
+		alloc->total_allocations--;
+
+		intptr_t key = (intptr_t)ptr;
+		hashmap_remove(&alloc->memory_map, &key);
+	}
 	free(ptr);
-	return;
-	if (alloc == NULL) return;
-	alloc->dirty = true;
-
-	alloc->total_allocations--;
-
-	intptr_t key = (intptr_t)ptr;
-	hashmap_remove(&alloc->memory_map, &key);
 }

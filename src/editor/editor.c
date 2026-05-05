@@ -306,6 +306,8 @@ void editor_update() {
 
 		static ImGuiTextFilter filter = {0};
 		ImGuiTextFilter_Draw(&filter, "Search", 200.0f);
+		
+		igBeginChild_Str("memory table", (ImVec2){0}, 0, 0);
 
 		if (igBeginTable("alloc_table", 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Sortable, (ImVec2){0}, 0.0f)) {
 			igTableSetupColumn("File", ImGuiTableColumnFlags_DefaultSort, 0.0f, MEMCOL_FILE);
@@ -344,6 +346,7 @@ void editor_update() {
 
 			igEndTable();
 		}
+		igEndChild();
 	}
 	
 	igEnd();

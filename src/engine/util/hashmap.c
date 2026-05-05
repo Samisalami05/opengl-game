@@ -223,7 +223,6 @@ static bool hashmap_put_internal(Hashmap* map, const void* key, const void* valu
 		}
 
 		if (bucket_cmp(map, p, CURR_BUCKET, key_str)) {
-			if (map->v_size == sizeof(AllocationEntry)) LOG(LOG_INFO, "Overwriting value in hashmap\n");
 			insert = false; // insert is false, no knew value is added, only overwritten
 			break;
 		}
