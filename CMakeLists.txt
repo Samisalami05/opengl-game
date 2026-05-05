@@ -70,6 +70,7 @@ target_include_directories(editor PUBLIC
 
 target_link_libraries(engine PUBLIC glad)
 target_link_libraries(engine PRIVATE glfw cimgui assimp)
+#target_link_options(engine PRIVATE -rdynamic)
 
 target_link_libraries(editor PUBLIC glad)
 target_link_libraries(editor PRIVATE glfw cimgui assimp)
@@ -87,8 +88,11 @@ else()
 	target_link_libraries(editor PRIVATE GL openal dl m)
 endif()
 
+add_compile_options(-g -O0 -fno-omit-frame-pointer)
+
 add_executable(main src/main.c)
 target_link_libraries(main PRIVATE engine editor)
+target_link_options(main PRIVATE -rdynamic)
 
 add_executable(runtests ${TEST_SRC})
 target_link_libraries(runtests PRIVATE engine)

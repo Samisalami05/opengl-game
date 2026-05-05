@@ -1,11 +1,12 @@
 #include "allocator.h"
+#include "stack_trace.h"
 #include "util/hashmap.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static Allocator* alloc;
+static Allocator* alloc = NULL;
 
 size_t ptr_hash(const void* key) {
 	const intptr_t* ptr = key;
@@ -34,13 +35,12 @@ void* mmalloc(size_t size, AllocationDetails details) {
 	if (alloc == NULL) return ptr;
 	alloc->dirty = true;
 
-	alloc->total_allocations++;
-
 	AllocationEntry entry = {0};
 	entry.size = size;
 	entry.line = details.line;
 	strncpy(entry.file, details.file + file_offset(details.file, 2), 128);
 	strncpy(entry.func, details.func, 64);
+	stacktrace_capture(&entry.trace);
 
 	intptr_t key = (intptr_t)ptr;
 	hashmap_put(&alloc->memory_map, &key, &entry);
@@ -54,13 +54,12 @@ void* mcalloc(size_t count, size_t size, AllocationDetails details) {
 	if (alloc == NULL) return ptr;
 	alloc->dirty = true;
 
-	alloc->total_allocations++;
-
 	AllocationEntry entry = {0};
 	entry.size = size;
 	entry.line = details.line;
 	strncpy(entry.file, details.file + file_offset(details.file, 2), 128);
 	strncpy(entry.func, details.func, 64);
+	stacktrace_capture(&entry.trace);
 
 	intptr_t key = (intptr_t)ptr;
 	hashmap_put(&alloc->memory_map, &key, &entry);
@@ -74,13 +73,12 @@ void* mrealloc(void* ptr, size_t size, AllocationDetails details) {
 	if (alloc == NULL) return p;
 	alloc->dirty = true;
 
-	alloc->total_allocations++;
-
 	AllocationEntry entry = {0};
 	entry.size = size;
 	entry.line = details.line;
 	strncpy(entry.file, details.file + file_offset(details.file, 2), 128);
 	strncpy(entry.func, details.func, 64);
+	stacktrace_capture(&entry.trace);
 
 	intptr_t key = (intptr_t)ptr;
 	if (hashmap_get(&alloc->memory_map, &key) != NULL) {
@@ -96,8 +94,6 @@ void* mrealloc(void* ptr, size_t size, AllocationDetails details) {
 void mfree(void* ptr, AllocationDetails details) {
 	if (alloc != NULL) {
 		alloc->dirty = true;
-
-		alloc->total_allocations--;
 
 		intptr_t key = (intptr_t)ptr;
 		hashmap_remove(&alloc->memory_map, &key);

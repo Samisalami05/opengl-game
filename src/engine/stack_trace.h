@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define STACK_TRACE_MAX_FRAMES 50
+#define STACK_TRACE_MAX_FRAMES 64
 
 typedef struct {
 	uint8_t* frames[STACK_TRACE_MAX_FRAMES];

@@ -1,3 +1,4 @@
+#include <asm-generic/errno-base.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <glad_impl.h>
@@ -45,32 +46,8 @@
 #define CIMGUI_DEFINE_ENUMS_AND_STRUCTS
 #include <cimgui.h>
 
-#include <execinfo.h>
-
-static void print_stacktrace() {
-	void *buffer[50];
-    int nptrs = backtrace(buffer, 50);
-	
-	printf("Stack trace (%d frames):\n", nptrs);
-
-    char **strings = backtrace_symbols(buffer, nptrs);
-    if (strings == NULL) {
-        perror("backtrace_symbols");
-        exit(EXIT_FAILURE);
-    }
-
-    for (int i = 0; i < nptrs; i++) {
-        printf("%s\n", strings[i]);
-    }
-
-    free(strings);
-}
-
 int main(void) {
-	/* StackTrace trace = {0};
-	stacktrace_capture(&trace);
-	stacktrace_print(&trace);
-
+	/*
 	Engine* eng = engine_get();
 	allocator_attach(&eng->allocator);
 
@@ -93,6 +70,7 @@ int main(void) {
 		printf("Count: %ld\n", eng->allocator.memory_map.count);
 		for (int i = 0; i < eng->allocator.memory_map.count; i++) {
 			printf("%s:%ld - %s, %ld\n", entrie[i].file, entrie[i].line, entrie[i].func, entrie[i].size);
+			stacktrace_print(&entrie[i].trace);
 		}
 	}
 
@@ -305,10 +283,11 @@ CLOSE:
 
 
 	if (engine->allocator.memory_map.count > 0) {
-		printf("MEMORY LEAK DETECTED\n");
-		printf("Count: %ld\n", engine->allocator.memory_map.count);
+		printf("Memory leaks: %ld\n", engine->allocator.memory_map.count);
 		for (int i = 0; i < engine->allocator.memory_map.count; i++) {
-			printf("%s:%ld - %s, %ld\n", entries[i].file, entries[i].line, entries[i].func, entries[i].size);
+			if (entries[i].line == 0) continue; // TODO: this should not fix a seg fault
+			printf("\n[Leak] %s:%ld - %s, %ld bytes\n", entries[i].file, entries[i].line, entries[i].func, entries[i].size);
+			stacktrace_print(&entries[i].trace);
 		}
 	}
 

@@ -1,6 +1,7 @@
 #ifndef ALLOCATOR_H
 #define ALLOCATOR_H
 
+#include "stack_trace.h"
 #include "util/hashmap.h"
 #include <stdbool.h>
 #include <stdint.h>
@@ -23,10 +24,6 @@
 #endif
 
 typedef struct {
-	size_t total_memory;
-	size_t frame_memory;
-	int total_allocations;
-	int frame_allocations;
 	Hashmap memory_map;
 	bool dirty;
 } Allocator;
@@ -42,6 +39,7 @@ typedef struct {
 	char file[128];
 	char func[64];
 	uint64_t line;
+	StackTrace trace;
 } AllocationEntry;
 
 void allocator_attach(Allocator* allocator);

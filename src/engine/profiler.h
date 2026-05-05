@@ -1,6 +1,7 @@
 #ifndef PROFILER_H
 #define PROFILER_H
 
+#include "util/hashmap.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -28,7 +29,26 @@ typedef struct {
 } RenderPipelineStats;
 
 typedef struct {
+	size_t size;
+} ProfilerAllocation;
+
+typedef struct {
+	intptr_t ptr;
+	char file[64];
+	char func[64];
+	uint32_t line;
+	size_t size;
+
+} ProfilerMemoryEntry;
+
+typedef struct {
+	ProfilerMemoryEntry entry;
+} ProfilerMemoryStats;
+
+typedef struct {
 	RenderPipelineStats pipeline;
+	ProfilerMemoryStats memory;
+
 	ProfilerTime fps;
 	ProfilerTime frame_cpu;
 	ProfilerTime frame_gpu;
