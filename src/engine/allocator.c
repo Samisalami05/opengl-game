@@ -1,4 +1,5 @@
 #include "allocator.h"
+#include "logger.h"
 #include "stack_trace.h"
 #include "util/hashmap.h"
 #include <stdint.h>
@@ -45,6 +46,14 @@ void* mmalloc(size_t size, AllocationDetails details) {
 	intptr_t key = (intptr_t)ptr;
 	hashmap_put(&alloc->memory_map, &key, &entry);
 
+	AllocationEntry* get = hashmap_get(&alloc->memory_map, &key);
+	
+	if (get == NULL) LOG(LOG_ERROR, "This is very bad");
+
+	else if (get->size == 0) {
+		printf("%s:%ld - %s() %ld", get->file, get->line, get->func, get->size);
+	}
+
 	return ptr;
 }
 
@@ -63,6 +72,7 @@ void* mcalloc(size_t count, size_t size, AllocationDetails details) {
 
 	intptr_t key = (intptr_t)ptr;
 	hashmap_put(&alloc->memory_map, &key, &entry);
+	if (hashmap_get(&alloc->memory_map, &key) == NULL) LOG(LOG_ERROR, "This is very bad\n");
 
 	return ptr;
 }
@@ -80,13 +90,16 @@ void* mrealloc(void* ptr, size_t size, AllocationDetails details) {
 	strncpy(entry.func, details.func, 64);
 	stacktrace_capture(&entry.trace);
 
-	intptr_t key = (intptr_t)ptr;
-	if (hashmap_get(&alloc->memory_map, &key) != NULL) {
-		hashmap_remove(&alloc->memory_map, &key);
+	if (ptr != NULL) {
+		intptr_t key = (intptr_t)ptr;
+		if (hashmap_get(&alloc->memory_map, &key) != NULL) {
+			hashmap_remove(&alloc->memory_map, &key);
+		}
 	}
 
 	intptr_t new = (intptr_t)p;
 	hashmap_put(&alloc->memory_map, &new, &entry);
+	if (hashmap_get(&alloc->memory_map, &new) == NULL) LOG(LOG_ERROR, "This is very bad\n");
 	
 	return p;
 }
@@ -96,7 +109,11 @@ void mfree(void* ptr, AllocationDetails details) {
 		alloc->dirty = true;
 
 		intptr_t key = (intptr_t)ptr;
-		hashmap_remove(&alloc->memory_map, &key);
+		if (hashmap_get(&alloc->memory_map, &key) == NULL) LOG(LOG_ERROR, "Could not be found");
+		if (!hashmap_remove(&alloc->memory_map, &key)) {
+			LOG(LOG_ERROR, "Could not remove ptr %ld from memory map", (size_t)key);
+		}
+		//if (hashmap_get(&alloc->memory_map, &key) != NULL) LOG(LOG_ERROR, "This is very bad\n");
 	}
 	free(ptr);
 }

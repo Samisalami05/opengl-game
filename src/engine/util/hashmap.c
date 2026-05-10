@@ -272,7 +272,10 @@ static bool hashmap_remove_internal(Hashmap* map, const void* key, bool key_str)
 	size_t probe = 0;
 
 	for (;;) {
-		if (!bucket_is_occupied(map, p)) return false;
+		if (!bucket_is_occupied(map, p)) {
+			LOG(LOG_ERROR, "Walked to unoccupied bucket");
+			return false;
+		}
 
 		probe_t curr_probe = (*(probe_t*)bucket_probe(map, p) & ~OCCUPIED_MASK);
 

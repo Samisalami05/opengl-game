@@ -56,5 +56,6 @@ void unload_asset(AssetHandle handle);
 void unload_asset_path(const char* path);
 
 const void* asset_get(AssetHandle handle);
+void asset_reload(AssetHandle handle);
 
 #endif

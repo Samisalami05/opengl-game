@@ -67,8 +67,9 @@ int main(void) {
 	Engine* eng = engine_get();
 	allocator_attach(&eng->allocator);
 
-	void* p = MALLOC(100);
-	FREE(p);
+	for (int i = 0; i < 100; i++) {
+		void* p = MALLOC(100);
+	}
 
 	void* p2 = CALLOC(1, 200);
 	
@@ -76,7 +77,9 @@ int main(void) {
 
 	p2 = REALLOC(p2, 2000);
 
-	//FREE(p2);
+	void* p3 = NULL;
+
+	p3 = REALLOC(p3, 5000);
 
 	AllocationEntry entrie[eng->allocator.memory_map.count];
 	hashmap_values(&eng->allocator.memory_map, entrie);
@@ -294,6 +297,7 @@ CLOSE:
 	model_deinit(&m);
 	engine_deinit(&game);
 
+	/*
 	AllocationEntry entries[engine->allocator.memory_map.count];
 	hashmap_values(&engine->allocator.memory_map, entries);
 
@@ -306,6 +310,6 @@ CLOSE:
 			stacktrace_print(&entries[i].trace);
 		}
 	}
-
+ */
     return 0;
 }
