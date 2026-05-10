@@ -47,22 +47,6 @@
 #include <cimgui.h>
 
 int main(void) {
-
-	WavFile coin = {0};
-	wav_open(&coin, "assets/coin.wav");
-	wav_print_info(&coin);
-
-	uint8_t buf[1024];
-	while (wav_read(&coin, buf, 1024) != WAV_EOF) {
-		for (int i = 0; i < 1024; i++) {
-			printf("0x%x,", buf[i]);
-			if (i % 20 == 0) printf("\n");
-		}
-	}
-
-	wav_close(&coin);
-
-	return 0;
 	/*
 	Engine* eng = engine_get();
 	allocator_attach(&eng->allocator);
