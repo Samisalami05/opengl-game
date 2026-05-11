@@ -62,7 +62,7 @@ void hashmap_init(Hashmap* map, size_t k_size, size_t v_size, HashFunc func) {
 
 void hashmap_deinit(Hashmap* map) {
 	if (map->buckets != NULL) {
-		FREE(map->buckets);
+		free(map->buckets);
 		map->buckets = NULL;
 	}
 	map->count = 0;
@@ -159,6 +159,7 @@ static bool hashmap_expand(Hashmap* map) {
     size_t new_capacity = old_capacity == 0 ? 4 : old_capacity * 2;
 
     uint8_t* old = map->buckets;
+
 
     uint8_t* new_buckets = calloc(new_capacity + 2, bucket_size(map)); // +2 for CURR and TMP bucket
     if (!new_buckets) {
@@ -273,7 +274,7 @@ static bool hashmap_remove_internal(Hashmap* map, const void* key, bool key_str)
 
 	for (;;) {
 		if (!bucket_is_occupied(map, p)) {
-			LOG(LOG_ERROR, "Walked to unoccupied bucket");
+			printf("Walked to unoccupied bucket\n");
 			return false;
 		}
 
@@ -297,6 +298,7 @@ static bool hashmap_remove_internal(Hashmap* map, const void* key, bool key_str)
 		bucket_cpy(map, hole, next);
 		probe_t* b_probe = bucket_probe(map, hole);
 		*b_probe = ((*b_probe & ~OCCUPIED_MASK) - 1);
+		*b_probe |= OCCUPIED_MASK;
 
 		hole = next;
 		next = (next + 1) % map->capacity;

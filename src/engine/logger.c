@@ -48,11 +48,14 @@ static void default_logger(LogInfo info, const char* fmt, va_list args, char* ou
 
     if (offset < 0 || offset >= LOGGER_LINE_MAX) return;
 
+	va_list args_copy;
+    va_copy(args_copy, args);
+
     vsnprintf(out + offset, LOGGER_LINE_MAX - offset, fmt, args);
 	
 	// TODO: maybe not log to terminal
 	fprintf(stderr, "%s:%d - ", info.file + path_off, info.line);
-	vfprintf(stderr, fmt, args);
+	vfprintf(stderr, fmt, args_copy);
 	fprintf(stderr, "\n");
 }
 

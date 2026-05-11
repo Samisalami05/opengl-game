@@ -6,6 +6,7 @@
 #include "asset_manager.h"
 #include "audio/wav.h"
 #include "components/transform.h"
+#include "core/shader.h"
 #include "core/texture.h"
 #include "debug_renderer.h"
 #include "ecs.h"
@@ -51,19 +52,15 @@ int main(void) {
 	Engine* eng = engine_get();
 	allocator_attach(&eng->allocator);
 
-	for (int i = 0; i < 100; i++) {
-		void* p = MALLOC(100);
-	}
-
-	void* p2 = CALLOC(1, 200);
-	
-	p2 = REALLOC(p2, 1000);
-
-	p2 = REALLOC(p2, 2000);
-
-	void* p3 = NULL;
-
-	p3 = REALLOC(p3, 5000);
+	AssetManager am = {0};
+	asset_manager_init(&am); */
+/*
+	AssetHandle handle = aload_texture("assets/metal.png");
+	if (handle == ASSET_HANDLE_INVALID) return 1;
+	const texture* tex = asset_get(handle);
+*/
+/*
+	asset_manager_deinit(&am);
 
 	AllocationEntry entrie[eng->allocator.memory_map.count];
 	hashmap_values(&eng->allocator.memory_map, entrie);
@@ -72,6 +69,10 @@ int main(void) {
 		printf("MEMORY LEAK DETECTED\n");
 		printf("Count: %ld\n", eng->allocator.memory_map.count);
 		for (int i = 0; i < eng->allocator.memory_map.count; i++) {
+			if (entrie[i].size == 0) {
+				LOG(LOG_ERROR, "Size is 0");
+				continue;
+			}
 			printf("%s:%ld - %s, %ld\n", entrie[i].file, entrie[i].line, entrie[i].func, entrie[i].size);
 			stacktrace_print(&entrie[i].trace);
 		}
@@ -81,18 +82,6 @@ int main(void) {
 	hashmap_deinit(&eng->allocator.memory_map);
 
 	return 0; */
-
-	AssetManager am = {0};
-	asset_manager_init(&am);
-
-	AssetHandle handle = aload_texture("assets/metal.png");
-	if (handle == ASSET_HANDLE_INVALID) return 1;
-	const texture* tex = asset_get(handle);
-
-	
-	asset_manager_deinit(&am);
-
-	//return 0 ;
 
     game game = {0};
 	if (engine_init(&game)) return 1;

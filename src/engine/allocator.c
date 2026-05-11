@@ -2,6 +2,7 @@
 #include "logger.h"
 #include "stack_trace.h"
 #include "util/hashmap.h"
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,6 +34,8 @@ static int file_offset(const char* path, int slash_count) {
 
 void* mmalloc(size_t size, AllocationDetails details) {
 	void* ptr = malloc(size);
+	printf("malloc: %p - %s:%ld\n", ptr, details.file, details.line);
+
 	if (alloc == NULL) return ptr;
 	alloc->dirty = true;
 
@@ -59,7 +62,8 @@ void* mmalloc(size_t size, AllocationDetails details) {
 
 void* mcalloc(size_t count, size_t size, AllocationDetails details) {
 	void* ptr = calloc(count, size);
-	
+	printf("calloc: %p - %s:%ld\n", ptr, details.file, details.line);
+
 	if (alloc == NULL) return ptr;
 	alloc->dirty = true;
 
@@ -79,7 +83,8 @@ void* mcalloc(size_t count, size_t size, AllocationDetails details) {
 
 void* mrealloc(void* ptr, size_t size, AllocationDetails details) {
 	void* p = realloc(ptr, size);
-	
+	printf("realloc: %ld, %p, %p, %s:%ld\n", (size_t)p, p, ptr, details.file, details.line);
+
 	if (alloc == NULL) return p;
 	alloc->dirty = true;
 
@@ -99,19 +104,23 @@ void* mrealloc(void* ptr, size_t size, AllocationDetails details) {
 
 	intptr_t new = (intptr_t)p;
 	hashmap_put(&alloc->memory_map, &new, &entry);
-	if (hashmap_get(&alloc->memory_map, &new) == NULL) LOG(LOG_ERROR, "This is very bad\n");
+	if (hashmap_get(&alloc->memory_map, &new) == NULL) LOG(LOG_ERROR, "It does not exist!!!\n");
 	
 	return p;
 }
 
 void mfree(void* ptr, AllocationDetails details) {
-	if (alloc != NULL) {
+
+	if (alloc != NULL && ptr != NULL) {
 		alloc->dirty = true;
 
 		intptr_t key = (intptr_t)ptr;
 		if (hashmap_get(&alloc->memory_map, &key) == NULL) LOG(LOG_ERROR, "Could not be found");
 		if (!hashmap_remove(&alloc->memory_map, &key)) {
-			LOG(LOG_ERROR, "Could not remove ptr %ld from memory map", (size_t)key);
+			printf("Could not remove ptr %ld %p from memory map in %s:%ld\n", (size_t)key, ptr, details.file, details.line);
+			StackTrace trace = {0};
+			stacktrace_capture(&trace);
+			stacktrace_print(&trace);
 		}
 		//if (hashmap_get(&alloc->memory_map, &key) != NULL) LOG(LOG_ERROR, "This is very bad\n");
 	}
